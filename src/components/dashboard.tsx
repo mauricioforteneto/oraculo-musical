@@ -34,6 +34,10 @@ function scoreLabel(score: number | null) {
   return score === null ? "—" : score.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
 }
 
+function sourceNumberLabel(value: number) {
+  return String(value).replace(".", ",");
+}
+
 function shortDate(value: string) {
   const date = new Date(value + "T12:00:00");
   return Number.isNaN(date.getTime())
@@ -66,6 +70,7 @@ export function Dashboard({ source, syncReady, localPreview }: { source: LocalSo
   const [filter, setFilter] = useState<ScoreFilter>("all");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [shown, setShown] = useState(15);
+  const [showAllBacklog, setShowAllBacklog] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncFeedback, setSyncFeedback] = useState("");
 
@@ -98,6 +103,7 @@ export function Dashboard({ source, syncReady, localPreview }: { source: LocalSo
   const average = originalScores.length ? originalScores.reduce((sum, score) => sum + score, 0) / originalScores.length : 0;
   const noteDifferences = albums.filter(scoreDifference).length;
   const count90 = originalScores.filter((score) => score >= 90).length;
+  const sourceTop50Positions = albums.filter((album) => album.isPresent !== false && album.top50SourceRank !== null).length;
   const sourceAverage = parseSummaryNumber(source?.summary["Nota média"]);
   const sourceBacklog = parseSummaryNumber(source?.summary["Backlog atual"]);
   const hasBacklogDifference = sourceBacklog !== null && sourceBacklog !== (source?.backlog.length ?? 0);
@@ -109,6 +115,8 @@ export function Dashboard({ source, syncReady, localPreview }: { source: LocalSo
     return matchesText && matchesScore;
   });
   const visibleAlbums = filteredAlbums.slice(0, shown);
+  const backlog = source?.backlog ?? [];
+  const visibleBacklog = showAllBacklog ? backlog : backlog.slice(0, 5);
   const histogram = [
     { label: "90–100", min: 90, max: 100 },
     { label: "80–89", min: 80, max: 89 },
@@ -322,8 +330,9 @@ export function Dashboard({ source, syncReady, localPreview }: { source: LocalSo
 
           <section className={styles.lowerGrid}>
             <div className={styles.backlogCard} id="backlog">
-              <div className={styles.cardHeader}><div><div className={styles.cardEyebrow}>PRÓXIMAS ESCUTAS</div><h2>Backlog</h2></div><span className={styles.backlogCount}>{source?.backlog.length ?? 0} álbuns</span></div>
-              {source?.backlog.length ? <ol className={styles.backlogList}>{source.backlog.slice(0, 5).map((item) => <li key={item.order + "-" + item.artist + "-" + item.title}><span className={styles.backlogOrder}>{String(item.order).padStart(2, "0")}</span><span><strong>{item.artist}</strong><small>{item.title}</small></span><span className={styles.priority}>{item.priority || "Sem prioridade"}</span></li>)}</ol> : <p className={styles.mutedBody}>A lista de próximas escutas aparece aqui após a leitura da fonte.</p>}
+              <div className={styles.cardHeader}><div><div className={styles.cardEyebrow}>PRÓXIMAS ESCUTAS</div><h2>Backlog</h2></div><span className={styles.backlogCount}>{backlog.length} álbuns</span></div>
+              {backlog.length ? <ol className={styles.backlogList} id="backlog-items">{visibleBacklog.map((item) => <li key={item.order + "-" + item.artist + "-" + item.title}><span className={styles.backlogOrder}>{String(item.order).padStart(2, "0")}</span><span><strong>{item.artist}</strong><small>{item.title}</small>{item.source && <small className={styles.backlogSource}>Fonte: {item.source}</small>}</span><span className={styles.priority}>{item.priority || "Sem prioridade"}</span></li>)}</ol> : <p className={styles.mutedBody}>A lista de próximas escutas aparece aqui após a leitura da fonte.</p>}
+              {backlog.length > 5 && <button className={styles.backlogToggle} type="button" aria-controls="backlog-items" aria-expanded={showAllBacklog} onClick={() => setShowAllBacklog((current) => !current)}>{showAllBacklog ? "Mostrar menos" : `Ver todos os ${backlog.length} álbuns`}</button>}
               <p className={styles.readOnlyNote}><LockKeyhole size={13} aria-hidden="true" />O backlog é exibido como está na planilha.</p>
             </div>
 
@@ -331,8 +340,9 @@ export function Dashboard({ source, syncReady, localPreview }: { source: LocalSo
               <div className={styles.pendingTop}><div className={styles.pendingIcon}><Trophy size={18} aria-hidden="true" /></div><span className={styles.pendingPill}>EM REVISÃO</span></div>
               <div className={styles.cardEyebrow}>TEMPORADA 2026</div>
               <h2>Top 50 e campeonato</h2>
-              <p>A planilha traz posições provisórias. O app só exibirá cálculos oficiais depois de resolver as regras pendentes de desempate e composição.</p>
-              <a href="#acervo" className={styles.textLink}>Voltar ao ranking anual <ArrowUpRight size={15} aria-hidden="true" /></a>
+              <p>Os campos competitivos da planilha estão disponíveis no detalhe de cada álbum como registros da fonte. Posições e resultados oficiais dependem das regras pendentes.</p>
+              {sourceTop50Positions > 0 && <div className={styles.sourcePositionCount}><strong>{sourceTop50Positions}</strong><span>posições provisórias registradas {localPreview ? "na prévia local" : "na versão publicada"}</span></div>}
+              <a href="#acervo" className={styles.textLink}>Examinar os registros <ArrowUpRight size={15} aria-hidden="true" /></a>
             </div>
           </section>
 
@@ -358,6 +368,12 @@ function Metric({ icon, label, value, caption, accent = false }: { icon: React.R
 function AlbumDetails({ album }: { album: RankedAlbum | null }) {
   if (!album) return <aside className={styles.detailCard}><div className={styles.detailEmpty}><Disc3 size={25} aria-hidden="true" /><strong>Escolha um álbum</strong><span>Os detalhes da avaliação aparecem aqui.</span></div></aside>;
   const hasDifference = scoreDifference(album);
+  const hasCompetitiveRecord = Boolean(
+    album.repescagem || album.repescagemDisqualified || album.repescagemNote || album.playInScore !== null
+    || album.playInResult || album.prePlayoffScore !== null || album.prePlayoffResult || album.prePlayoffTiebreak
+    || album.playoffSeed !== null || album.top50BestPhase || album.top50Bonus !== null
+    || album.top50Index !== null || album.top50SourceRank !== null,
+  );
   return <aside className={styles.detailCard} aria-label="Detalhes do álbum selecionado">
     <div className={styles.detailHeader}><span className={styles.cardEyebrow}>DETALHE DA AVALIAÇÃO</span><span className={styles.detailPosition}>#{displayRank(album.annualPosition)}</span></div>
     <div className={styles.detailArtist}>{album.artist}</div>
@@ -376,10 +392,27 @@ function AlbumDetails({ album }: { album: RankedAlbum | null }) {
       {album.identityScore !== null && <div><dt>Identidade &amp; personalidade</dt><dd>{scoreLabel(album.identityScore)}/25</dd></div>}
       {album.consistencyScore !== null && <div><dt>Consistência &amp; narrativa</dt><dd>{scoreLabel(album.consistencyScore)}/25</dd></div>}
       {album.replayScore !== null && <div><dt>Replay &amp; impacto</dt><dd>{scoreLabel(album.replayScore)}/25</dd></div>}
-      {album.playoffSeed !== null && <div><dt>Seed registrado</dt><dd>{album.playoffSeed}</dd></div>}
       {album.source && <div><dt>Fonte registrada</dt><dd className={styles.sourceText}>{album.source}</dd></div>}
     </dl>
     {album.repescagemNote && <div className={styles.observation}><span>OBSERVAÇÃO NA FONTE</span><p>{album.repescagemNote}</p></div>}
+    {hasCompetitiveRecord && <details className={styles.competitiveEvidence}>
+      <summary>Registros competitivos da planilha</summary>
+      <p>Valores transcritos da fonte{album.isPresent === false ? " (última versão em que este álbum apareceu)" : ""}; não são classificação nem resultado recalculado pelo app.</p>
+      <dl className={styles.detailFacts}>
+        {album.repescagem && <div><dt>Repescagem</dt><dd>{album.repescagem}</dd></div>}
+        {album.repescagemDisqualified && <div><dt>Desqualificação da Repescagem</dt><dd>{album.repescagemDisqualified}</dd></div>}
+        {album.playInScore !== null && <div><dt>Play-in informado</dt><dd>{sourceNumberLabel(album.playInScore)}/25</dd></div>}
+        {album.playInResult && <div><dt>Resultado Play-in</dt><dd>{album.playInResult}</dd></div>}
+        {album.prePlayoffScore !== null && <div><dt>Pré-playoff informado</dt><dd>{sourceNumberLabel(album.prePlayoffScore)}/25</dd></div>}
+        {album.prePlayoffResult && <div><dt>Resultado Pré-playoff</dt><dd>{album.prePlayoffResult}</dd></div>}
+        {album.prePlayoffTiebreak && <div><dt>Desempate Pré-playoff</dt><dd>{album.prePlayoffTiebreak}</dd></div>}
+        {album.playoffSeed !== null && <div><dt>Seed registrado</dt><dd>{album.playoffSeed}</dd></div>}
+        {album.top50BestPhase && <div><dt>Melhor fase informada</dt><dd>{album.top50BestPhase}</dd></div>}
+        {album.top50Bonus !== null && <div><dt>Bônus informado</dt><dd>{sourceNumberLabel(album.top50Bonus)}</dd></div>}
+        {album.top50Index !== null && <div><dt>Índice informado</dt><dd>{sourceNumberLabel(album.top50Index)}</dd></div>}
+        {album.top50SourceRank !== null && <div><dt>Posição Top 50 provisória</dt><dd>#{album.top50SourceRank}</dd></div>}
+      </dl>
+    </details>}
     <p className={styles.detailDisclaimer}><LockKeyhole size={13} aria-hidden="true" />Consulta somente leitura. Nenhuma nota pode ser alterada aqui.</p>
   </aside>;
 }

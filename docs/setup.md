@@ -96,4 +96,4 @@ E2E atual faz build e inicia o servidor de produção isolado na porta 3100; usa
 
 ## Próximo passo
 
-Conferir acesso negado a outra conta e exercitar uma avaliação fictícia nova em fonte de teste privada. A sincronização com serviços reais já publicou a fonte pessoal e confirmou idempotência; a restauração isolada também conferiu, mas isso não valida os cenários alternativos. Reiniciar o servidor web após a separação da URL administrativa para que a credencial antiga deixe o processo.
+O usuário dispensou por ora os ensaios com segunda conta e pasta privada de teste; não registrar esses cenários como validados. A sincronização com serviços reais publicou a fonte pessoal e confirmou idempotência, e a restauração isolada conferiu. A interface pode mostrar campos competitivos transcritos da planilha, mas resultados oficiais dependem das decisões em [decisions.md](decisions.md). Se uma credencial administrativa for retirada de `.env.local`, reiniciar o servidor web para que deixe o processo.

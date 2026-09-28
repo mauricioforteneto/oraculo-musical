@@ -2,11 +2,15 @@
 
 Status inicial em 27/09/2026: documentação e base funcional de acesso implementadas após instrução de avançar. Autenticação real, serviços hospedados e importação ainda não validados.
 
-Validação local em 28/09/2026: login Google do proprietário, conexões SQL segregadas, leitura da pasta privada no Drive e publicação da fonte pessoal em PostgreSQL concluídos. Uma segunda sincronização retornou `unchanged` sem duplicar dados. A URL administrativa foi separada de `.env.local` e movida para `.env.migration.local`, ignorado pelo Git. Ainda faltam prova de bloqueio de outra conta e fonte de teste privada com uma avaliação fictícia nova.
+Validação local em 28/09/2026: login Google do proprietário, conexões SQL segregadas, leitura da pasta privada no Drive e publicação da fonte pessoal em PostgreSQL concluídos. Uma segunda sincronização retornou `unchanged` sem duplicar dados. A URL administrativa foi separada de `.env.local` e movida para `.env.migration.local`, ignorado pelo Git. Os ensaios com outra conta e fonte de teste privada foram dispensados por ora pelo usuário.
 
 Recuperação em 28/09/2026: `pg_dump` dos esquemas `oraculo` e `oraculo_migrations` gerou uma cópia GPG criptografada em `.private/backups/` usando TLS verificado. A restauração em PostgreSQL 17 local e isolado foi concluída; contagens e conteúdo das 12 tabelas conferiram com a origem após normalização de horários e JSON. O banco temporário foi removido. A cópia ainda precisa ser guardada fora deste computador, e a senha deve ter guarda separada. Procedimento em [backup.md](backup.md).
 
-Fonte de teste em 28/09/2026: duas planilhas inteiramente fictícias, v1 com um álbum e v2 com dois, foram preparadas em `.private/test-source/`. O parser as leu como publicáveis, sem erros ou avisos. O ensaio Drive → banco → ranking continua pendente até haver uma pasta privada de teste e uma fonte cadastrada separada da pessoal.
+Fonte de teste em 28/09/2026: duas planilhas inteiramente fictícias, v1 com um álbum e v2 com dois, foram preparadas em `.private/test-source/`. O parser as leu como publicáveis, sem erros ou avisos. O usuário dispensou por ora o ensaio Drive → banco → ranking com pasta de teste e o ensaio de acesso com segunda conta; não há esses recursos disponíveis. Esses resultados não são considerados validados.
+
+Evidência competitiva em 28/09/2026: os campos já importados da planilha passaram a aparecer no detalhe de cada álbum como registros da fonte, incluindo scores, resultados, seed, bônus, índice e posição Top 50 provisória quando presentes. A publicação atual possui 26 posições provisórias registradas. Nenhum cálculo oficial de Top 50 ou chaveamento foi liberado; P01–P14 seguem pendentes.
+
+Consulta do backlog em 28/09/2026: o painel agora permite abrir todos os registros publicados da aba `Backlog` e consultar prioridade e referência de cada item; a lista inicial continua compacta. Os 15 itens importados seguem somente leitura. Reescutas ainda não têm mapeamento confiável na fonte.
 
 Auditoria local em 28/09/2026: os papéis `anon` e `authenticated` não têm acesso ao esquema `oraculo`; `oraculo_web` não escreve e `oraculo_importer` não altera nem exclui avaliações originais. Uma busca por valores completos de credenciais nos arquivos versionados e nos bundles de navegador existentes não encontrou correspondências. Isso não substitui a revisão da configuração hospedada nem um ensaio de acesso com outra conta.
 
@@ -36,7 +40,7 @@ Implementação local em 28/09/2026: criada a migração 0002 para snapshots por
 - [x] Scaffold Next.js/TypeScript, versões fixadas e package-lock.json. Migração inicial de fontes, versões, tentativas, álbuns, originais e problemas; outras entidades virão com os respectivos recursos.
 - [x] Criar scripts lint/typecheck/test/test:integration/test:e2e/build/db:migrate e CI com `npm ci`; PostgreSQL efêmero na CI e PGlite isolado localmente.
 - [x] Fixtures exclusivamente fictícias em `tests/fixtures/synthetic`; nenhuma exportação pessoal no Git. Fixture XLSX fica para a implementação do parser.
-- [ ] Conta pessoal pré-criada; cadastro público fechado; autorização em cada entrada HTTP e cache privado.
+- [ ] Conta pessoal pré-criada; cadastro público fechado; autorização em cada entrada HTTP e cache privado. Ensaio com segunda conta dispensado por ora pelo usuário.
 - [x] Credenciais SQL de leitura, sincronização e migração segregadas no ambiente local; credenciais Drive exclusivas do servidor.
 - [ ] Conferir segregação no ambiente hospedado e ausência de segredos no bundle e nos logs.
 - [x] Criar backup criptografado local e ensaiar restauração em banco isolado; cópia externa e rotação semanal pendentes.
@@ -53,9 +57,9 @@ Aceite: visitante sem sessão e outra conta não leem dados nem acionam sync; pa
 - [x] Persistência transacional, idempotência, histórico, relatório, preservação de ausentes e último estado válido.
 - [x] Tela de ranking, busca, detalhes, sincronização e versões/horários/pendências.
 - [x] Ensaio real com credenciais da aplicação, além de mocks: primeira publicação e repetição `unchanged`.
-- [ ] Ensaio controlado com avaliação fictícia nova em fonte de teste privada.
+- [ ] Ensaio controlado com avaliação fictícia nova em fonte de teste privada. Dispensado por ora pelo usuário; arquivos fictícios locais preparados, sem publicação de teste no Drive.
 
-Progresso: leitor Drive com paginação, seleção de versão numérica, revalidação e hash; parser XLSX; persistência transacional idempotente com histórico de snapshots, preservação de ausentes e última publicação válida; consulta DB para ranking; endpoint POST com autorização do dono e validação de origem. A migração 0002 foi aplicada e a fonte pessoal foi publicada com OAuth, Drive e PostgreSQL reais. A repetição retornou `unchanged`; backup/restauração isolada conferiu, e restam a fonte fictícia de teste e os cenários de falha ainda não exercitados com serviços reais.
+Progresso: leitor Drive com paginação, seleção de versão numérica, revalidação e hash; parser XLSX; persistência transacional idempotente com histórico de snapshots, preservação de ausentes e última publicação válida; consulta DB para ranking; endpoint POST com autorização do dono e validação de origem. A migração 0002 foi aplicada e a fonte pessoal foi publicada com OAuth, Drive e PostgreSQL reais. A repetição retornou `unchanged`; backup/restauração isolada conferiu. O ensaio com fonte fictícia foi dispensado por ora; cenários de falha com serviços reais seguem sem exercício.
 
 Aceite central: nova avaliação fictícia em fonte de teste privada → botão → um registro no banco → posição correta. Em seguida, teste controlado com fonte pessoal sem escrita nela. Nenhuma edição de avaliação ou upload arbitrário pelo app.
 
@@ -93,6 +97,8 @@ Aceite central: nova avaliação fictícia em fonte de teste privada → botão 
 
 Depende das decisões pertinentes P01/P03/P04/P05/P07/P12/P13/P14. Importar fases encerradas como histórico, preservando evidência; nunca reexecutar a seleção para inventar resultados.
 
+Os campos competitivos da versão publicada estão preservados nos registros da fonte e podem ser consultados no detalhe de cada álbum como evidência provisória. Isso não confirma fases encerradas nem libera projeção oficial; a modelagem de participações e snapshots históricos continua pendente das decisões e da conferência da fonte.
+
 Testar: bônus máximo e não cumulativo (+1, +3, +6); Repescagem Etapas 1 e 2 ambas +1, Etapa 2 vence desempate; sem fase 79 elegível e 78 inelegível; participantes podem ter original menor; Play-in inteiro /25 e Pré-playoff meios pontos /25; desempates por fase/desempenho/original/residual aprovado. Índice não ordena participantes dos Playoffs. Casos N=24 e N>24 devem respeitar decisão P01; enquanto não resolvida, resultado final indisponível.
 
 ## Entrega 4 — Playoffs e calendário
@@ -107,7 +113,7 @@ Testar empate /20 por Replay, depois Consistência, depois seed original. Reseed
 
 Validar janela inicial e orçamento. Testar paginação com limite de 200, janela estável, nowplaying, timestamps ausentes, faixas repetidas em horários distintos, retries, deduplicação e retomada sem avançar checkpoint incompleto. Diferentes edições não são fundidas. Medir volume real; não afirmar integração validada só com fixtures.
 
-Backlog e reescutas continuam vindo da fonte, após resolver divergências de descoberta. AOTY depende de exportação comprovada e não sobrescreve avaliação oficial. Mixtapes, análise de gosto e eventual adaptador de consulta para Chat ficam em backlog futuro, sem compromisso de implantação nesta fase.
+Backlog continua vindo da aba da fonte e já pode ser consultado por inteiro, com a divergência entre resumo e lista sinalizada. Reescutas dependem de mapeamento confiável na fonte. AOTY depende de exportação comprovada e não sobrescreve avaliação oficial. Mixtapes, análise de gosto e eventual adaptador de consulta para Chat ficam em backlog futuro, sem compromisso de implantação nesta fase.
 
 ## Critério de publicação
 

@@ -298,6 +298,13 @@
 .observation { margin-top: 14px; padding-top: 12px; border-top: 1px solid #2e3831; }
 .observation span { color: #839086; font-size: 7px; letter-spacing: 0.12em; }
 .observation p { max-height: 110px; overflow: auto; margin: 6px 0 0; color: #b0b7ac; font-size: 9px; line-height: 1.55; white-space: pre-wrap; }
+.competitiveEvidence { margin-top: 15px; padding: 10px; border: 1px solid #364238; border-radius: 5px; background: #19221b; }
+.competitiveEvidence summary { color: #d7bd99; font-size: 10px; font-weight: 600; cursor: pointer; }
+.competitiveEvidence summary:focus-visible { outline: 2px solid #dfa775; outline-offset: 3px; }
+.competitiveEvidence > p { margin: 9px 0 0; color: #9da99d; font-size: 9px; line-height: 1.5; }
+.competitiveEvidence .detailFacts { gap: 9px; margin-top: 11px; }
+.competitiveEvidence .detailFacts > div { align-items: flex-start; flex-direction: column; gap: 3px; }
+.competitiveEvidence .detailFacts dt, .competitiveEvidence .detailFacts dd { overflow-wrap: anywhere; text-align: left; }
 .detailDisclaimer { display: flex; align-items: flex-start; gap: 6px; margin: 16px 0 0; padding-top: 10px; border-top: 1px solid #2e3831; color: #7d897f; font-size: 8px; line-height: 1.45; }
 .detailDisclaimer svg { flex: 0 0 auto; }
 .detailEmpty { min-height: 170px; display: grid; place-content: center; justify-items: center; gap: 8px; color: #869188; }
@@ -308,12 +315,16 @@
 .backlogCard { padding: 17px 18px 13px; scroll-margin-top: 18px; }
 .backlogCount { padding: 5px 7px; color: #c5ae8e; border: 1px solid #544735; border-radius: 4px; font-size: 8px; }
 .backlogList { display: grid; gap: 0; margin: 12px 0 0; padding: 0; list-style: none; }
-.backlogList li { min-height: 43px; display: grid; grid-template-columns: 25px minmax(0, 1fr) auto; align-items: center; gap: 9px; border-top: 1px solid #2c362f; }
+.backlogList li { min-height: 43px; display: grid; grid-template-columns: 25px minmax(0, 1fr) auto; align-items: center; gap: 9px; padding: 7px 0; border-top: 1px solid #2c362f; }
 .backlogOrder { color: #a7805b; font: 400 12px Georgia, serif; }
 .backlogList li > span:nth-child(2) { min-width: 0; }
 .backlogList li strong, .backlogList li small { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .backlogList li strong { color: #d9ddd4; font-size: 9px; font-weight: 600; }
 .backlogList li small { margin-top: 3px; color: #8b978c; font-size: 8px; }
+.backlogList li .backlogSource { color: #758579; }
+.backlogToggle { margin-top: 10px; padding: 7px 0; color: #d7ae83; border: 0; background: transparent; font-size: 9px; cursor: pointer; }
+.backlogToggle:hover { color: #f0c8a0; }
+.backlogToggle:focus-visible { outline: 2px solid #dfa775; outline-offset: 3px; }
 .priority { padding: 4px 6px; color: #aeb8aa; border: 1px solid #344137; border-radius: 4px; font-size: 7px; }
 .readOnlyNote { display: flex; align-items: center; gap: 6px; margin: 11px 0 0; color: #77847b; font-size: 8px; }
 .mutedBody { color: #95a096; font-size: 10px; line-height: 1.6; }
@@ -324,6 +335,9 @@
 .pendingPill { padding: 5px 7px; color: #d8b681; border: 1px solid #5d4c37; border-radius: 4px; font-size: 7px; letter-spacing: 0.12em; }
 .pendingCard h2 { margin: 7px 0 7px; color: #eee9dd; font: 400 21px/1.1 Georgia, "Times New Roman", serif; }
 .pendingCard p { max-width: 360px; margin: 0; color: #9aa398; font-size: 9px; line-height: 1.6; }
+.sourcePositionCount { display: flex; align-items: center; gap: 10px; margin-top: 13px; padding-top: 11px; border-top: 1px solid #3d4034; }
+.sourcePositionCount strong { color: #e0b386; font: 400 23px Georgia, "Times New Roman", serif; }
+.sourcePositionCount span { max-width: 170px; color: #9aa398; font-size: 8px; line-height: 1.4; }
 .textLink { display: inline-flex; align-items: center; gap: 6px; margin-top: 17px; color: #d7ae83; font-size: 9px; text-decoration: none; }
 .textLink:hover { color: #f0c8a0; }
 
