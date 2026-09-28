@@ -8,7 +8,7 @@ Suporte local em 27/09/2026: reproduzido bloqueio do PowerShell ao executar `npm
 
 Falha do servidor em 27/09/2026: reproduzido no Ubuntu WSL. `node_modules` continha apenas o binário Windows de Lightning CSS, embora o Next estivesse rodando em Linux por `/mnt/c`. Encerrada a instância com erro, `npm ci` foi executado no WSL e o servidor reiniciado lá. A rota `/` respondeu HTTP 200, exibindo prévia local de 118 álbuns. A instância foi encerrada em 28/09/2026; o setup instrui instalar dependências no mesmo sistema operacional que executará a aplicação.
 
-Ambiente local em 28/09/2026: checkout de trabalho copiado para `~/projects/oraculo-musical` no filesystem Linux do WSL, preservando a cópia Windows. Dependências reinstaladas no WSL; `npm run test` (25 testes), `npm run typecheck`, `npm run lint` e `npm run build` passaram. Configuração do Git Credential Manager do Windows para o Git no WSL e fluxo de push em validação.
+Ambiente local em 28/09/2026: checkout de trabalho copiado para `~/projects/oraculo-musical` no filesystem Linux do WSL, preservando a cópia Windows. Dependências reinstaladas no WSL; `npm run test` (25 testes), `npm run typecheck`, `npm run lint` e `npm run build` passaram. O Git do WSL reutiliza o Git Credential Manager do Windows; push validado e commit `731c947` publicado em `origin/main`. A rota `/` respondeu HTTP 200 pelo WSL e pelo Windows; o servidor de desenvolvimento está ativo em `http://127.0.0.1:3000`.
 
 ## Entrega 0 — revisão e descoberta
 
