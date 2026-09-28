@@ -1,0 +1,282 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import {
+  AlertTriangle,
+  ArrowDownRight,
+  ArrowUpRight,
+  AudioLines,
+  ChevronRight,
+  CircleHelp,
+  Disc3,
+  Headphones,
+  LibraryBig,
+  ListMusic,
+  LockKeyhole,
+  LogOut,
+  Search,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
+import type { AlbumRecord, LocalSourcePreview } from "@/lib/catalog/types";
+import { rankAnnualAlbums, recordKey, type RankedAlbum } from "@/lib/catalog/ranking";
+import { parseSummaryNumber } from "@/lib/catalog/summary";
+import styles from "./dashboard.module.css";
+
+type ScoreFilter = "all" | "90" | "80" | "70";
+
+function normalize(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
+}
+
+function scoreLabel(score: number | null) {
+  return score === null ? "—" : score.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+}
+
+function shortDate(value: string) {
+  const date = new Date(value + "T12:00:00");
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function displayRank(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function scoreDifference(a: AlbumRecord) {
+  return a.reportedScore !== null && a.originalScore !== null && a.reportedScore !== a.originalScore;
+}
+
+export function Dashboard({ source }: { source: LocalSourcePreview | null }) {
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<ScoreFilter>("all");
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [shown, setShown] = useState(15);
+
+  const albums = useMemo(() => rankAnnualAlbums(source?.albums ?? []), [source?.albums]);
+  const selected = albums.find((album) => album.key === selectedKey) ?? albums[0] ?? null;
+  const originalScores = albums.map((album) => album.originalScore).filter((score): score is number => score !== null);
+  const average = originalScores.length ? originalScores.reduce((sum, score) => sum + score, 0) / originalScores.length : 0;
+  const noteDifferences = albums.filter(scoreDifference).length;
+  const count90 = originalScores.filter((score) => score >= 90).length;
+  const sourceAverage = parseSummaryNumber(source?.summary["Nota média"]);
+  const sourceBacklog = parseSummaryNumber(source?.summary["Backlog atual"]);
+  const hasBacklogDifference = sourceBacklog !== null && sourceBacklog !== (source?.backlog.length ?? 0);
+  const filteredAlbums = albums.filter((album) => {
+    const needle = normalize(query.trim());
+    const matchesText = !needle || normalize([album.artist, album.title, album.genre, album.country].join(" ")).includes(needle);
+    const score = album.originalScore ?? -1;
+    const matchesScore = filter === "all" || score >= Number(filter);
+    return matchesText && matchesScore;
+  });
+  const visibleAlbums = filteredAlbums.slice(0, shown);
+  const histogram = [
+    { label: "90–100", min: 90, max: 100 },
+    { label: "80–89", min: 80, max: 89 },
+    { label: "70–79", min: 70, max: 79 },
+    { label: "60–69", min: 60, max: 69 },
+    { label: "Abaixo de 60", min: 0, max: 59 },
+  ].map((band) => ({ ...band, count: originalScores.filter((score) => score >= band.min && score <= band.max).length }));
+  const maxBand = Math.max(...histogram.map((band) => band.count), 1);
+  const topThree = albums.slice(0, 3);
+  const dateLabel = source ? shortDate(source.referenceDate) : "Sem arquivo local";
+  const hasSummaryDifference = sourceAverage !== null && Math.abs(sourceAverage - average) > 0.005;
+
+  const filters: { id: ScoreFilter; label: string }[] = [
+    { id: "all", label: "Todos" },
+    { id: "90", label: "90+" },
+    { id: "80", label: "80+" },
+    { id: "70", label: "70+" },
+  ];
+
+  return (
+    <div className={styles.appShell}>
+      <aside className={styles.sidebar} aria-label="Navegação principal">
+        <a className={styles.brand} href="#visao-geral" aria-label="Oráculo Musical, início">
+          <span className={styles.brandMark}><Disc3 size={21} strokeWidth={1.45} aria-hidden="true" /></span>
+          <span><strong>oráculo</strong><small>MUSICAL · 2026</small></span>
+        </a>
+
+        <div className={styles.navCaption}>ACERVO</div>
+        <nav className={styles.navigation}>
+          <a className={styles.navItem + " " + styles.navActive} href="#visao-geral" aria-current="page"><AudioLines size={17} aria-hidden="true" />Visão geral</a>
+          <a className={styles.navItem} href="#acervo"><LibraryBig size={17} aria-hidden="true" />Álbuns <span className={styles.navCount}>{albums.length || "—"}</span></a>
+          <a className={styles.navItem} href="#backlog"><ListMusic size={17} aria-hidden="true" />Backlog <span className={styles.navCount}>{source?.backlog.length ?? "—"}</span></a>
+        </nav>
+
+        <div className={styles.navCaption + " " + styles.navCaptionSpaced}>TEMPORADA</div>
+        <nav className={styles.navigation} aria-label="Seções da temporada">
+          <a className={styles.navItem} href="#top-50"><Trophy size={17} aria-hidden="true" />Top 50 <span className={styles.pendingDot}>Pendente</span></a>
+          <span className={styles.navItem + " " + styles.navDisabled}><Sparkles size={17} aria-hidden="true" />Chaveamento <span className={styles.lockLabel}>em revisão</span></span>
+        </nav>
+
+        <div className={styles.sidebarBottom}>
+          <div className={styles.sourceMini}>
+            <div className={styles.sourceMiniIcon}><LockKeyhole size={15} aria-hidden="true" /></div>
+            <div><strong>Fonte privada</strong><span>{source ? "Prévia local · v" + source.version : "Arquivo ainda não carregado"}</span></div>
+            <span className={styles.statusDot} aria-label="Sem sincronização com o Drive" />
+          </div>
+          <form action="/auth/logout" method="post">
+            <button className={styles.logoutButton} type="submit"><LogOut size={16} aria-hidden="true" />Sair</button>
+          </form>
+        </div>
+      </aside>
+
+      <main className={styles.mainContent} id="visao-geral">
+        <header className={styles.topbar}>
+          <div className={styles.breadcrumb}><span>MINHA ESCUTA</span><ChevronRight size={13} aria-hidden="true" /><strong>2026</strong></div>
+          <div className={styles.topbarRight}>
+            <span className={styles.readOnly}><LockKeyhole size={13} aria-hidden="true" />Somente leitura</span>
+            <span className={styles.topbarDate}>{dateLabel}</span>
+          </div>
+        </header>
+
+        <div className={styles.pageContent}>
+          <section className={styles.intro} aria-labelledby="page-title">
+            <div className={styles.introCopy}>
+              <div className={styles.overline}><span className={styles.overlineRule} />TEMPORADA 2026 <span className={styles.overlineDot}>·</span> {source ? "ARQUIVO V" + source.version : "ACERVO"}</div>
+              <h1 id="page-title">O ano em <em>discos.</em></h1>
+              <p>Um retrato da escuta, organizado pela nota original de cada álbum.</p>
+            </div>
+            <div className={styles.syncStatus}>
+              <span className={styles.statusRing}><span /></span>
+              <div><strong>{source ? "Prévia local" : "Fonte não carregada"}</strong><span>{source ? "Drive ainda não conectado" : "Aguardando a fonte de dados"}</span></div>
+              <CircleHelp size={17} className={styles.statusHelp} aria-hidden="true" />
+            </div>
+          </section>
+
+          <section className={styles.metrics} aria-label="Resumo do acervo">
+            <Metric icon={<Headphones size={17} aria-hidden="true" />} label="Álbuns ouvidos" value={String(albums.length)} caption="registrados na fonte" />
+            <Metric icon={<AudioLines size={17} aria-hidden="true" />} label="Nota média original" value={average.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 2 })} caption="calculada sobre as avaliações originais" />
+            <Metric icon={<Sparkles size={17} aria-hidden="true" />} label="90 ou mais" value={String(count90)} caption="notas originais nesta faixa" accent />
+            <Metric icon={<AlertTriangle size={17} aria-hidden="true" />} label="Notas divergentes" value={String(noteDifferences)} caption="nota informada diferente da original" />
+          </section>
+
+          <section className={styles.featureGrid} aria-label="Destaque e distribuição">
+            <div className={styles.featureCard}>
+              <div className={styles.featureArt} aria-hidden="true">
+                <div className={styles.vinyl}><span className={styles.vinylCenter}>OM</span></div>
+                <span className={styles.artIndex}>LADO A<br />2026</span>
+                <span className={styles.artLine} />
+              </div>
+              <div className={styles.featureInfo}>
+                <div className={styles.cardEyebrow}><span>01</span> MAIOR NOTA ORIGINAL</div>
+                {topThree[0] ? <><h2>{topThree[0].artist}</h2><p className={styles.featureAlbum}>{topThree[0].title}</p><div className={styles.featureScoreLine}><strong>{scoreLabel(topThree[0].originalScore)}</strong><span>/ 100</span><span className={styles.featureDivider} />{topThree[0].country}</div></> : <><h2>Seu acervo começa aqui</h2><p className={styles.featureAlbum}>Importe a planilha para ver seus destaques.</p></>}
+                {topThree.length > 1 && <div className={styles.runnersUp}>
+                  {topThree.slice(1).map((album, index) => <div className={styles.runner} key={recordKey(album)}><span>0{index + 2}</span><strong>{album.artist}</strong><small>{scoreLabel(album.originalScore)}</small></div>)}
+                </div>}
+              </div>
+            </div>
+
+            <div className={styles.distributionCard}>
+              <div className={styles.cardHeader}><div><div className={styles.cardEyebrow}>PANORAMA</div><h2>Notas originais</h2></div><span className={styles.chartIcon}><AudioLines size={18} aria-hidden="true" /></span></div>
+              <div className={styles.chartTotal}><strong>{originalScores.length}</strong><span>avaliações com nota original</span></div>
+              <div className={styles.histogram} aria-label="Distribuição de notas originais por faixa">
+                {histogram.map((band) => <div className={styles.histogramRow} key={band.label}>
+                  <span>{band.label}</span><div className={styles.barTrack}><span style={{ width: ((band.count / maxBand) * 100) + "%" }} /></div><strong>{band.count}</strong>
+                </div>)}
+              </div>
+              <p className={styles.chartFootnote}>A nota informada e os bônus competitivos ficam separados deste ranking.</p>
+            </div>
+          </section>
+
+          {source && (hasSummaryDifference || noteDifferences > 0 || hasBacklogDifference) && <section className={styles.sourceAlert} aria-label="Divergências encontradas na planilha">
+            <div className={styles.alertIcon}><AlertTriangle size={18} aria-hidden="true" /></div>
+            <div className={styles.alertCopy}>
+              <strong>Alguns totais da planilha precisam de conferência.</strong>
+              <p>{noteDifferences > 0 && <span>{noteDifferences} notas exibidas diferem da nota original. </span>}{sourceAverage !== null && hasSummaryDifference && <span>O resumo informa média {sourceAverage.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}; a média original calculada é {average.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}. </span>}{sourceBacklog !== null && hasBacklogDifference && <span>O resumo lista {sourceBacklog} itens no backlog, mas a aba contém {source.backlog.length}.</span>}</p>
+            </div>
+            <span className={styles.alertTag}>REVISÃO DA FONTE</span>
+          </section>}
+
+          <section className={styles.catalogSection} id="acervo" aria-labelledby="catalog-title">
+            <div className={styles.catalogHeading}>
+              <div><div className={styles.cardEyebrow}>ACERVO 2026</div><h2 id="catalog-title">Ranking anual</h2><p>Ordenado pela nota original. Empates compartilham posição.</p></div>
+              <div className={styles.albumCount} aria-live="polite"><strong>{filteredAlbums.length}</strong><span>de {albums.length}</span></div>
+            </div>
+
+            <div className={styles.catalogControls}>
+              <label className={styles.searchBox}>
+                <Search size={17} aria-hidden="true" />
+                <span className={styles.visuallyHidden}>Buscar por álbum, artista, gênero ou país</span>
+                <input value={query} onChange={(event) => { setQuery(event.target.value); setShown(15); }} placeholder="Buscar álbum, artista, gênero..." />
+              </label>
+              <div className={styles.filters} role="group" aria-label="Filtrar por nota original">
+                {filters.map((item) => <button className={filter === item.id ? styles.filterActive : styles.filterButton} type="button" key={item.id} aria-pressed={filter === item.id} onClick={() => { setFilter(item.id); setShown(15); }}>{item.label}</button>)}
+              </div>
+            </div>
+
+            <div className={styles.catalogLayout}>
+              <div className={styles.rankingList} role="list" aria-label="Álbuns ordenados pela nota original">
+                {visibleAlbums.length ? visibleAlbums.map((album) => <button className={styles.albumRow + (selected?.key === album.key ? " " + styles.albumSelected : "")} type="button" key={album.key} onClick={() => setSelectedKey(album.key)} aria-pressed={selected?.key === album.key}>
+                  <span className={styles.albumPosition}>{album.annualPosition ? displayRank(album.annualPosition) : "—"}</span>
+                  <span className={styles.albumIdentity}><strong>{album.artist}</strong><span>{album.title}</span><small>{album.country}{album.tier ? " · " + album.tier : ""}</small></span>
+                  <span className={styles.albumScore}>{scoreLabel(album.originalScore)}<small>ORIGINAL</small></span>
+                  <ChevronRight className={styles.rowChevron} size={16} aria-hidden="true" />
+                </button>) : <div className={styles.emptySearch}><Search size={20} aria-hidden="true" /><strong>Nenhum álbum encontrado</strong><span>Tente outro artista, título ou país.</span></div>}
+                {filteredAlbums.length > visibleAlbums.length && <button className={styles.loadMore} type="button" onClick={() => setShown((current) => current + 15)}>Mostrar mais álbuns <span>{filteredAlbums.length - visibleAlbums.length} restantes</span></button>}
+              </div>
+
+              <AlbumDetails album={selected} />
+            </div>
+          </section>
+
+          <section className={styles.lowerGrid}>
+            <div className={styles.backlogCard} id="backlog">
+              <div className={styles.cardHeader}><div><div className={styles.cardEyebrow}>PRÓXIMAS ESCUTAS</div><h2>Backlog</h2></div><span className={styles.backlogCount}>{source?.backlog.length ?? 0} álbuns</span></div>
+              {source?.backlog.length ? <ol className={styles.backlogList}>{source.backlog.slice(0, 5).map((item) => <li key={item.order + "-" + item.artist + "-" + item.title}><span className={styles.backlogOrder}>{String(item.order).padStart(2, "0")}</span><span><strong>{item.artist}</strong><small>{item.title}</small></span><span className={styles.priority}>{item.priority || "Sem prioridade"}</span></li>)}</ol> : <p className={styles.mutedBody}>A lista de próximas escutas aparece aqui após a leitura da fonte.</p>}
+              <p className={styles.readOnlyNote}><LockKeyhole size={13} aria-hidden="true" />O backlog é exibido como está na planilha.</p>
+            </div>
+
+            <div className={styles.pendingCard} id="top-50">
+              <div className={styles.pendingTop}><div className={styles.pendingIcon}><Trophy size={18} aria-hidden="true" /></div><span className={styles.pendingPill}>EM REVISÃO</span></div>
+              <div className={styles.cardEyebrow}>TEMPORADA 2026</div>
+              <h2>Top 50 e campeonato</h2>
+              <p>A planilha traz posições provisórias. O app só exibirá cálculos oficiais depois de resolver as regras pendentes de desempate e composição.</p>
+              <a href="#acervo" className={styles.textLink}>Voltar ao ranking anual <ArrowUpRight size={15} aria-hidden="true" /></a>
+            </div>
+          </section>
+
+          <footer className={styles.footer}>
+            <span>ORÁCULO MUSICAL <span className={styles.footerDot}>·</span> 2026</span>
+            <span>{source ? "Prévia local da versão " + source.version + " · referência " + dateLabel : "Nenhuma fonte carregada"}</span>
+            <span>Dados privados <LockKeyhole size={12} aria-hidden="true" /></span>
+          </footer>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function Metric({ icon, label, value, caption, accent = false }: { icon: React.ReactNode; label: string; value: string; caption: string; accent?: boolean }) {
+  return <article className={styles.metricCard + (accent ? " " + styles.metricAccent : "")}>
+    <div className={styles.metricTop}><span className={styles.metricIcon}>{icon}</span><span className={styles.metricLabel}>{label}</span></div>
+    <strong className={styles.metricValue}>{value}</strong>
+    <span className={styles.metricCaption}>{caption}</span>
+  </article>;
+}
+
+function AlbumDetails({ album }: { album: RankedAlbum | null }) {
+  if (!album) return <aside className={styles.detailCard}><div className={styles.detailEmpty}><Disc3 size={25} aria-hidden="true" /><strong>Escolha um álbum</strong><span>Os detalhes da avaliação aparecem aqui.</span></div></aside>;
+  const hasDifference = scoreDifference(album);
+  return <aside className={styles.detailCard} aria-label="Detalhes do álbum selecionado">
+    <div className={styles.detailHeader}><span className={styles.cardEyebrow}>DETALHE DA AVALIAÇÃO</span><span className={styles.detailPosition}>#{displayRank(album.annualPosition)}</span></div>
+    <div className={styles.detailArtist}>{album.artist}</div>
+    <h3>{album.title}</h3>
+    <div className={styles.detailMeta}>{album.genre || "Gênero não informado"}<span>·</span>{album.country || "País não informado"}</div>
+    <div className={styles.detailScore}>
+      <div><span>NOTA ORIGINAL</span><strong>{scoreLabel(album.originalScore)}<small>/100</small></strong></div>
+      {hasDifference && <div className={styles.reportedScore}><span>NOTA DA PLANILHA</span><strong>{scoreLabel(album.reportedScore)}</strong></div>}
+    </div>
+    {hasDifference && <div className={styles.detailNotice}><ArrowDownRight size={15} aria-hidden="true" /><span>A nota informada na planilha difere da avaliação original. O ranking usa a original.</span></div>}
+    <dl className={styles.detailFacts}>
+      <div><dt>Faixa informada</dt><dd>{album.tier || "Não informada"}</dd></div>
+      <div><dt>Posição na planilha</dt><dd>{album.sourceRank ? "#" + album.sourceRank : "Não informada"}</dd></div>
+      {album.playoffSeed !== null && <div><dt>Seed registrado</dt><dd>{album.playoffSeed}</dd></div>}
+      {album.source && <div><dt>Fonte registrada</dt><dd className={styles.sourceText}>{album.source}</dd></div>}
+    </dl>
+    {album.repescagemNote && <div className={styles.observation}><span>OBSERVAÇÃO NA FONTE</span><p>{album.repescagemNote}</p></div>}
+    <p className={styles.detailDisclaimer}><LockKeyhole size={13} aria-hidden="true" />Consulta somente leitura. Nenhuma nota pode ser alterada aqui.</p>
+  </aside>;
+}

@@ -1,0 +1,36 @@
+# Segredos e configuração pessoal
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
+service-account*.json
+
+# Dados pessoais e evidências locais
+.private/
+backups/
+downloads/
+*.xlsx
+*.xls
+*.csv
+*.tsv
+*.dump
+*.sql.gz
+
+# Build, dependências e ferramentas
+node_modules/
+.next/
+out/
+dist/
+coverage/
+test-results/
+playwright-report/
+.vercel/
+*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db
+
+# Futuras fixtures devem ser explicitamente fictícias
+!tests/fixtures/synthetic/*.csv
