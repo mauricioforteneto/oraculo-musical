@@ -2,7 +2,7 @@
 
 Aplicação web pessoal, confortável no celular, para consultar avaliações de álbuns, ranking anual e, em etapas posteriores, Top 50, campeonato, backlog, reescutas e histórico do Last.fm.
 
-**Estado: acesso e sincronização reais validados localmente.** Login Google via Supabase, banco hospedado, leitura privada do Drive, publicação transacional e repetição idempotente foram exercitados com a fonte pessoal. Backup/restauração isolada, negação com uma segunda conta, configuração hospedada e critérios de publicação ainda pendem. Dados pessoais permanecem fora do Git.
+**Estado: acesso, sincronização e restauração validados localmente.** Login Google via Supabase, banco hospedado, leitura privada do Drive, publicação transacional e repetição idempotente foram exercitados com a fonte pessoal. Backup criptografado e restauração isolada conferiram; negação com uma segunda conta, configuração hospedada e critérios de publicação ainda pendem. Dados pessoais permanecem fora do Git.
 
 ## Fluxo aprovado
 
@@ -35,6 +35,6 @@ Requer Node.js 24 (versão fixada em `.nvmrc`). Use `npm ci` e `npm run dev`; no
 
 Verificações: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run test:e2e` e `npm run build`. A integração local usa PostgreSQL WASM isolado (PGlite); CI está configurada para PostgreSQL 17 descartável. Os testes E2E atuais verificam HTTP, sem navegador nem credenciais de produção.
 
-Próxima entrega: ensaiar backup/restauração isolada, acesso negado a outra conta e uma avaliação fictícia nova em fonte de teste privada. Regras competitivas pendentes não foram decididas. Não habilitar cobranças ou planos pagos.
+Próxima entrega: conferir acesso negado a outra conta e uma avaliação fictícia nova em fonte de teste privada. A cópia externa e a rotação do backup ainda pendem. Regras competitivas pendentes não foram decididas. Não habilitar cobranças ou planos pagos.
 
 Dados reais, exportações, dumps e credenciais ficam fora do Git. Evidências locais de descoberta, se presentes, ficam em `.private/`, ignorada pelo Git. Acesso pelo conector usado na descoberta não fornece credenciais para a aplicação hospedada.

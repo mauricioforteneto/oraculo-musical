@@ -2,7 +2,11 @@
 
 Status inicial em 27/09/2026: documentação e base funcional de acesso implementadas após instrução de avançar. Autenticação real, serviços hospedados e importação ainda não validados.
 
-Validação local em 28/09/2026: login Google do proprietário, conexões SQL segregadas, leitura da pasta privada no Drive e publicação da fonte pessoal em PostgreSQL concluídos. Uma segunda sincronização retornou `unchanged` sem duplicar dados. A URL administrativa foi separada de `.env.local` e movida para `.env.migration.local`, ignorado pelo Git. Ainda faltam ensaio de backup/restauração, prova de bloqueio de outra conta e fonte de teste privada com uma avaliação fictícia nova.
+Validação local em 28/09/2026: login Google do proprietário, conexões SQL segregadas, leitura da pasta privada no Drive e publicação da fonte pessoal em PostgreSQL concluídos. Uma segunda sincronização retornou `unchanged` sem duplicar dados. A URL administrativa foi separada de `.env.local` e movida para `.env.migration.local`, ignorado pelo Git. Ainda faltam prova de bloqueio de outra conta e fonte de teste privada com uma avaliação fictícia nova.
+
+Recuperação em 28/09/2026: `pg_dump` dos esquemas `oraculo` e `oraculo_migrations` gerou uma cópia GPG criptografada em `.private/backups/` usando TLS verificado. A restauração em PostgreSQL 17 local e isolado foi concluída; contagens e conteúdo das 12 tabelas conferiram com a origem após normalização de horários e JSON. O banco temporário foi removido. A cópia ainda precisa ser guardada fora deste computador, e a senha deve ter guarda separada. Procedimento em [backup.md](backup.md).
+
+Fonte de teste em 28/09/2026: duas planilhas inteiramente fictícias, v1 com um álbum e v2 com dois, foram preparadas em `.private/test-source/`. O parser as leu como publicáveis, sem erros ou avisos. O ensaio Drive → banco → ranking continua pendente até haver uma pasta privada de teste e uma fonte cadastrada separada da pessoal.
 
 Auditoria local em 28/09/2026: os papéis `anon` e `authenticated` não têm acesso ao esquema `oraculo`; `oraculo_web` não escreve e `oraculo_importer` não altera nem exclui avaliações originais. Uma busca por valores completos de credenciais nos arquivos versionados e nos bundles de navegador existentes não encontrou correspondências. Isso não substitui a revisão da configuração hospedada nem um ensaio de acesso com outra conta.
 
@@ -35,6 +39,7 @@ Implementação local em 28/09/2026: criada a migração 0002 para snapshots por
 - [ ] Conta pessoal pré-criada; cadastro público fechado; autorização em cada entrada HTTP e cache privado.
 - [x] Credenciais SQL de leitura, sincronização e migração segregadas no ambiente local; credenciais Drive exclusivas do servidor.
 - [ ] Conferir segregação no ambiente hospedado e ausência de segredos no bundle e nos logs.
+- [x] Criar backup criptografado local e ensaiar restauração em banco isolado; cópia externa e rotação semanal pendentes.
 
 Código de login/logout e autorização de dono implementado, com estado fechado sem configuração e proteção de origem nos POSTs. O login real do proprietário e a leitura/importação por papéis SQL distintos foram observados; ainda falta conferir cadastro público fechado e acesso negado a outra conta. CI criada, ainda não executada no GitHub nesta sessão.
 
@@ -50,7 +55,7 @@ Aceite: visitante sem sessão e outra conta não leem dados nem acionam sync; pa
 - [x] Ensaio real com credenciais da aplicação, além de mocks: primeira publicação e repetição `unchanged`.
 - [ ] Ensaio controlado com avaliação fictícia nova em fonte de teste privada.
 
-Progresso: leitor Drive com paginação, seleção de versão numérica, revalidação e hash; parser XLSX; persistência transacional idempotente com histórico de snapshots, preservação de ausentes e última publicação válida; consulta DB para ranking; endpoint POST com autorização do dono e validação de origem. A migração 0002 foi aplicada e a fonte pessoal foi publicada com OAuth, Drive e PostgreSQL reais. A repetição retornou `unchanged`; resta conferir backup/restauração, a fonte fictícia de teste e os cenários de falha ainda não exercitados com serviços reais.
+Progresso: leitor Drive com paginação, seleção de versão numérica, revalidação e hash; parser XLSX; persistência transacional idempotente com histórico de snapshots, preservação de ausentes e última publicação válida; consulta DB para ranking; endpoint POST com autorização do dono e validação de origem. A migração 0002 foi aplicada e a fonte pessoal foi publicada com OAuth, Drive e PostgreSQL reais. A repetição retornou `unchanged`; backup/restauração isolada conferiu, e restam a fonte fictícia de teste e os cenários de falha ainda não exercitados com serviços reais.
 
 Aceite central: nova avaliação fictícia em fonte de teste privada → botão → um registro no banco → posição correta. Em seguida, teste controlado com fonte pessoal sem escrita nela. Nenhuma edição de avaliação ou upload arbitrário pelo app.
 

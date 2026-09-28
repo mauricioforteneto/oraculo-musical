@@ -4,7 +4,7 @@
 
 Next.js App Router, TypeScript, tela de entrada em português, login Google via Supabase Auth com PKCE, callback e logout, validação de proprietário no servidor, cookies HttpOnly/SameSite e POSTs com verificação de origem. Sem autenticação configurada, o desenvolvimento no loopback pode exibir somente a prévia privada local se `.private/source-preview.json` existir; fora desse caso o acesso fica fechado. Não há cadastro público no código; é necessário desligá-lo também no Supabase.
 
-Parser XLSX, serviço de publicação transacional, endpoint POST protegido e consulta do ranking estão implementados. O botão só é habilitado com OAuth, banco de leitura/escrita e Drive configurados. As migrações 0001 e 0002 foram aplicadas no projeto Supabase configurado, e login, Drive e primeira publicação foram exercitados localmente. Backup/restauração isolada e validação com outra conta ainda pendem; não há provisionamento automático.
+Parser XLSX, serviço de publicação transacional, endpoint POST protegido e consulta do ranking estão implementados. O botão só é habilitado com OAuth, banco de leitura/escrita e Drive configurados. As migrações 0001 e 0002 foram aplicadas no projeto Supabase configurado, e login, Drive e primeira publicação foram exercitados localmente. Backup/restauração isolada conferiu; validação com outra conta ainda pende. Não há provisionamento automático.
 
 ## Executar localmente
 
@@ -59,7 +59,7 @@ Na mesma etapa de configuração do Supabase:
 5. Preparar DATABASE_READ_URL com oraculo_web e DATABASE_SYNC_URL com oraculo_importer. No pooler compartilhado, preservar host/porta do painel e usar o usuário customizado com sufixo do projeto conforme configuração do pooler. Não copiar a credencial postgres para essas variáveis. As consultas usam a primeira URL; a sincronização e a migração de publicação usam a segunda. Mantenha a credencial administrativa fora do runtime.
 6. Não expor o schema `oraculo` na Data API nem conceder privilégios a anon/authenticated. Essas tabelas são acessadas apenas pelo backend com roles SQL próprias. Não ativar a Data API para contornar erro de permissão SQL.
 7. Conferir no banco: role de leitura consegue SELECT, mas UPDATE/DELETE de originais são negados; role de sincronização também não altera originais. A migração deve continuar sendo operada somente por administrador.
-8. Guardar a URL administrativa apenas no ambiente de manutenção. Definir destino privado para backup conforme arquitetura antes de carregar dados pessoais. Não criar bucket, assinatura paga ou cobrança automática para concluir este setup.
+8. Guardar a URL administrativa apenas no ambiente de manutenção. Preparar o backup criptografado e ensaiar a restauração conforme [backup.md](backup.md). O destino inicial é local e privado; ainda será necessária uma cópia fora deste computador. Não criar bucket, assinatura paga ou cobrança automática para concluir este setup.
 
 Referência: [conexões PostgreSQL no Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres). Login Google, senha de banco e credencial Drive são três configurações independentes.
 
@@ -96,4 +96,4 @@ E2E atual faz build e inicia o servidor de produção isolado na porta 3100; usa
 
 ## Próximo passo
 
-Ensaiar backup/restauração em banco isolado, conferir acesso negado a outra conta e exercitar uma avaliação fictícia nova em fonte de teste privada. A sincronização com serviços reais já publicou a fonte pessoal e confirmou idempotência; isso não valida ainda os cenários alternativos nem a recuperação de dados. Reiniciar o servidor web após a separação da URL administrativa para que a credencial antiga deixe o processo.
+Conferir acesso negado a outra conta e exercitar uma avaliação fictícia nova em fonte de teste privada. A sincronização com serviços reais já publicou a fonte pessoal e confirmou idempotência; a restauração isolada também conferiu, mas isso não valida os cenários alternativos. Reiniciar o servidor web após a separação da URL administrativa para que a credencial antiga deixe o processo.
