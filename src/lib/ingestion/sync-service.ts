@@ -45,6 +45,16 @@ export class SyncServiceError extends Error {
   }
 }
 
+function logSyncFailure(stage: string, error: unknown) {
+  const detail = error && typeof error === "object" ? error as { name?: unknown; code?: unknown; constraint?: unknown } : {};
+  console.error("Sync failure", {
+    stage,
+    name: typeof detail.name === "string" ? detail.name : "UnknownError",
+    code: typeof detail.code === "string" ? detail.code : undefined,
+    constraint: typeof detail.constraint === "string" ? detail.constraint : undefined,
+  });
+}
+
 function safeSeason(): number {
   const value = process.env.SOURCE_SEASON ?? "2026";
   if (!/^\d{4}$/.test(value) || Number(value) < 2000) throw new SyncServiceError("SOURCE_NOT_CONFIGURED");
@@ -103,6 +113,7 @@ async function acquireLeaseAndStartRun(pool: Pool, sourceId: string, userId: str
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
     if (error instanceof SyncServiceError) throw error;
+    logSyncFailure("start_run", error);
     throw new SyncServiceError("SYNC_STORAGE_UNAVAILABLE");
   } finally {
     client.release();
@@ -153,13 +164,14 @@ async function finishFailedRun(pool: Pool, sourceId: string, runId: string, toke
     }
     await client.query(
       `UPDATE oraculo.sync_runs SET status = 'failed', finished_at = now(), error_code = $2,
-        counts = jsonb_build_object('errors', $3, 'warnings', $4) WHERE id = $1`,
+        counts = jsonb_build_object('errors', $3::integer, 'warnings', $4::integer) WHERE id = $1`,
       [runId, code, issues.filter((issue) => issue.severity === "error").length || 1, issues.filter((issue) => issue.severity === "warning").length],
     );
     await client.query("DELETE FROM oraculo.sync_leases WHERE source_id = $1 AND token = $2", [sourceId, token]);
     await client.query("COMMIT");
-  } catch {
+  } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
+    logSyncFailure("finish_failed_run", error);
     throw new SyncServiceError("SYNC_STORAGE_UNAVAILABLE");
   } finally {
     client.release();
@@ -215,7 +227,6 @@ async function publish(
     );
     if (!lease.rowCount) throw new SyncServiceError("SYNC_LEASE_LOST");
 
-    await client.query("SELECT id FROM oraculo.sources WHERE id = $1 FOR UPDATE", [source.id]);
     const existingVersionResult = await client.query<ExistingVersion>(
       "SELECT id, version::text, sha256 FROM oraculo.source_versions WHERE source_id = $1 AND version = $2::bigint",
       [source.id, candidate.sourceVersion],
@@ -370,6 +381,7 @@ async function publish(
   } catch (error) {
     await client.query("ROLLBACK").catch(() => {});
     if (error instanceof SyncServiceError) throw error;
+    logSyncFailure("publish", error);
     throw new SyncServiceError("SYNC_PUBLICATION_FAILED");
   } finally {
     client.release();
@@ -402,6 +414,7 @@ export async function syncDriveSource(userId: string) {
       : error instanceof SourceError || error instanceof WorkbookParseError
         ? error.code
         : "SYNC_FAILED";
+    logSyncFailure("sync", error);
     if (error instanceof SyncServiceError && error.issues.length) issues = error.issues;
     if (code === "SYNC_PUBLICATION_FAILED") {
       try {

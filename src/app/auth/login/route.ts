@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { authClient, authConfigured } from "@/lib/auth";
-import { sameOrigin } from "@/lib/access";
+import { sameOriginFormRequest } from "@/lib/access";
 
 export async function POST(request: Request) {
   const origin = process.env.APP_ORIGIN;
-  if (!sameOrigin(request.headers.get("origin"), origin)) return new Response("Origem não permitida", { status: 403 });
+  if (!sameOriginFormRequest(request, origin)) return new Response("Origem não permitida", { status: 403 });
   if (!authConfigured()) return new Response("Acesso não configurado", { status: 503 });
   const client = await authClient();
   const { data, error } = await client.auth.signInWithOAuth({
