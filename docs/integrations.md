@@ -28,7 +28,7 @@ Implementação atual: `src/lib/ingestion/drive.ts` cobre listagem paginada limi
 
 Limites técnicos propostos: 10 MB comprimidos, 100 MB descompactados, 10.000 registros de avaliação; exceder limites é erro acionável. Parser não executa macros, fórmulas, links externos ou instruções contidas em células. Conferir todas as abas e layout esperado; cabeçalho desconhecido obrigatório bloqueia para revisão do adaptador. Não presumir que colunas sempre estão nas mesmas posições.
 
-Fórmulas da fonte são evidência: ler expressão e valor armazenado, detectar erro/ausência de cache; calcular o domínio com código convencional. Campo factual obrigatório cujo único valor depende de fórmula sem cache válido bloqueia o lote. Divergência em métrica derivada produz alerta. A auditoria de fórmulas reais permanece bloqueada por HTTP 403 nesta descoberta.
+Fórmulas da fonte são evidência: ler expressão e valor armazenado, detectar erro/ausência de cache; calcular o domínio com código convencional. Campo factual obrigatório cujo único valor depende de fórmula sem cache válido bloqueia o lote. Divergência em métrica derivada produz alerta. O leitor da conta de serviço acessou a fonte real; a auditoria abrangente das fórmulas ainda está pendente.
 
 Tratar 401/403 como problema de credencial/permissão, 404 como fonte ausente e 429/5xx com até três tentativas e espera exponencial com jitter, respeitando Retry-After e orçamento total da requisição. Não repetir indefinidamente. Evitar armazenamento de bytes em logs, Git ou diretórios públicos.
 

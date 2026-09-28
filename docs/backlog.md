@@ -2,6 +2,10 @@
 
 Status inicial em 27/09/2026: documentação e base funcional de acesso implementadas após instrução de avançar. Autenticação real, serviços hospedados e importação ainda não validados.
 
+Validação local em 28/09/2026: login Google do proprietário, conexões SQL segregadas, leitura da pasta privada no Drive e publicação da fonte pessoal em PostgreSQL concluídos. Uma segunda sincronização retornou `unchanged` sem duplicar dados. A URL administrativa foi separada de `.env.local` e movida para `.env.migration.local`, ignorado pelo Git. Ainda faltam ensaio de backup/restauração, prova de bloqueio de outra conta e fonte de teste privada com uma avaliação fictícia nova.
+
+Auditoria local em 28/09/2026: os papéis `anon` e `authenticated` não têm acesso ao esquema `oraculo`; `oraculo_web` não escreve e `oraculo_importer` não altera nem exclui avaliações originais. Uma busca por valores completos de credenciais nos arquivos versionados e nos bundles de navegador existentes não encontrou correspondências. Isso não substitui a revisão da configuração hospedada nem um ensaio de acesso com outra conta.
+
 Revisão do MVP em 28/09/2026: desempates posicionais do ranking anual, chave conservadora de identidade e tratamento de totais com pilares incompletos registrados em [decisions.md](decisions.md), [spec.md](spec.md) e [data-model.md](data-model.md). P01–P14 permanecem pendentes porque afetam regras competitivas/Top 50, fora do MVP de ranking anual.
 
 Atualização em 27/09/2026: prévia do dashboard liberada para consulta local em `http://127.0.0.1:3000`, sem login apenas em desenvolvimento e enquanto a autenticação não estiver configurada. O servidor fica vinculado ao loopback; produção segue protegida. Build, lint e verificação de tipos passaram, e a rota principal respondeu HTTP 200 com a prévia de 118 álbuns. A fonte local permanece em `.private/`, fora do Git.
@@ -29,9 +33,10 @@ Implementação local em 28/09/2026: criada a migração 0002 para snapshots por
 - [x] Criar scripts lint/typecheck/test/test:integration/test:e2e/build/db:migrate e CI com `npm ci`; PostgreSQL efêmero na CI e PGlite isolado localmente.
 - [x] Fixtures exclusivamente fictícias em `tests/fixtures/synthetic`; nenhuma exportação pessoal no Git. Fixture XLSX fica para a implementação do parser.
 - [ ] Conta pessoal pré-criada; cadastro público fechado; autorização em cada entrada HTTP e cache privado.
-- [ ] Credenciais SQL de leitura, sincronização e migração segregadas; credenciais Drive exclusivas do servidor.
+- [x] Credenciais SQL de leitura, sincronização e migração segregadas no ambiente local; credenciais Drive exclusivas do servidor.
+- [ ] Conferir segregação no ambiente hospedado e ausência de segredos no bundle e nos logs.
 
-Código de login/logout e autorização de dono implementado, com estado fechado sem configuração e proteção de origem nos POSTs. Testes de permissões SQL implementados; ainda falta ensaio com Supabase real e usuário proprietário/usuário não autorizado. CI criada, ainda não executada no GitHub nesta sessão.
+Código de login/logout e autorização de dono implementado, com estado fechado sem configuração e proteção de origem nos POSTs. O login real do proprietário e a leitura/importação por papéis SQL distintos foram observados; ainda falta conferir cadastro público fechado e acesso negado a outra conta. CI criada, ainda não executada no GitHub nesta sessão.
 
 Atualização: login agora usa Google OAuth/PKCE, sem formulário de senha; callback bloqueia contas diferentes e redirecionamentos externos. Passo a passo do login e banco está preparado em [setup.md](setup.md) para a etapa de configuração manual, conforme solicitado. Não é necessário fornecer credenciais na conversa para continuar o código testável localmente.
 
@@ -42,9 +47,10 @@ Aceite: visitante sem sessão e outra conta não leem dados nem acionam sync; pa
 - [x] Listagem paginada, escolha de maior versão numérica, download privado, validação e auditoria.
 - [x] Persistência transacional, idempotência, histórico, relatório, preservação de ausentes e último estado válido.
 - [x] Tela de ranking, busca, detalhes, sincronização e versões/horários/pendências.
-- [ ] Ensaio real com credenciais da aplicação, além de mocks.
+- [x] Ensaio real com credenciais da aplicação, além de mocks: primeira publicação e repetição `unchanged`.
+- [ ] Ensaio controlado com avaliação fictícia nova em fonte de teste privada.
 
-Progresso parcial: leitor Drive isolado com paginação, seleção de versão numérica, ambiguidades, limites, revalidação e hash; parser XLSX; persistência transacional idempotente com histórico de snapshots, preservação de ausentes e última publicação válida; consulta DB para ranking; endpoint POST com autorização do dono e validação de origem. A cópia local v80 foi auditada e a interface privada exibe ranking pela nota original, busca, filtros, detalhes, backlog e divergências da fonte. Ainda pendem aplicação e revisão da migração 0002, configuração e ensaio de Drive/OAuth/PostgreSQL reais, validação de backup e relatório completo de versões/tentativas.
+Progresso: leitor Drive com paginação, seleção de versão numérica, revalidação e hash; parser XLSX; persistência transacional idempotente com histórico de snapshots, preservação de ausentes e última publicação válida; consulta DB para ranking; endpoint POST com autorização do dono e validação de origem. A migração 0002 foi aplicada e a fonte pessoal foi publicada com OAuth, Drive e PostgreSQL reais. A repetição retornou `unchanged`; resta conferir backup/restauração, a fonte fictícia de teste e os cenários de falha ainda não exercitados com serviços reais.
 
 Aceite central: nova avaliação fictícia em fonte de teste privada → botão → um registro no banco → posição correta. Em seguida, teste controlado com fonte pessoal sem escrita nela. Nenhuma edição de avaliação ou upload arbitrário pelo app.
 

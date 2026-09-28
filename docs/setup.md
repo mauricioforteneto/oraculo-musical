@@ -4,13 +4,13 @@
 
 Next.js App Router, TypeScript, tela de entrada em português, login Google via Supabase Auth com PKCE, callback e logout, validação de proprietário no servidor, cookies HttpOnly/SameSite e POSTs com verificação de origem. Sem autenticação configurada, o desenvolvimento no loopback pode exibir somente a prévia privada local se `.private/source-preview.json` existir; fora desse caso o acesso fica fechado. Não há cadastro público no código; é necessário desligá-lo também no Supabase.
 
-Parser XLSX, serviço de publicação transacional, endpoint POST protegido e consulta do ranking estão implementados. O botão só é habilitado com OAuth, banco de leitura/escrita e Drive configurados. A migração 0002 ainda precisa ser aplicada e revisada em ambiente isolado; nenhuma integração real foi validada e não há provisionamento automático.
+Parser XLSX, serviço de publicação transacional, endpoint POST protegido e consulta do ranking estão implementados. O botão só é habilitado com OAuth, banco de leitura/escrita e Drive configurados. As migrações 0001 e 0002 foram aplicadas no projeto Supabase configurado, e login, Drive e primeira publicação foram exercitados localmente. Backup/restauração isolada e validação com outra conta ainda pendem; não há provisionamento automático.
 
 ## Executar localmente
 
 1. Usar Node.js 24.15.0 (`.nvmrc`) e executar `npm ci` no mesmo ambiente que será usado para iniciar a aplicação. No PowerShell, usar `npm.cmd ci`; no WSL, `npm ci`.
-2. Copiar `.env.example` para `.env.local`, se for configurar serviços. Não preencher segredos em arquivos versionáveis ou na conversa.
-3. No PowerShell, executar `npm.cmd run dev`; no WSL, `npm run dev`. Abrir http://127.0.0.1:3000. A política padrão do PowerShell pode bloquear `npm.ps1` quando se digita `npm`; no Prompt de Comando, `npm run dev` funciona normalmente.
+2. Copiar `.env.example` para `.env.local`, se for configurar serviços. Não preencher segredos em arquivos versionáveis ou na conversa. A URL administrativa do banco fica em `.env.migration.local`, separada da aplicação.
+3. No PowerShell, executar `npm.cmd run dev`; no WSL, `npm run dev`. Abrir http://localhost:3000, igual ao `APP_ORIGIN`. A política padrão do PowerShell pode bloquear `npm.ps1` quando se digita `npm`; no Prompt de Comando, `npm run dev` funciona normalmente.
 
 Neste computador, o checkout de trabalho fica no filesystem Linux do WSL, em `~/projects/oraculo-musical`. Não execute a aplicação a partir do checkout em `/mnt/c`: binários nativos do `node_modules` dependem do sistema operacional. Abra o projeto pelo VS Code com `code .` executado dentro da pasta WSL ou navegue pelo caminho `\\wsl.localhost\Ubuntu\home\mauricio\projects\oraculo-musical`.
 
@@ -20,9 +20,9 @@ Não compartilhe `node_modules` entre Windows e WSL: dependências nativas como 
 
 Sem credenciais a aplicação inicia e mostra somente a preparação de acesso. Nenhuma chave de serviço é necessária para build. `APP_ORIGIN` deve ser a origem exata usada no navegador; em produção usar HTTPS. Não usar Host/Forwarded recebidos para decidir a origem confiável.
 
-## Passo a passo para a etapa de configuração: Google + Supabase
+## Configuração: Google + Supabase
 
-Este roteiro será executado pelo usuário na etapa de conexão real. Não é pré-requisito para desenvolver/testar módulos locais. Não enviar senhas ou chaves na conversa. Nenhum desses serviços foi configurado automaticamente.
+Este roteiro registra a configuração manual usada no ensaio local. Não enviar senhas ou chaves na conversa. Nenhum desses serviços foi configurado automaticamente.
 
 1. No Supabase, criar projeto na organização Free, sem trial/upgrade pago. Guardar a senha do banco em gerenciador de senhas. Aguardar o projeto ficar disponível.
 2. Em Authentication → Providers → Google, localizar a URL de callback do projeto; será semelhante a `https://<ref>.supabase.co/auth/v1/callback`. Copiar exatamente o valor do painel.
@@ -33,9 +33,9 @@ Este roteiro será executado pelo usuário na etapa de conexão real. Não é pr
 7. Em Authentication → Users, pré-criar um usuário com exatamente o e-mail da conta Google que usará o app, confirmando esse e-mail. Se o painel exigir senha administrativa para criar o usuário, gerar uma aleatória; ela não será usada pelo app. Copiar o UUID para OWNER_USER_ID. Não usar apenas o e-mail como autorização.
 8. Desligar Allow new users to sign up e login anônimo. Desativar o provider de e-mail/senha para que o acesso de usuário seja pelo Google. Supabase documenta vinculação automática de identidades com mesmo e-mail verificado; conferir que o primeiro login Google reutiliza o UUID criado. Se houver erro de vinculação, corrigir identidade/e-mail no painel, sem liberar cadastro geral como contorno.
 9. Em `.env.local`, preencher APP_ORIGIN, SUPABASE_URL (Project URL), SUPABASE_PUBLISHABLE_KEY (chave publicável) e OWNER_USER_ID. Não usar service_role no lugar da chave publicável. Reiniciar `npm run dev`.
-10. Abrir o app, usar “Entrar com Google”, conferir que sua conta entra e sair. Testar cancelamento, callback expirado e bloqueio de outra conta. A área privada está em preparação; não haverá ranking até implementar a importação.
+10. Abrir o app, usar “Entrar com Google”, conferir que sua conta entra e sair. Após a sincronização, conferir o ranking. Cancelamento, callback expirado e bloqueio de outra conta ainda precisam de verificação controlada.
 
-Fontes: [Google no Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google), [vinculação de identidade](https://supabase.com/docs/guides/auth/auth-identity-linking). Nomes de menus podem mudar. Roteiro baseado na documentação, ainda não ensaiado na conta real.
+Fontes: [Google no Supabase](https://supabase.com/docs/guides/auth/social-login/auth-google), [vinculação de identidade](https://supabase.com/docs/guides/auth/auth-identity-linking). Nomes de menus podem mudar. O login do proprietário foi exercitado na conta real; os cenários alternativos acima ainda não.
 
 Páginas verificam `getUser()` e UUID permitido, independentemente do proxy. Conta diferente é desconectada no callback. Proteção em duas etapas da conta Google pode permanecer habilitada; isso não equivale a implementar MFA/AAL2 próprio do Supabase. Rate limiting do provedor deve permanecer ativo.
 
@@ -44,7 +44,7 @@ Páginas verificam `getUser()` e UUID permitido, independentemente do proxy. Con
 Na mesma etapa de configuração do Supabase:
 
 1. Abrir Connect no painel. Para migração, usar conexão direta ou Session pooler caso a rede local não suporte IPv6; não usar Transaction pooler para o runner, que mantém lock de sessão.
-2. Copiar a URI administrativa para DATABASE_MIGRATION_URL no ambiente local de manutenção, substituindo a senha e codificando caracteres especiais na URI. Manter verificação TLS; nunca usar `rejectUnauthorized=false`. Se necessário, configurar o certificado CA conforme as instruções de conexão do painel.
+2. Criar `.env.migration.local` apenas no ambiente local de manutenção, com uma linha `DATABASE_MIGRATION_URL=<URI_ADMINISTRATIVA>`. Substituir a senha e codificar caracteres especiais na URI. Não colocar essa variável em `.env.local`: o Next carrega esse arquivo no servidor web. Manter verificação TLS; nunca usar `rejectUnauthorized=false`. Se necessário, configurar o certificado CA conforme as instruções de conexão do painel.
 3. Em banco novo e dedicado ao projeto, executar `npm run db:migrate`. Em banco com dados, fazer backup/restauração de ensaio antes. Executar novamente deve indicar “Já aplicada”, sem recriar tabelas.
 4. No SQL Editor administrativo, criar dois usuários LOGIN com senhas distintas e apenas os grupos já criados pela migração. Exemplo abaixo contém placeholders; substituir em ambiente privado, nunca salvar senhas no Git:
 
@@ -63,7 +63,7 @@ Na mesma etapa de configuração do Supabase:
 
 Referência: [conexões PostgreSQL no Supabase](https://supabase.com/docs/guides/database/connecting-to-postgres). Login Google, senha de banco e credencial Drive são três configurações independentes.
 
-`DATABASE_MIGRATION_URL` é credencial administrativa, usada somente no ambiente de manutenção. Configurar TLS verificado para banco remoto. Executar `npm run db:migrate`: runner usa lock, transação por arquivo e checksum para impedir edição de migração já aplicada.
+`DATABASE_MIGRATION_URL` é credencial administrativa, usada somente pelo comando de manutenção que lê `.env.migration.local`. Configurar TLS verificado para banco remoto. Executar `npm run db:migrate`: runner usa lock, transação por arquivo e checksum para impedir edição de migração já aplicada. Reiniciar o servidor web após retirar uma credencial administrativa antiga de `.env.local`.
 
 A migração cria esquema privado `oraculo`, fora do esquema público; não adicioná-lo aos schemas expostos na Data API. Cria papéis de grupo `oraculo_reader` e `oraculo_sync` sem login. O administrador deve criar identidades LOGIN com senhas aleatórias fora do Git, conceder a cada uma apenas seu grupo correspondente e configurar as URLs distintas. Não usar superusuário, proprietário das tabelas ou service_role no runtime. A credencial administrativa não deve estar na hospedagem web.
 
@@ -96,4 +96,4 @@ E2E atual faz build e inicia o servidor de produção isolado na porta 3100; usa
 
 ## Próximo passo
 
-Aplicar a migração 0002 em ambiente isolado e conferir permissões; em seguida, configurar credenciais privadas, ensaiar sincronização e ranking com a conta real, validar backup/restauração e completar auditoria de datas/revisões. O código de parser, publicação transacional e consulta já existe, mas não foi validado com serviços reais. Não publicar esta base como MVP completo nem declarar integração externa validada.
+Ensaiar backup/restauração em banco isolado, conferir acesso negado a outra conta e exercitar uma avaliação fictícia nova em fonte de teste privada. A sincronização com serviços reais já publicou a fonte pessoal e confirmou idempotência; isso não valida ainda os cenários alternativos nem a recuperação de dados. Reiniciar o servidor web após a separação da URL administrativa para que a credencial antiga deixe o processo.
