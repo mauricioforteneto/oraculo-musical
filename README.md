@@ -2,7 +2,7 @@
 
 Aplicação web pessoal, confortável no celular, para consultar avaliações de álbuns, ranking anual e, em etapas posteriores, Top 50, campeonato, backlog, reescutas e histórico do Last.fm.
 
-**Estado: base funcional de acesso e segurança implementada.** Há Next.js, login Google via Supabase, migração inicial, leitor de versões do Drive, testes e CI. A sincronização completa e o ranking ainda não estão implementados. Nenhum banco hospedado foi provisionado e nenhum dado pessoal foi importado.
+**Estado: base de acesso, parser XLSX, publicação transacional e consulta do ranking implementados; integrações reais pendentes.** Há login Google via Supabase, duas migrações, leitor Drive read-only, importador, endpoint de sincronização protegido e consulta privada ao ranking. OAuth, banco hospedado, Drive, importação e backup ainda não foram validados com credenciais reais; nenhum dado pessoal foi publicado no banco.
 
 ## Fluxo aprovado
 
@@ -31,10 +31,10 @@ Excel versionado em pasta privada do Google Drive → sincronização solicitada
 
 ## Preparação local
 
-Requer Node.js 24 (versão fixada em `.nvmrc`). Use `npm ci` e `npm run dev`; no PowerShell com scripts desabilitados, use `npm.cmd`. Abra http://localhost:3000. Sem credenciais, aparece o estado “Seu espaço está em preparação”, sem dados fictícios disfarçados de acervo.
+Requer Node.js 24 (versão fixada em `.nvmrc`). Use `npm ci` e `npm run dev`; no PowerShell com scripts desabilitados, use `npm.cmd`. Abra http://127.0.0.1:3000. Em desenvolvimento no loopback, `.private/source-preview.json` permite consultar a prévia local privada; fora desse caso, sem credenciais o acesso permanece fechado. Nenhum dado fictício é apresentado como acervo pessoal.
 
 Verificações: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run test:e2e` e `npm run build`. A integração local usa PostgreSQL WASM isolado (PGlite); CI está configurada para PostgreSQL 17 descartável. Os testes E2E atuais verificam HTTP, sem navegador nem credenciais de produção.
 
-Próxima entrega: configurar e validar os serviços privados, concluir a auditoria do Excel e implementar fonte → banco → ranking anual. Regras competitivas pendentes não foram decididas. Não habilitar cobranças ou planos pagos.
+Próxima entrega: configurar e validar os serviços privados, ensaiar a publicação fonte → banco → ranking anual e confirmar recuperação por backup. Regras competitivas pendentes não foram decididas. Não habilitar cobranças ou planos pagos.
 
 Dados reais, exportações, dumps e credenciais ficam fora do Git. Evidências locais de descoberta, se presentes, ficam em `.private/`, ignorada pelo Git. Acesso pelo conector usado na descoberta não fornece credenciais para a aplicação hospedada.

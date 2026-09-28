@@ -29,6 +29,7 @@ export type ParsedSourceWorkbook = {
     backlog: number;
     rejectedRows: number;
     reportedOriginalDifferences: number;
+    incompleteEvaluations: number;
     errors: number;
     warnings: number;
   };
@@ -49,6 +50,10 @@ const ALBUM_HEADERS: HeaderConfig = {
     country: ["país"],
     source: ["fonte"],
     originalScore: ["nota original"],
+    soundScore: ["construção sonora"],
+    identityScore: ["identidade & personalidade"],
+    consistencyScore: ["consistência & narrativa"],
+    replayScore: ["replay & impacto"],
     repescagem: ["repescagem 75-79"],
     repescagemDisqualified: ["desqualificado repescagem?"],
     repescagemNote: ["observação repescagem"],
@@ -296,6 +301,16 @@ export function parseWorkbookSheets(
       const sourceRank = readNumber(valueAt(row, albumColumns, "sourceRank"), "source_rank", "Rank informado", locator(albumSheetName, sourceRow, albumColumns, "sourceRank"), issues, { minimum: 1, integer: true });
       const reportedScore = readNumber(valueAt(row, albumColumns, "reportedScore"), "reported_score", "Nota informada", locator(albumSheetName, sourceRow, albumColumns, "reportedScore"), issues, { minimum: 0, maximum: 100 });
       const originalScore = readNumber(valueAt(row, albumColumns, "originalScore"), "original_score", "Nota Original", locator(albumSheetName, sourceRow, albumColumns, "originalScore"), issues, { required: true, minimum: 0, maximum: 100 });
+      const soundScore = readNumber(valueAt(row, albumColumns, "soundScore"), "sound_score", "Construção Sonora", locator(albumSheetName, sourceRow, albumColumns, "soundScore"), issues, { minimum: 0, maximum: 25 });
+      const identityScore = readNumber(valueAt(row, albumColumns, "identityScore"), "identity_score", "Identidade & Personalidade", locator(albumSheetName, sourceRow, albumColumns, "identityScore"), issues, { minimum: 0, maximum: 25 });
+      const consistencyScore = readNumber(valueAt(row, albumColumns, "consistencyScore"), "consistency_score", "Consistência & Narrativa", locator(albumSheetName, sourceRow, albumColumns, "consistencyScore"), issues, { minimum: 0, maximum: 25 });
+      const replayScore = readNumber(valueAt(row, albumColumns, "replayScore"), "replay_score", "Replay & Impacto", locator(albumSheetName, sourceRow, albumColumns, "replayScore"), issues, { minimum: 0, maximum: 25 });
+      const pillarScores = [soundScore, identityScore, consistencyScore, replayScore];
+      const evaluationCompleteness = pillarScores.every((score) => score !== null) ? "complete" : "incomplete";
+      if (evaluationCompleteness === "complete" && originalScore !== null
+        && Math.round(pillarScores.reduce<number>((sum, score) => sum + (score ?? 0), 0) * 1000) !== Math.round(originalScore * 1000)) {
+        issues.push({ code: "ORIGINAL_PILLAR_SUM_MISMATCH", severity: "error", sourceLocator: `${albumSheetName}!${sourceRow}`, message: "A soma dos quatro pilares difere da Nota Original." });
+      }
       const identityArtist = artist.normalize("NFC").trim();
       const identityTitle = title.normalize("NFC").trim();
       const identityKey = JSON.stringify([options.season, identityArtist, identityTitle, ""]);
@@ -326,6 +341,11 @@ export function parseWorkbookSheets(
         genre: readText(valueAt(row, albumColumns, "genre")),
         country: readText(valueAt(row, albumColumns, "country")),
         source: readText(valueAt(row, albumColumns, "source")),
+        evaluationCompleteness,
+        soundScore,
+        identityScore,
+        consistencyScore,
+        replayScore,
         repescagem: readText(valueAt(row, albumColumns, "repescagem")),
         repescagemDisqualified: readText(valueAt(row, albumColumns, "repescagemDisqualified")),
         repescagemNote: readText(valueAt(row, albumColumns, "repescagemNote")),
@@ -392,7 +412,17 @@ export function parseWorkbookSheets(
     albums,
     backlog,
     issues,
-    counts: { albumRows, albums: albums.length, backlogRows, backlog: backlog.length, rejectedRows: rejectedRows.size, reportedOriginalDifferences, errors, warnings },
+    counts: {
+      albumRows,
+      albums: albums.length,
+      backlogRows,
+      backlog: backlog.length,
+      rejectedRows: rejectedRows.size,
+      reportedOriginalDifferences,
+      incompleteEvaluations: albums.filter((album) => album.evaluationCompleteness === "incomplete").length,
+      errors,
+      warnings,
+    },
     canPublish: errors === 0 && albums.length > 0,
   };
 }

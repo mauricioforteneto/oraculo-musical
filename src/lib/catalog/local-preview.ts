@@ -13,6 +13,13 @@ function albumRecord(value: unknown): AlbumRecord | null {
   const title = text(item.title).trim();
   const sourceRow = number(item.sourceRow);
   if (!artist || !title || sourceRow === null) return null;
+  const soundScore = number(item.soundScore);
+  const identityScore = number(item.identityScore);
+  const consistencyScore = number(item.consistencyScore);
+  const replayScore = number(item.replayScore);
+  const evaluationCompleteness = [soundScore, identityScore, consistencyScore, replayScore].every((score) => score !== null)
+    ? "complete" as const
+    : "incomplete" as const;
   return {
     sourceRow,
     sourceRank: number(item.sourceRank),
@@ -24,6 +31,12 @@ function albumRecord(value: unknown): AlbumRecord | null {
     genre: text(item.genre),
     country: text(item.country),
     source: text(item.source),
+    isPresent: true,
+    evaluationCompleteness,
+    soundScore,
+    identityScore,
+    consistencyScore,
+    replayScore,
     repescagem: text(item.repescagem),
     repescagemDisqualified: text(item.repescagemDisqualified),
     repescagemNote: text(item.repescagemNote),

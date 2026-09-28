@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowDownRight,
@@ -40,6 +41,17 @@ function shortDate(value: string) {
     : date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 }
 
+function dateTime(value: string) {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? value
+    : date.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" });
+}
+
+function syncStatusLabel(status: "running" | "succeeded" | "unchanged" | "failed") {
+  return status === "running" ? "Em andamento" : status === "succeeded" ? "Publicada" : status === "unchanged" ? "Sem alterações" : "Falhou";
+}
+
 function displayRank(value: number) {
   return String(value).padStart(2, "0");
 }
@@ -48,11 +60,37 @@ function scoreDifference(a: AlbumRecord) {
   return a.reportedScore !== null && a.originalScore !== null && a.reportedScore !== a.originalScore;
 }
 
-export function Dashboard({ source }: { source: LocalSourcePreview | null }) {
+export function Dashboard({ source, syncReady, localPreview }: { source: LocalSourcePreview | null; syncReady: boolean; localPreview: boolean }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ScoreFilter>("all");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [shown, setShown] = useState(15);
+  const [syncing, setSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState("");
+
+  async function synchronize() {
+    if (!syncReady || syncing) return;
+    setSyncing(true);
+    setSyncFeedback("");
+    try {
+      const response = await fetch("/api/sync", { method: "POST", credentials: "same-origin", headers: { Accept: "application/json" } });
+      const result = await response.json() as { status?: string; version?: string; error?: string };
+      if (!response.ok) {
+        setSyncFeedback(`Falha na sincronização (${result.error ?? "SYNC_FAILED"}).`);
+        router.refresh();
+        return;
+      }
+      setSyncFeedback(result.status === "unchanged"
+        ? `A versão ${result.version} já está publicada.`
+        : `Versão ${result.version} publicada.`);
+      router.refresh();
+    } catch {
+      setSyncFeedback("Não foi possível concluir a sincronização.");
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const albums = useMemo(() => rankAnnualAlbums(source?.albums ?? []), [source?.albums]);
   const selected = albums.find((album) => album.key === selectedKey) ?? albums[0] ?? null;
@@ -80,8 +118,36 @@ export function Dashboard({ source }: { source: LocalSourcePreview | null }) {
   ].map((band) => ({ ...band, count: originalScores.filter((score) => score >= band.min && score <= band.max).length }));
   const maxBand = Math.max(...histogram.map((band) => band.count), 1);
   const topThree = albums.slice(0, 3);
-  const dateLabel = source ? shortDate(source.referenceDate) : "Sem arquivo local";
+  const dateLabel = source?.referenceDate ? shortDate(source.referenceDate) : source ? "Sem publicação válida" : "Sem arquivo local";
   const hasSummaryDifference = sourceAverage !== null && Math.abs(sourceAverage - average) > 0.005;
+  const lastAttempt = source?.lastAttempt ?? null;
+  const attemptHistory = source?.attemptHistory ?? [];
+  const latestVersion = source?.version === null || source?.version === undefined ? null : String(source.version);
+  const syncTitle = localPreview
+    ? "Prévia local"
+    : lastAttempt?.status === "running"
+      ? "Sincronização em andamento"
+      : lastAttempt?.status === "failed"
+        ? latestVersion ? "Falha na última tentativa" : "Sem publicação válida"
+        : latestVersion ? "Fonte sincronizada" : source ? "Fonte configurada" : "Fonte não carregada";
+  const syncDescription = localPreview
+    ? "Drive ainda não conectado"
+    : lastAttempt?.status === "failed"
+      ? latestVersion ? `Última publicação válida · v${latestVersion}` : "A tentativa mais recente não gerou uma publicação válida"
+      : lastAttempt?.status === "running"
+        ? latestVersion ? `Última publicação válida · v${latestVersion}` : "Ainda não há uma publicação válida"
+        : latestVersion
+          ? `Última versão publicada · v${latestVersion}${source?.publishedAt ? ` · ${dateTime(source.publishedAt)}` : ""}`
+          : source ? "Aguardando a primeira sincronização" : "Aguardando a fonte de dados";
+  const attemptCounts = lastAttempt ? [
+    ["Novos", lastAttempt.counts.new],
+    ["Alterados", lastAttempt.counts.changed],
+    ["Sem mudança", lastAttempt.counts.unchanged],
+    ["Ausentes", lastAttempt.counts.absent],
+    ["Avisos", lastAttempt.counts.warnings],
+    ["Erros", lastAttempt.counts.errors],
+  ].filter(([, count]) => typeof count === "number" && count > 0) : [];
+  const showSyncReport = lastAttempt && (lastAttempt.status === "failed" || lastAttempt.issues.length > 0);
 
   const filters: { id: ScoreFilter; label: string }[] = [
     { id: "all", label: "Todos" },
@@ -114,8 +180,8 @@ export function Dashboard({ source }: { source: LocalSourcePreview | null }) {
         <div className={styles.sidebarBottom}>
           <div className={styles.sourceMini}>
             <div className={styles.sourceMiniIcon}><LockKeyhole size={15} aria-hidden="true" /></div>
-            <div><strong>Fonte privada</strong><span>{source ? "Prévia local · v" + source.version : "Arquivo ainda não carregado"}</span></div>
-            <span className={styles.statusDot} aria-label="Sem sincronização com o Drive" />
+            <div><strong>Fonte privada</strong><span>{source ? localPreview ? `Prévia local · v${source.version}` : latestVersion ? `Última publicação · v${latestVersion}` : "Sem publicação válida" : "Arquivo ainda não carregado"}</span></div>
+            <span className={styles.statusDot} aria-label={localPreview ? "Prévia local" : lastAttempt?.status === "running" ? "Sincronização em andamento" : lastAttempt?.status === "failed" ? "Última tentativa falhou" : latestVersion ? "Publicação válida disponível" : "Sem publicação válida"} />
           </div>
           <form action="/auth/logout" method="post">
             <button className={styles.logoutButton} type="submit"><LogOut size={16} aria-hidden="true" />Sair</button>
@@ -135,16 +201,48 @@ export function Dashboard({ source }: { source: LocalSourcePreview | null }) {
         <div className={styles.pageContent}>
           <section className={styles.intro} aria-labelledby="page-title">
             <div className={styles.introCopy}>
-              <div className={styles.overline}><span className={styles.overlineRule} />TEMPORADA 2026 <span className={styles.overlineDot}>·</span> {source ? "ARQUIVO V" + source.version : "ACERVO"}</div>
+              <div className={styles.overline}><span className={styles.overlineRule} />TEMPORADA 2026 <span className={styles.overlineDot}>·</span> {latestVersion ? "ARQUIVO V" + latestVersion : "ACERVO"}</div>
               <h1 id="page-title">O ano em <em>discos.</em></h1>
               <p>Um retrato da escuta, organizado pela nota original de cada álbum.</p>
             </div>
             <div className={styles.syncStatus}>
               <span className={styles.statusRing}><span /></span>
-              <div><strong>{source ? "Prévia local" : "Fonte não carregada"}</strong><span>{source ? "Drive ainda não conectado" : "Aguardando a fonte de dados"}</span></div>
+              <div className={styles.syncStatusCopy}>
+                <strong>{syncTitle}</strong>
+                <span>{syncDescription}</span>
+                {syncFeedback && <span role="status">{syncFeedback}</span>}
+              </div>
+              <button className={styles.syncButton} type="button" disabled={!syncReady || syncing} onClick={synchronize} title={syncReady ? "Ler a versão mais recente da pasta privada" : "Configuração privada de sincronização pendente"}>
+                {syncing ? "Lendo…" : "Sincronizar"}
+              </button>
               <CircleHelp size={17} className={styles.statusHelp} aria-hidden="true" />
             </div>
           </section>
+
+          {showSyncReport && <section className={styles.syncReport} aria-labelledby="sync-report-title">
+            <div className={styles.alertIcon}><AlertTriangle size={18} aria-hidden="true" /></div>
+            <div className={styles.alertCopy}>
+              <strong id="sync-report-title">Última tentativa: {lastAttempt.status === "failed" ? "falhou" : lastAttempt.status === "running" ? "em andamento" : "concluída com apontamentos"}.</strong>
+              <p>Iniciada em {dateTime(lastAttempt.startedAt)}{lastAttempt.finishedAt ? ` · finalizada em ${dateTime(lastAttempt.finishedAt)}` : ""}{lastAttempt.errorCode ? ` · código ${lastAttempt.errorCode}` : ""}{latestVersion ? ` · publicação válida v${latestVersion} preservada` : " · nenhuma publicação válida"}</p>
+              {attemptCounts.length > 0 && <p>{attemptCounts.map(([label, count]) => `${label}: ${count}`).join(" · ")}</p>}
+              {lastAttempt.issues.length > 0 && <details className={styles.syncIssueDetails}>
+                <summary>Ver {lastAttempt.issues.length} apontamento{lastAttempt.issues.length === 1 ? "" : "s"}</summary>
+                <ul>{lastAttempt.issues.map((issue, index) => <li key={issue.code + issue.sourceLocator + index}><strong>{issue.severity === "error" ? "Erro" : "Aviso"} · {issue.code}</strong>{issue.sourceLocator && <span>{issue.sourceLocator}</span>}<p>{issue.message}</p></li>)}</ul>
+              </details>}
+            </div>
+            <span className={styles.alertTag}>{lastAttempt.status === "failed" ? "SINCRONIZAÇÃO" : "REVISÃO DA FONTE"}</span>
+          </section>}
+
+          {attemptHistory.length > 0 && <details className={styles.syncHistory}>
+            <summary>Histórico recente · {attemptHistory.length} tentativa{attemptHistory.length === 1 ? "" : "s"}</summary>
+            <ol>{attemptHistory.map((attempt, index) => <li key={attempt.startedAt + index}>
+              <div><strong>{syncStatusLabel(attempt.status)}{attempt.version ? ` · v${attempt.version}` : ""}</strong><span>{dateTime(attempt.startedAt)}{attempt.finishedAt ? ` · ${dateTime(attempt.finishedAt)}` : ""}</span></div>
+              <span className={attempt.isCurrentPublication ? styles.currentPublication : styles.historyOutcome}>
+                {attempt.isCurrentPublication ? "Publicação ativa" : attempt.status === "failed" ? "Não publicada" : attempt.version ? "Versão histórica" : "Sem versão"}
+              </span>
+              {(attempt.errorCode || attempt.issueCount > 0) && <small>{attempt.errorCode ? `Código ${attempt.errorCode}` : ""}{attempt.errorCode && attempt.issueCount > 0 ? " · " : ""}{attempt.issueCount > 0 ? `${attempt.issueCount} apontamento${attempt.issueCount === 1 ? "" : "s"}` : ""}</small>}
+            </li>)}</ol>
+          </details>}
 
           <section className={styles.metrics} aria-label="Resumo do acervo">
             <Metric icon={<Headphones size={17} aria-hidden="true" />} label="Álbuns ouvidos" value={String(albums.length)} caption="registrados na fonte" />
@@ -211,7 +309,7 @@ export function Dashboard({ source }: { source: LocalSourcePreview | null }) {
               <div className={styles.rankingList} role="list" aria-label="Álbuns ordenados pela nota original">
                 {visibleAlbums.length ? visibleAlbums.map((album) => <button className={styles.albumRow + (selected?.key === album.key ? " " + styles.albumSelected : "")} type="button" key={album.key} onClick={() => setSelectedKey(album.key)} aria-pressed={selected?.key === album.key}>
                   <span className={styles.albumPosition}>{album.annualPosition ? displayRank(album.annualPosition) : "—"}</span>
-                  <span className={styles.albumIdentity}><strong>{album.artist}</strong><span>{album.title}</span><small>{album.country}{album.tier ? " · " + album.tier : ""}</small></span>
+                  <span className={styles.albumIdentity}><strong>{album.artist}</strong><span>{album.title}</span><small>{album.country}{album.tier ? " · " + album.tier : ""}{album.isPresent === false ? " · ausente na versão atual" : ""}</small></span>
                   <span className={styles.albumScore}>{scoreLabel(album.originalScore)}<small>ORIGINAL</small></span>
                   <ChevronRight className={styles.rowChevron} size={16} aria-hidden="true" />
                 </button>) : <div className={styles.emptySearch}><Search size={20} aria-hidden="true" /><strong>Nenhum álbum encontrado</strong><span>Tente outro artista, título ou país.</span></div>}
@@ -240,7 +338,7 @@ export function Dashboard({ source }: { source: LocalSourcePreview | null }) {
 
           <footer className={styles.footer}>
             <span>ORÁCULO MUSICAL <span className={styles.footerDot}>·</span> 2026</span>
-            <span>{source ? "Prévia local da versão " + source.version + " · referência " + dateLabel : "Nenhuma fonte carregada"}</span>
+            <span>{source ? latestVersion ? `${localPreview ? "Prévia local da versão " : "Última publicação da versão "}${latestVersion} · referência ${dateLabel}` : "Sem publicação válida" : "Nenhuma fonte carregada"}</span>
             <span>Dados privados <LockKeyhole size={12} aria-hidden="true" /></span>
           </footer>
         </div>
@@ -269,10 +367,15 @@ function AlbumDetails({ album }: { album: RankedAlbum | null }) {
       <div><span>NOTA ORIGINAL</span><strong>{scoreLabel(album.originalScore)}<small>/100</small></strong></div>
       {hasDifference && <div className={styles.reportedScore}><span>NOTA DA PLANILHA</span><strong>{scoreLabel(album.reportedScore)}</strong></div>}
     </div>
+    {album.evaluationCompleteness === "incomplete" && <div className={styles.detailNotice}><AlertTriangle size={15} aria-hidden="true" /><span>Os quatro pilares não estão estruturados na fonte; o total original não representa uma soma validada.</span></div>}
     {hasDifference && <div className={styles.detailNotice}><ArrowDownRight size={15} aria-hidden="true" /><span>A nota informada na planilha difere da avaliação original. O ranking usa a original.</span></div>}
     <dl className={styles.detailFacts}>
       <div><dt>Faixa informada</dt><dd>{album.tier || "Não informada"}</dd></div>
       <div><dt>Posição na planilha</dt><dd>{album.sourceRank ? "#" + album.sourceRank : "Não informada"}</dd></div>
+      {album.soundScore !== null && <div><dt>Construção sonora</dt><dd>{scoreLabel(album.soundScore)}/25</dd></div>}
+      {album.identityScore !== null && <div><dt>Identidade &amp; personalidade</dt><dd>{scoreLabel(album.identityScore)}/25</dd></div>}
+      {album.consistencyScore !== null && <div><dt>Consistência &amp; narrativa</dt><dd>{scoreLabel(album.consistencyScore)}/25</dd></div>}
+      {album.replayScore !== null && <div><dt>Replay &amp; impacto</dt><dd>{scoreLabel(album.replayScore)}/25</dd></div>}
       {album.playoffSeed !== null && <div><dt>Seed registrado</dt><dd>{album.playoffSeed}</dd></div>}
       {album.source && <div><dt>Fonte registrada</dt><dd className={styles.sourceText}>{album.source}</dd></div>}
     </dl>

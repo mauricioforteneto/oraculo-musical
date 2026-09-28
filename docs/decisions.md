@@ -1,6 +1,6 @@
 # Decisões e pendências
 
-Referência: 27/09/2026. “Confirmado” significa instrução explícita do usuário. “Proposta” não autoriza regra competitiva nem provisionamento. Nenhuma pendência abaixo foi resolvida automaticamente pela descoberta.
+Revisado em 28/09/2026. “Confirmado” significa instrução explícita do usuário. “Adotado para o MVP” registra uma escolha técnica feita na revisão do backlog; não autoriza provisionamento de serviços nem resolve regra competitiva. A descoberta da planilha, por si só, não aprova decisões.
 
 ## Confirmados
 
@@ -19,26 +19,32 @@ Referência: 27/09/2026. “Confirmado” significa instrução explícita do us
 | C11 | Login via Google; configuração de login e banco Supabase será feita pelo usuário seguindo passo a passo, na etapa correspondente. |
 | C12 | Interface escura, seguindo direção editorial musical; Tailwind e componentes locais no padrão shadcn/ui. Gráficos entram na etapa correspondente. |
 
-## Propostas técnicas para revisão
+## Decisões técnicas para o MVP
 
-| ID | Proposta | Consequência |
+| ID | Decisão e estado | Consequência / limite |
 | --- | --- | --- |
-| T01 | Next.js/TypeScript + Supabase Free + Vercel Hobby | App único; pausa do banco e backup próprio documentados |
-| T02 | Supabase Auth com usuário pré-criado e UUID permitido | Cadastro público desligado; demais usuários recebem 403 |
-| T03 | Conta de serviço Drive, acesso de leitor à pasta e escopo read-only | Aplicação independente do conector da conversa |
-| T04 | Lote atômico; maior versão inválida mantém última publicação | Evita estado parcialmente atualizado |
-| T05 | Ranking anual por nota original, mesma posição para empate (1,1,3) | Ordem alfabética só visual; não resolve P07 |
-| T06 | Aceitar legado com total original e pilares incompletos sinalizados | Ranking funciona sem inventar notas de pilares |
-| T07 | Identidade provisória por temporada/artista/título/edição | Renomeação ou colisão exige esclarecimento; preferir ID da fonte quando disponível |
-| T08 | Last.fm inicialmente 90 dias, sobreposição de 48 h | Limita volume; cobertura histórica aparece explicitamente |
+| T01 | Adotado: Next.js/TypeScript, PostgreSQL/Supabase e hospedagem compatível com Next.js | Arquitetura de app único; nenhum serviço foi provisionado. Plano, preços e limites serão conferidos antes de publicar. |
+| T02 | Adotado: Google OAuth via Supabase, usuário pré-criado e autorização pelo UUID | Cadastro público fechado; outras contas recebem 403. Login real ainda não foi validado. |
+| T03 | Adotado como desenho: conta de serviço Drive com acesso de leitor à pasta e escopo read-only | Acesso independente do conector da conversa; credencial e permissão reais ainda não foram validadas. Se a política da conta impedir esse modelo, interromper e rever a integração. |
+| T04 | Adotado: preparar e validar o lote antes da transação; publicar tudo de forma atômica; versão candidata inválida preserva a última publicação | Nenhuma mescla parcial nem fallback silencioso. Falhas de infraestrutura permanecem tentativas separadas da última publicação válida. |
+| T05 | Adotado para o ranking anual: nota original decrescente e posição por competição; notas iguais compartilham posição (90, 90, 88 → 1, 1, 3) | Artista/álbum só ordenam visualmente dentro do empate. Não criam desempate competitivo nem resolvem P07, que trata do residual do Top 50. |
+| T06 | Adotado: total original válido pode ser usado mesmo quando pilares estejam ausentes ou incompletos; sinalizar avaliação incompleta | Não converter vazio em zero nem inferir pilares. Se os quatro pilares forem fornecidos, cada um deve respeitar /25 e a soma deve ser igual ao total; divergência é erro. |
+| T07 | Adotado como identidade conservadora: temporada + artista creditado + título exato + edição explícita, quando houver | O XLSX auditado não tem ID estável nem coluna de edição. Aplicar NFC e remover apenas espaços externos para a chave; preservar caixa, pontuação e espaços internos. Colisão exata bloqueia; semelhança gera alerta, nunca fusão. Mudança/renomeação ambígua exige esclarecimento. |
+| T08 | Proposta futura, fora do MVP: Last.fm começar com 90 dias e sobreposição de 48 h | Não importar nem fixar orçamento histórico antes de validar objetivo e volume reais. |
 
-Esses defaults orientam a próxima revisão; não foram apresentados como regras confirmadas. Detalhes em [arquitetura](architecture.md), [modelo](data-model.md) e [integrações](integrations.md).
+### Resultado da revisão de MVP (28/09/2026)
+
+O ranking anual, a identidade de álbuns e as avaliações incompletas têm contrato definido acima. Como a fonte não apresenta pilares em colunas estruturadas, ausência ou preenchimento parcial não bloqueia um total original válido; o registro fica marcado como incompleto e não participa de validação de soma. Quando os quatro pilares estiverem disponíveis, a validação é integral. O parser não extrai pilares de texto livre por aproximação.
+
+A identidade atual não distingue reedições que compartilhem exatamente artista e título, pois a planilha não fornece essa informação em coluna própria. Não fundir nem inventar edições: preservar o título recebido e a edição explícita se uma coluna verificável vier a existir. Se um ID persistente surgir no futuro, sua adoção exige mapeamento auditável dos IDs antigos, sem troca silenciosa de chaves.
+
+P01–P14 seguem pendentes: dizem respeito à competição/Top 50 e não são necessários para consultar o ranking anual do MVP. Divergências em resumo, backlog ou campos competitivos devem ser reportadas como evidência da fonte; não impedem o ranking se artista, título e nota original forem válidos. Datas, revisões e resultados competitivos só entram no cálculo quando houver contrato confirmado. T08 e validações de Last.fm/AOTY seguem fora do MVP.
 
 ### Avanço autorizado
 
-Após a entrega documental, o usuário pediu “Seguir para proxima etapa”. Isso autoriza a preparação funcional: Next.js, login Supabase, migrações, permissões e verificações locais. T01/T02 orientam essa implementação sem provisionar serviços ou ativar cobranças. T04–T08 e P01–P14 não foram convertidos em decisões competitivas por essa instrução; importação e desempates ainda não implementados. Não trocar a arquitetura Next.js/PostgreSQL por um starter de hospedagem com outro banco.
+Após a entrega documental, o usuário pediu “Seguir para proxima etapa”. Isso autorizou a preparação funcional de acesso, migrações e verificações locais, sem provisionar serviços ou ativar cobranças. A revisão atual adota T04–T07 para o MVP; não converte P01–P14 em regras competitivas. Não trocar a arquitetura Next.js/PostgreSQL por um starter com outro banco.
 
-Na continuação, o usuário escolheu login com Google e pediu para seguir o backlog, recebendo instruções de configuração na etapa correspondente. Implementado OAuth/PKCE com callback e autorização por UUID; removida entrada por senha. A leitura de versões do Drive avançou em módulo isolado com testes sintéticos, sem fechar parser físico, publicar importações ou validar credenciais remotas.
+Na continuação, o usuário escolheu login com Google e pediu para seguir o backlog, recebendo instruções de configuração na etapa correspondente. Implementado OAuth/PKCE com callback e autorização por UUID; removida entrada por senha. Depois, foram adicionados o parser XLSX, o serviço de publicação transacional, o endpoint protegido e a consulta privada do snapshot. Nenhum deles foi validado com credenciais reais ou dados publicados em banco hospedado.
 
 ## As 14 pendências do regulamento
 

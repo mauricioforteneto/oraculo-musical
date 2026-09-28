@@ -2,9 +2,9 @@
 
 ## O que já existe
 
-Next.js App Router, TypeScript, tela de entrada em português, login Google via Supabase Auth com PKCE, callback e logout, validação de proprietário no servidor, cookies HttpOnly/SameSite e POSTs com verificação de origem. Sem configuração, acesso fechado e sem acervo de demonstração. Não há cadastro público no código; é necessário desligá-lo também no Supabase.
+Next.js App Router, TypeScript, tela de entrada em português, login Google via Supabase Auth com PKCE, callback e logout, validação de proprietário no servidor, cookies HttpOnly/SameSite e POSTs com verificação de origem. Sem autenticação configurada, o desenvolvimento no loopback pode exibir somente a prévia privada local se `.private/source-preview.json` existir; fora desse caso o acesso fica fechado. Não há cadastro público no código; é necessário desligá-lo também no Supabase.
 
-O botão de sincronização está desabilitado e identificado como preparação: não existe endpoint de importação nesta etapa. Migração inicial contém fontes, versões, execuções, álbuns, notas originais e problemas. Não há ranking, regras competitivas calculadas ou provisionamento automático.
+Parser XLSX, serviço de publicação transacional, endpoint POST protegido e consulta do ranking estão implementados. O botão só é habilitado com OAuth, banco de leitura/escrita e Drive configurados. A migração 0002 ainda precisa ser aplicada e revisada em ambiente isolado; nenhuma integração real foi validada e não há provisionamento automático.
 
 ## Executar localmente
 
@@ -56,7 +56,7 @@ Na mesma etapa de configuração do Supabase:
    grant connect on database postgres to oraculo_web, oraculo_importer;
    ```
 
-5. Preparar DATABASE_READ_URL com oraculo_web e DATABASE_SYNC_URL com oraculo_importer. No pooler compartilhado, preservar host/porta do painel e usar o usuário customizado com sufixo do projeto conforme configuração do pooler. Não copiar a credencial postgres para essas variáveis. As URLs de runtime serão utilizadas na entrega de persistência; ainda não há consultas do acervo nesta versão.
+5. Preparar DATABASE_READ_URL com oraculo_web e DATABASE_SYNC_URL com oraculo_importer. No pooler compartilhado, preservar host/porta do painel e usar o usuário customizado com sufixo do projeto conforme configuração do pooler. Não copiar a credencial postgres para essas variáveis. As consultas usam a primeira URL; a sincronização e a migração de publicação usam a segunda. Mantenha a credencial administrativa fora do runtime.
 6. Não expor o schema `oraculo` na Data API nem conceder privilégios a anon/authenticated. Essas tabelas são acessadas apenas pelo backend com roles SQL próprias. Não ativar a Data API para contornar erro de permissão SQL.
 7. Conferir no banco: role de leitura consegue SELECT, mas UPDATE/DELETE de originais são negados; role de sincronização também não altera originais. A migração deve continuar sendo operada somente por administrador.
 8. Guardar a URL administrativa apenas no ambiente de manutenção. Definir destino privado para backup conforme arquitetura antes de carregar dados pessoais. Não criar bucket, assinatura paga ou cobrança automática para concluir este setup.
@@ -67,7 +67,15 @@ Referência: [conexões PostgreSQL no Supabase](https://supabase.com/docs/guides
 
 A migração cria esquema privado `oraculo`, fora do esquema público; não adicioná-lo aos schemas expostos na Data API. Cria papéis de grupo `oraculo_reader` e `oraculo_sync` sem login. O administrador deve criar identidades LOGIN com senhas aleatórias fora do Git, conceder a cada uma apenas seu grupo correspondente e configurar as URLs distintas. Não usar superusuário, proprietário das tabelas ou service_role no runtime. A credencial administrativa não deve estar na hospedagem web.
 
-O leitor recebe SELECT. O sincronizador recebe INSERT limitado e UPDATE apenas do estado de execuções; não pode alterar/excluir originais, versões ou identidades. Cadastro da pasta fonte é manutenção administrativa, nunca enviado pelo navegador. Não há credenciais LOGIN criadas automaticamente. Modelo restante (revisões, snapshots de publicação, leases, competição) será adicionado por novas migrações, sem editar 0001.
+O leitor recebe SELECT. O sincronizador recebe INSERT limitado e UPDATE apenas do estado de execuções, publicação, lease e estado derivado; não pode alterar/excluir originais, versões ou identidades. Cadastro da pasta fonte é manutenção administrativa, nunca enviado pelo navegador. Não há credenciais LOGIN criadas automaticamente.
+
+Depois de aplicar as migrações, cadastre a pasta autorizada como administrador do banco, substituindo o ID pelo valor privado do Drive:
+
+```sql
+INSERT INTO oraculo.sources(season, folder_id) VALUES (2026, '<ID_DA_PASTA_PRIVADA>');
+```
+
+Não coloque o ID real no Git nem o envie na conversa. A aplicação só sincroniza a temporada e a pasta configuradas no servidor, e exige que esse cadastro coincida.
 
 Antes de qualquer migração de produção, fazer backup e restauração isolada conforme [arquitetura](architecture.md). O runner não cria backup e esta etapa não realizou um ensaio de restauração hospedada.
 
@@ -88,4 +96,4 @@ E2E atual faz build e inicia o servidor de produção isolado na porta 3100; usa
 
 ## Próximo passo
 
-Concluir leitura binária do XLSX privado, confirmar mapeamento e identidade, integrar leitor Drive já implementado ao parser e implementar serviço de sincronização transacional e ranking. Configurar conta de serviço leitora da pasta apenas nessa etapa, em roteiro próprio. Não publicar esta base como MVP completo nem declarar integração externa validada.
+Aplicar a migração 0002 em ambiente isolado e conferir permissões; em seguida, configurar credenciais privadas, ensaiar sincronização e ranking com a conta real, validar backup/restauração e completar auditoria de datas/revisões. O código de parser, publicação transacional e consulta já existe, mas não foi validado com serviços reais. Não publicar esta base como MVP completo nem declarar integração externa validada.

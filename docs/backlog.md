@@ -1,6 +1,8 @@
 # Backlog e critérios de aceite
 
-Status em 27/09/2026: documentação e base funcional de acesso implementadas após instrução de avançar. Autenticação real, serviços hospedados e importação ainda não validados.
+Status inicial em 27/09/2026: documentação e base funcional de acesso implementadas após instrução de avançar. Autenticação real, serviços hospedados e importação ainda não validados.
+
+Revisão do MVP em 28/09/2026: desempates posicionais do ranking anual, chave conservadora de identidade e tratamento de totais com pilares incompletos registrados em [decisions.md](decisions.md), [spec.md](spec.md) e [data-model.md](data-model.md). P01–P14 permanecem pendentes porque afetam regras competitivas/Top 50, fora do MVP de ranking anual.
 
 Atualização em 27/09/2026: prévia do dashboard liberada para consulta local em `http://127.0.0.1:3000`, sem login apenas em desenvolvimento e enquanto a autenticação não estiver configurada. O servidor fica vinculado ao loopback; produção segue protegida. Build, lint e verificação de tipos passaram, e a rota principal respondeu HTTP 200 com a prévia de 118 álbuns. A fonte local permanece em `.private/`, fora do Git.
 
@@ -10,6 +12,8 @@ Falha do servidor em 27/09/2026: reproduzido no Ubuntu WSL. `node_modules` conti
 
 Ambiente local em 28/09/2026: checkout de trabalho copiado para `~/projects/oraculo-musical` no filesystem Linux do WSL, preservando a cópia Windows. Dependências reinstaladas no WSL; `npm run test` (25 testes), `npm run typecheck`, `npm run lint` e `npm run build` passaram. O Git do WSL reutiliza o Git Credential Manager do Windows; push validado e commit `731c947` publicado em `origin/main`. A rota `/` respondeu HTTP 200 pelo WSL e pelo Windows; o servidor de desenvolvimento está ativo em `http://127.0.0.1:3000`.
 
+Implementação local em 28/09/2026: criada a migração 0002 para snapshots por versão, estado de ausências, publicação e leases; criado o serviço transacional que conecta Drive → XLSX → PostgreSQL, o endpoint POST protegido e a consulta privada do snapshot publicado. O painel agora conserva a última publicação válida quando uma tentativa falha e exibe estado, versão, horários, contagens, apontamentos e até oito tentativas recentes. Typecheck, lint e `git diff --check` passaram após as alterações. Ainda não houve aplicação da migração nem ensaio das integrações reais; essa implementação aguarda configuração externa.
+
 ## Entrega 0 — revisão e descoberta
 
 - [x] Inspecionar repositório/Git e preservar arquivos existentes.
@@ -17,7 +21,7 @@ Ambiente local em 28/09/2026: checkout de trabalho copiado para `~/projects/orac
 - [x] Documentar escopo read-only, infraestrutura, modelo, integrações, regulamento e decisões.
 - [x] Preparar `.gitignore` e `.env.example` sem credenciais.
 - [x] Obter uma cópia local do XLSX e auditar abas/fórmulas. Relatório e prévia com dados reais permanecem em `.private/`, fora do Git; a leitura pelo conector Drive ainda retorna HTTP 403.
-- [ ] Revisar propostas técnicas e pendências necessárias ao MVP. Aceite: decisões registradas, incluindo empate anual, identidade e legado incompleto.
+- [x] Revisar propostas técnicas e pendências necessárias ao MVP. Aceite: empate anual, identidade e legado incompleto registrados; pendências competitivas separadas do ranking anual.
 
 ## Entrega 1 — preparação funcional e segurança
 
@@ -35,12 +39,12 @@ Aceite: visitante sem sessão e outra conta não leem dados nem acionam sync; pa
 
 ## Entrega 2 — fonte → banco → ranking anual
 
-- [ ] Listagem paginada, escolha de maior versão numérica, download privado, validação e auditoria.
-- [ ] Persistência transacional, idempotência, histórico, relatório, preservação de ausentes e último estado válido.
-- [ ] Tela de ranking, busca, detalhes, sincronização e versões/horários/pendências.
+- [x] Listagem paginada, escolha de maior versão numérica, download privado, validação e auditoria.
+- [x] Persistência transacional, idempotência, histórico, relatório, preservação de ausentes e último estado válido.
+- [x] Tela de ranking, busca, detalhes, sincronização e versões/horários/pendências.
 - [ ] Ensaio real com credenciais da aplicação, além de mocks.
 
-Progresso parcial: leitor Drive isolado implementado (paginação, versão numérica, ambiguidades, limites, revalidação e hash), com conta de serviço read-only. A cópia local v80 foi auditada e a interface privada de prévia exibe ranking pela nota original, busca, filtros, detalhes, backlog e divergências da fonte. Enquanto OAuth não estiver configurado, a prévia pode ser aberta sem login somente em desenvolvimento no endereço loopback; o servidor de desenvolvimento também escuta apenas em `127.0.0.1`. Continua pendente: acesso do app ao Drive, parser de produção, persistência transacional, sincronização e validação de login/banco reais.
+Progresso parcial: leitor Drive isolado com paginação, seleção de versão numérica, ambiguidades, limites, revalidação e hash; parser XLSX; persistência transacional idempotente com histórico de snapshots, preservação de ausentes e última publicação válida; consulta DB para ranking; endpoint POST com autorização do dono e validação de origem. A cópia local v80 foi auditada e a interface privada exibe ranking pela nota original, busca, filtros, detalhes, backlog e divergências da fonte. Ainda pendem aplicação e revisão da migração 0002, configuração e ensaio de Drive/OAuth/PostgreSQL reais, validação de backup e relatório completo de versões/tentativas.
 
 Aceite central: nova avaliação fictícia em fonte de teste privada → botão → um registro no banco → posição correta. Em seguida, teste controlado com fonte pessoal sem escrita nela. Nenhuma edição de avaliação ou upload arbitrário pelo app.
 

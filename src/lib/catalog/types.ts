@@ -9,6 +9,12 @@ export type AlbumRecord = {
   genre: string;
   country: string;
   source: string;
+  isPresent?: boolean;
+  evaluationCompleteness?: "complete" | "incomplete";
+  soundScore: number | null;
+  identityScore: number | null;
+  consistencyScore: number | null;
+  replayScore: number | null;
   repescagem: string;
   repescagemDisqualified: string;
   repescagemNote: string;
@@ -33,8 +39,26 @@ export type BacklogRecord = {
 };
 
 export type LocalSourcePreview = {
-  version: number;
+  version: number | string | null;
   referenceDate: string;
+  publishedAt?: string | null;
+  lastAttempt?: {
+    status: "running" | "succeeded" | "unchanged" | "failed";
+    startedAt: string;
+    finishedAt: string | null;
+    errorCode: string | null;
+    counts: Record<string, number>;
+    issues: Array<{ code: string; severity: "warning" | "error"; sourceLocator: string; message: string }>;
+  } | null;
+  attemptHistory?: Array<{
+    status: "running" | "succeeded" | "unchanged" | "failed";
+    startedAt: string;
+    finishedAt: string | null;
+    version: string | null;
+    isCurrentPublication: boolean;
+    errorCode: string | null;
+    issueCount: number;
+  }>;
   summary: Record<string, string>;
   albums: AlbumRecord[];
   backlog: BacklogRecord[];

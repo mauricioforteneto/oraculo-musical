@@ -1,6 +1,6 @@
 # Modelo de dados proposto
 
-Modelo lógico, ainda sem migração aplicada. Usar UUIDs internos, instantes `timestamptz`, notas em decimal exato e restrições SQL. Regras são versionadas por temporada; mudança em temporada futura não altera 2026.
+Modelo lógico implementado pelas migrações 0001–0002, ainda sem aplicação validada em banco hospedado. Usar UUIDs internos, instantes `timestamptz`, notas em decimal exato e restrições SQL. Regras são versionadas por temporada; mudança em temporada futura não altera 2026.
 
 ## Entidades e responsabilidades
 
@@ -24,15 +24,17 @@ Modelo lógico, ainda sem migração aplicada. Usar UUIDs internos, instantes `t
 | annual_ranking | Projeção por snapshot, nota original e posição/grupo de empate; distinta de rank informado |
 | top50_projection | Elegibilidade, melhor fase, bônus, índice, posição e pendências; índice e posição distintos |
 | import_issue | Execução, entidade/linha, código, severidade, valor informado e descrição; sem segredos em logs |
-| publication | Ponteiro para snapshot válido e ruleset aplicado; troca atômica na transação |
+| publication | Ponteiro para snapshot válido; troca atômica na transação |
+
+A migração 0002 adiciona snapshots imutáveis por versão, estado corrente de cada identidade (incluindo ausência explícita), ponteiro de publicação e lease por fonte. A sincronização troca o ponteiro e grava os fatos do lote na mesma transação; consultas usam apenas o ponteiro publicado.
 
 Backlog e reescutas terão registros de origem próprios, sem interface de edição. Last.fm usará scrobble e checkpoint separados; não criar avaliação a partir de scrobbles.
 
-## Identidade provisória após auditoria do XLSX
+## Identidade adotada para o MVP após auditoria do XLSX
 
-Não foi observada coluna de ID estável. Proposta: chave de origem por temporada + artista + título + edição, com normalização Unicode NFC e remoção apenas de espaços externos. Preservar acentos, pontuação, caixa e nomes originais; diferenças de edição não são ruído. Não usar rank, seed ou número de linha como chave.
+Não foi observada coluna de ID estável nem coluna própria de edição. Chave de origem: temporada + artista creditado + título recebido + edição explícita somente se uma coluna verificável vier a existir. Normalizar Unicode NFC e remover apenas espaços externos para a chave. Preservar acentos, pontuação, caixa, espaços internos e nomes originais; não usar rank, seed ou número de linha como chave.
 
-Detectar colisões exatas como erro, mesmo se as notas coincidirem. Semelhança por caixa/espaços internos gera alerta, nunca fusão. Se uma versão remove uma identidade e introduz outra, bloquear a publicação para esclarecer possível renomeação; ausência isolada preserva registro e gera alerta. Esta política conservadora evita duplicar álbum renomeado e deve ser revisada com o usuário. Um ID persistente na fonte será preferível, mas o app não o escreverá no Excel.
+Detectar colisões exatas como erro, mesmo se as notas coincidirem. Semelhança por caixa/espaços internos gera alerta, nunca fusão. Se uma versão remove uma identidade e introduz outra, bloquear a publicação para esclarecer possível renomeação; ausência isolada preserva registro e gera alerta. Não inferir uma edição a partir de observações. Se um ID persistente surgir na fonte, adotá-lo exigirá mapeamento auditável das identidades já conhecidas; o app não escreverá no Excel.
 
 ## Notas e alterações
 

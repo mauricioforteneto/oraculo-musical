@@ -1,6 +1,6 @@
 # Integrações e contratos
 
-Implementados login Google via Supabase e módulo de seleção/download do Drive. Testes locais usam respostas sintéticas; nenhuma integração remota foi validada com credenciais da aplicação. A leitura pelo conector confirma descoberta parcial da fonte, não acesso do backend.
+Implementados login Google via Supabase, seleção/download do Drive, parser XLSX e fluxo de publicação PostgreSQL. Verificações locais usam dados ou respostas sintéticas; nenhuma integração remota foi validada com credenciais da aplicação. A leitura pelo conector confirma descoberta parcial da fonte, não acesso do backend.
 
 ## Login Google
 

@@ -1,5 +1,6 @@
 import { Dashboard } from "@/components/dashboard";
 import { getLocalSourcePreview } from "@/lib/catalog/local-preview";
+import { getPublishedSource } from "@/lib/catalog/database";
 import { authConfigured, requireOwner } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -15,11 +16,17 @@ function isLoopbackHost(value: string | null) {
 }
 
 export default async function Home() {
-  const localPreview = process.env.NODE_ENV === "development"
+  const usingPreview = process.env.NODE_ENV === "development" && !process.env.DATABASE_READ_URL;
+  const localPreview = usingPreview
     && !authConfigured()
     && isLoopbackHost((await headers()).get("host"));
 
   if (!localPreview) await requireOwner();
-  const source = await getLocalSourcePreview();
-  return <Dashboard source={source} />;
+  const source = usingPreview
+    ? await getLocalSourcePreview()
+    : process.env.DATABASE_READ_URL ? await getPublishedSource(Number(process.env.SOURCE_SEASON ?? "2026"), process.env.GOOGLE_DRIVE_FOLDER_ID ?? "") : null;
+  const syncReady = !usingPreview && authConfigured()
+    && Boolean(process.env.DATABASE_READ_URL && process.env.DATABASE_SYNC_URL && process.env.GOOGLE_DRIVE_FOLDER_ID
+      && process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
+  return <Dashboard source={source} syncReady={syncReady} localPreview={usingPreview} />;
 }

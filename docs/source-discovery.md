@@ -42,4 +42,4 @@ Os três primeiros grupos são colunas da mesma aba `Albuns 2026`.
 
 ## Contrato de mapeamento e pendências
 
-Não foi encontrada chave estável de álbum; o contrato provisório de identidade permanece temporada + artista + título + edição, sujeito a colisões e validação. Validar datas, revisões e justificativas, além das divergências de participação e bônus, antes de fechar o parser de produção. A integração do Drive deve obter a fonte privada sem torná-la pública e validar uma revisão nova antes de publicar.
+Não foi encontrada chave estável de álbum nem coluna própria de edição. Para o MVP, foi adotada a identidade por temporada + artista + título exato, conforme [decisions.md](decisions.md); se surgir ID persistente, será necessário mapear as identidades antigas. O parser local aceita as colunas observadas e pilares estruturados opcionais, mas não extrai pilares de texto livre. Datas, revisões e justificativas seguem sem contrato. O acesso real do backend ao Drive e a publicação ainda aguardam configuração e ensaio.

@@ -1,6 +1,6 @@
 # Especificação do produto
 
-Status: proposta técnica para revisão, em 27/09/2026. As decisões de produto já confirmadas estão em [decisions.md](decisions.md). O mapeamento inicial foi conferido na cópia local v80; o parser de produção ainda depende de contrato de identidade, validação das divergências e acesso privado pelo backend.
+Status: especificação do MVP revisada em 28/09/2026. Decisões técnicas adotadas e regras competitivas ainda pendentes estão em [decisions.md](decisions.md). O mapeamento inicial foi conferido na cópia local v80; parser de produção, publicação no banco e acesso privado pelo backend ainda não foram validados em conjunto.
 
 ## Objetivo e limites
 
@@ -24,9 +24,9 @@ Interface em português, datas em America/Sao_Paulo; instantes armazenados em UT
 
 Ordenar por nota original decrescente. Nunca usar `Nota` promovida, seed, índice Top 50 ou score competitivo como nota anual. Comparar o resultado com o rank informado na fonte e reportar diferenças.
 
-Empates de nota recebem a mesma posição por competição (exemplo fictício: 90, 90, 88 → 1, 1, 3), proposta técnica provisória sujeita à revisão. Ordenação alfabética de artista/álbum dentro do grupo serve somente à apresentação e não desempata competição. Ranking anual residual permanece bloqueado até decisão P07. Nenhum seed é calculado usando esse fallback.
+Empates de nota recebem a mesma posição por competição (exemplo fictício: 90, 90, 88 → 1, 1, 3). Ordenação alfabética de artista/álbum dentro do grupo serve somente à apresentação e não desempata competição. Ranking anual residual para o Top 50 permanece bloqueado até decisão P07. Nenhum seed é calculado usando esse fallback.
 
-Registros legados com total original válido e sem todos os pilares podem entrar no ranking, marcados como avaliação incompleta. Não distribuir o total artificialmente entre os pilares. Para novas avaliações com quatro pilares, validar soma e limites; para registros que continuem sem pilares, importar total com alerta de incompletude, sem afirmar validação da soma.
+Registros com total original válido e sem todos os pilares podem entrar no ranking, marcados como avaliação incompleta. Não distribuir o total artificialmente entre os pilares. Quando os quatro pilares estiverem presentes, validar limites e soma; para registros sem o conjunto completo, manter os valores ausentes como nulos e sinalizar que a soma não foi validada.
 
 ## Publicação da importação
 
