@@ -1,5 +1,9 @@
 # Decisões e pendências
 
+## Adendo aprovado para a entrega de 2026 (28/09/2026)
+
+As decisões explícitas mais recentes para esta entrega substituem as propostas pendentes abaixo onde houver conflito: corte exclusivo em `2026-10-01T03:00:00Z`; maior versão numérica do XLSX ainda no Drive modificada antes do corte; seeds da fonte são autoritativos, e ordem por rota/nota apenas indica divergências; 24–32 participantes, com `32−N` byes e `N−16` jogos; único reseeding depois da primeira rodada e distribuição A=1×16, B=8×9, C=4×13, D=5×12, E=2×15, F=7×10, G=3×14, H=6×11. Top 50 reserva 1–N sem ordem final e projeta N+1–50 por original e maior bônus comprovado (+6 Pré-playoff, +3 Play-in, +1 Repescagem, +0 sem fase); entradas posteriores ao corte concorrem só no residual, com 79+ se sem fase. Empate irredutível na última vaga exige decisão manual. Revisões não mudam cálculos de 2026; álbuns avaliados no ano contam independentemente de lançamento ou formato. Eliminados na mesma rodada serão ordenados por seed original, sem terceiro lugar. Snapshot real exige confirmação explícita do dono após backup restaurável; correção anterior à primeira partida exige nova versão, justificativa, comparação e declaração de elegibilidade no corte. Resultados /20, Late Challenger, médias/projeções anuais e algoritmo geral de fases históricas continuam pendentes.
+
 Revisado em 28/09/2026. “Confirmado” significa instrução explícita do usuário. “Adotado para o MVP” registra uma escolha técnica feita na revisão do backlog; não autoriza provisionamento de serviços nem resolve regra competitiva. A descoberta da planilha, por si só, não aprova decisões.
 
 ## Confirmados

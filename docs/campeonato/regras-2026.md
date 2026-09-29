@@ -1,5 +1,7 @@
 # Regulamento do campeonato de 2026
 
+**Adendo aprovado em 28/09/2026:** para o congelamento e a projeção provisória de 2026, aplicar as decisões em [decisions.md](../decisions.md). A reserva do Top 50 é 1–N (N entre 24 e 32); a incompatibilidade histórica descrita na seção 13 foi resolvida para esta entrega. As posições dos participantes e os resultados dependem das partidas reais.
+
 Texto dos 22 tópicos fornecidos pelo usuário, preservado sem resolver ambiguidades. Referência: 27/09/2026. Fuso: America/Sao_Paulo.
 
 **Nota de escopo posterior:** o aplicativo é somente leitura. A escrita/versionamento da planilha no tópico 21 descreve contexto externo, não funcionalidade autorizada do aplicativo. Propostas e conflitos estão em [decisions.md](../decisions.md). Temporadas futuras não alteram retroativamente 2026.

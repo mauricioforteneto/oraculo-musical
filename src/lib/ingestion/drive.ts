@@ -72,7 +72,7 @@ export class DriveReader {
     throw new SourceError("DRIVE_UNAVAILABLE");
   }
 
-  async latest(folder: string, season: number): Promise<Candidate> {
+  async latest(folder: string, season: number, modifiedBefore?: string, modifiedFrom?: string): Promise<Candidate> {
     if (!/^[a-zA-Z0-9_-]+$/.test(folder)) throw new SourceError("INVALID_FOLDER");
     const files: DriveFile[] = [], seen = new Set<string>(), ids = new Set<string>();
     let pageToken: string | undefined;
@@ -89,7 +89,9 @@ export class DriveReader {
         if (ids.has(file.id)) throw new SourceError("UNSTABLE_DRIVE_LIST");
         ids.add(file.id); files.push(file);
       }
-      if (!body.nextPageToken) return selectCandidate(files, season, folder);
+      if (!body.nextPageToken) return selectCandidate(files.filter(file =>
+        (!modifiedBefore || Date.parse(file.modifiedTime) < Date.parse(modifiedBefore)) &&
+        (!modifiedFrom || Date.parse(file.modifiedTime) >= Date.parse(modifiedFrom))), season, folder);
       if (typeof body.nextPageToken !== "string" || seen.has(body.nextPageToken)) throw new SourceError("INVALID_DRIVE_PAGINATION");
       pageToken = body.nextPageToken; seen.add(pageToken!);
     }

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import {
   AlertTriangle,
   ArrowDownRight,
-  ArrowUpRight,
   AudioLines,
   ChevronRight,
   CircleHelp,
@@ -23,6 +22,8 @@ import type { AlbumRecord, LocalSourcePreview } from "@/lib/catalog/types";
 import { rankAnnualAlbums, recordKey, type RankedAlbum } from "@/lib/catalog/ranking";
 import { parseSummaryNumber } from "@/lib/catalog/summary";
 import styles from "./dashboard.module.css";
+import { CompetitionPanel } from "./competition-panel";
+import type { getCompetitionState } from "@/lib/competition/service";
 
 type ScoreFilter = "all" | "90" | "80" | "70";
 
@@ -64,7 +65,7 @@ function scoreDifference(a: AlbumRecord) {
   return a.reportedScore !== null && a.originalScore !== null && a.reportedScore !== a.originalScore;
 }
 
-export function Dashboard({ source, syncReady, localPreview }: { source: LocalSourcePreview | null; syncReady: boolean; localPreview: boolean }) {
+export function Dashboard({ source, syncReady, localPreview, competition }: { source: LocalSourcePreview | null; syncReady: boolean; localPreview: boolean; competition: Awaited<ReturnType<typeof getCompetitionState>> | null }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ScoreFilter>("all");
@@ -181,8 +182,8 @@ export function Dashboard({ source, syncReady, localPreview }: { source: LocalSo
 
         <div className={styles.navCaption + " " + styles.navCaptionSpaced}>TEMPORADA</div>
         <nav className={styles.navigation} aria-label="Seções da temporada">
-          <a className={styles.navItem} href="#top-50"><Trophy size={17} aria-hidden="true" />Top 50 <span className={styles.pendingDot}>Pendente</span></a>
-          <span className={styles.navItem + " " + styles.navDisabled}><Sparkles size={17} aria-hidden="true" />Chaveamento <span className={styles.lockLabel}>em revisão</span></span>
+          <a className={styles.navItem} href="#top-50"><Trophy size={17} aria-hidden="true" />Top 50 <span className={styles.pendingDot}>Provisório</span></a>
+          <a className={styles.navItem} href="#chaveamento"><Sparkles size={17} aria-hidden="true" />Chaveamento</a>
         </nav>
 
         <div className={styles.sidebarBottom}>
@@ -336,14 +337,7 @@ export function Dashboard({ source, syncReady, localPreview }: { source: LocalSo
               <p className={styles.readOnlyNote}><LockKeyhole size={13} aria-hidden="true" />O backlog é exibido como está na planilha.</p>
             </div>
 
-            <div className={styles.pendingCard} id="top-50">
-              <div className={styles.pendingTop}><div className={styles.pendingIcon}><Trophy size={18} aria-hidden="true" /></div><span className={styles.pendingPill}>EM REVISÃO</span></div>
-              <div className={styles.cardEyebrow}>TEMPORADA 2026</div>
-              <h2>Top 50 e campeonato</h2>
-              <p>Os campos competitivos da planilha estão disponíveis no detalhe de cada álbum como registros da fonte. Posições e resultados oficiais dependem das regras pendentes.</p>
-              {sourceTop50Positions > 0 && <div className={styles.sourcePositionCount}><strong>{sourceTop50Positions}</strong><span>posições provisórias registradas {localPreview ? "na prévia local" : "na versão publicada"}</span></div>}
-              <a href="#acervo" className={styles.textLink}>Examinar os registros <ArrowUpRight size={15} aria-hidden="true" /></a>
-            </div>
+            <CompetitionPanel state={competition} ready={syncReady} sourceTop50Positions={sourceTop50Positions} />
           </section>
 
           <footer className={styles.footer}>

@@ -1,5 +1,7 @@
 # Backlog e critérios de aceite
 
+Atualização da entrega competitiva em 28/09/2026: prévia privada do arquivo de corte, validação de participantes/seeds, chave da primeira rodada, espaços condicionais das oitavas e projeção residual do Top 50 implementados. As migrações 0003/0004 adicionam snapshots imutáveis de participantes, ponteiro ativo e declarações auditáveis; foram aplicadas no Supabase, cada uma após nova cópia GPG criptografada. A leitura hospedada confirmou zero snapshots ativos e papel leitor sem permissão de inserção. A confirmação exige corte atingido, nova leitura/hash do XLSX e declaração de backup restaurável; essa declaração é do proprietário, não uma verificação automática da restauração naquele momento. Correções exigem XLSX posterior ao corte, versão superior, justificativa, comparação auditável e declarações de elegibilidade e ausência de primeira partida. Testes fictícios, integração PostgreSQL isolada, build, lint e tipos passaram. A leitura privada atual aponta 24 participantes e uma divergência de Repescagem sem posição provisória. Resultados de partidas, posições finais, Late Challenger, médias/projeções anuais e reprodução geral das fases históricas seguem fora desta entrega. O congelamento real não foi executado: depende do corte e de ação explícita do proprietário. A segunda conta e a pasta de teste no Drive continuam dispensadas e não constam como validadas.
+
 Status inicial em 27/09/2026: documentação e base funcional de acesso implementadas após instrução de avançar. Autenticação real, serviços hospedados e importação ainda não validados.
 
 Validação local em 28/09/2026: login Google do proprietário, conexões SQL segregadas, leitura da pasta privada no Drive e publicação da fonte pessoal em PostgreSQL concluídos. Uma segunda sincronização retornou `unchanged` sem duplicar dados. A URL administrativa foi separada de `.env.local` e movida para `.env.migration.local`, ignorado pelo Git. Os ensaios com outra conta e fonte de teste privada foram dispensados por ora pelo usuário.
@@ -95,6 +97,8 @@ Aceite central: nova avaliação fictícia em fonte de teste privada → botão 
 
 ## Entrega 3 — Top 50 e histórico competitivo
 
+Recorte aprovado para 2026: posições 1–N reservadas sem ordem final; vagas N+1–50 usam a maior fase comprovada, bônus não cumulativo e fonte publicada mais recente. Álbuns após o corte disputam apenas as vagas residuais. Divergências de fase ficam sem posição provisória; empate irredutível na última vaga aguarda decisão manual. Os campos históricos das fases anteriores seguem como evidência, sem algoritmo geral para reexecutar torneios encerrados.
+
 Depende das decisões pertinentes P01/P03/P04/P05/P07/P12/P13/P14. Importar fases encerradas como histórico, preservando evidência; nunca reexecutar a seleção para inventar resultados.
 
 Os campos competitivos da versão publicada estão preservados nos registros da fonte e podem ser consultados no detalhe de cada álbum como evidência provisória. Isso não confirma fases encerradas nem libera projeção oficial; a modelagem de participações e snapshots históricos continua pendente das decisões e da conferência da fonte.
@@ -102,6 +106,8 @@ Os campos competitivos da versão publicada estão preservados nos registros da 
 Testar: bônus máximo e não cumulativo (+1, +3, +6); Repescagem Etapas 1 e 2 ambas +1, Etapa 2 vence desempate; sem fase 79 elegível e 78 inelegível; participantes podem ter original menor; Play-in inteiro /25 e Pré-playoff meios pontos /25; desempates por fase/desempenho/original/residual aprovado. Índice não ordena participantes dos Playoffs. Casos N=24 e N>24 devem respeitar decisão P01; enquanto não resolvida, resultado final indisponível.
 
 ## Entrega 4 — Playoffs e calendário
+
+Recorte aprovado para 2026: seed da planilha governa a rodada inicial; ordem Elite → entrada direta → Pré-playoff e nota original apenas apontam divergências. Campo de 24–32: `32−N` byes, `N−16` jogos entre melhor e pior seed dos que jogam. Após resultados reais, um reseeding único posicionará A–H; até lá as oitavas são espaços condicionais. Snapshot de corte e correções são auditados, sem partidas presumidas pelo calendário.
 
 Depende de P02/P06/P08/P10/P11. Testar todos os N de 24 a 32: byes=32−N, jogos=N−16, exatamente 16 sobreviventes e nenhum participante repetido. N=24 produz 8 byes e pares 9×24 até 16×17; N=25 produz 7 byes e 9 jogos; N=32 não tem bye.
 

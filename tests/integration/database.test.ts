@@ -16,6 +16,9 @@ beforeAll(async () => {
   await db.exec("BEGIN");
   await db.exec(await readFile("db/migrations/0001_foundation.sql", "utf8"));
   await db.exec(await readFile("tests/fixtures/synthetic/foundation.sql", "utf8"));
+  await db.exec(await readFile("db/migrations/0002_source_publication.sql", "utf8"));
+  await db.exec(await readFile("db/migrations/0003_competition_freeze.sql", "utf8"));
+  await db.exec(await readFile("db/migrations/0004_freeze_attestations.sql", "utf8"));
 }, 30000);
 afterAll(async () => { if (db) { await db.exec("ROLLBACK"); await db.close(); } });
 
@@ -54,5 +57,27 @@ describe("permissões reais do banco", () => {
       await expect(db.exec(`UPDATE oraculo.original_evaluations SET ${changes}`)).rejects.toMatchObject({ code: "23514" });
       await db.exec("ROLLBACK TO SAVEPOINT invalid_score");
     }
+  });
+  it("mantém snapshot imutável e troca apenas o ponteiro de forma auditável", async () => {
+    const source = "00000000-0000-4000-8000-000000000001";
+    const first = "00000000-0000-4000-8000-000000000011";
+    const second = "00000000-0000-4000-8000-000000000012";
+    await db.exec("SET LOCAL ROLE oraculo_sync");
+    await db.exec(`INSERT INTO oraculo.competition_freezes
+      (id,source_id,season,drive_file_id,file_name,file_version,drive_revision,modified_at,sha256,cutoff_album_keys,rules_version,parser_version,frozen_by,backup_attested)
+      VALUES ('${first}','${source}',2026,'f1','synthetic-v1.xlsx',1,'1','2026-09-30T23:00:00Z',repeat('a',64),'[]','test','test',gen_random_uuid(),true)`);
+    await db.exec(`INSERT INTO oraculo.competition_freeze_participants
+      (freeze_id,identity_key,artist,title,original_score,route,seed,source_row)
+      VALUES ('${first}','synthetic-identity','Fictional Artist','Fictional Album',90,'elite',1,2)`);
+    await db.exec(`INSERT INTO oraculo.competition_freeze_publications(source_id,freeze_id) VALUES('${source}','${first}')`);
+    await db.exec(`INSERT INTO oraculo.competition_freezes
+      (id,source_id,season,drive_file_id,file_name,file_version,drive_revision,modified_at,sha256,cutoff_album_keys,rules_version,parser_version,frozen_by,supersedes_id,correction_reason,eligibility_attested,backup_attested,no_match_attested)
+      VALUES ('${second}','${source}',2026,'f2','synthetic-v2.xlsx',2,'1','2026-10-01T04:00:00Z',repeat('b',64),'[]','test','test',gen_random_uuid(),'${first}','Correção fictícia auditada',true,true,true)`);
+    await db.exec(`UPDATE oraculo.competition_freeze_publications SET freeze_id='${second}' WHERE source_id='${source}'`);
+    await db.exec("RESET ROLE");
+    await denied("oraculo_sync", `UPDATE oraculo.competition_freezes SET sha256=repeat('c',64) WHERE id='${first}'`);
+    await denied("oraculo_sync", `DELETE FROM oraculo.competition_freeze_participants WHERE freeze_id='${first}'`);
+    await denied("oraculo_reader", `UPDATE oraculo.competition_freeze_publications SET freeze_id='${first}' WHERE source_id='${source}'`);
+    await db.exec(`DO $$ BEGIN IF (SELECT freeze_id FROM oraculo.competition_freeze_publications WHERE source_id='${source}') <> '${second}'::uuid THEN RAISE EXCEPTION 'pointer mismatch'; END IF; END $$`);
   });
 });

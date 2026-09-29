@@ -1,0 +1,27 @@
+.panel { min-width: 0; padding: 18px; border: 1px solid #4d4939; border-radius: 9px; background: #171e18; scroll-margin-top: 18px; }
+.heading { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
+.eyebrow { color: #d9ad7f; font-size: 9px; letter-spacing: .13em; }
+.heading h2 { margin: 7px 0 10px; font: 400 21px Georgia, serif; }
+.badge { color: #dfbd91; border: 1px solid #66513a; border-radius: 4px; padding: 6px; font-size: 8px; white-space: nowrap; }
+.panel p, .panel li, .panel label, .panel summary, .meta span { color: #adb7aa; font-size: 11px; line-height: 1.6; overflow-wrap: anywhere; }
+.panel p { margin: 7px 0 12px; }
+.panel h3 { margin: 0 0 8px; font: 400 17px Georgia, serif; }
+.panel ol, .panel ul { padding-left: 21px; margin: 8px 0; }
+.panel li { padding: 2px 0; }
+.panel summary { cursor: pointer; color: #e0bb8b; }
+.action { margin: 8px 0; padding: 9px 12px; border: 1px solid #a0714b; border-radius: 5px; color: #f3ddc5; background: #493724; cursor: pointer; font-size: 11px; }
+.action:disabled { opacity: .5; cursor: default; }
+.action:focus-visible, .panel summary:focus-visible, .panel textarea:focus-visible, .panel input:focus-visible { outline: 2px solid #e3ad75; outline-offset: 2px; }
+.meta { display: grid; gap: 3px; margin: 12px 0; padding: 10px; border: 1px solid #384235; border-radius: 5px; }
+.meta strong { color: #f1e7d7; font-size: 11px; }
+.preview, .section { margin-top: 13px; padding-top: 12px; border-top: 1px solid #3a4239; }
+.confirm { display: grid; gap: 7px; margin: 10px 0; }
+.confirm label { display: block; }
+.confirm input { margin-right: 7px; }
+.confirm textarea { display: block; width: 100%; min-height: 65px; margin-top: 5px; border: 1px solid #626e60; border-radius: 4px; color: #f0eee5; background: #111713; }
+.bracket { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.bracket strong { color: #e7d5b8; font-size: 11px; }
+.residual { max-height: 380px; overflow: auto; }
+.residual strong { color: #e7bd87; }
+.warning, .feedback { color: #e5b980 !important; }
+@media (max-width: 700px) { .bracket { grid-template-columns: 1fr; } }

@@ -3,6 +3,7 @@ import { getLocalSourcePreview } from "@/lib/catalog/local-preview";
 import { getPublishedSource } from "@/lib/catalog/database";
 import { authConfigured, requireOwner } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getCompetitionState } from "@/lib/competition/service";
 
 export const dynamic = "force-dynamic";
 
@@ -28,5 +29,6 @@ export default async function Home() {
   const syncReady = !usingPreview && authConfigured()
     && Boolean(process.env.DATABASE_READ_URL && process.env.DATABASE_SYNC_URL && process.env.GOOGLE_DRIVE_FOLDER_ID
       && process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
-  return <Dashboard source={source} syncReady={syncReady} localPreview={usingPreview} />;
+  const competition = !usingPreview && source?.version ? await getCompetitionState(source.albums) : null;
+  return <Dashboard source={source} syncReady={syncReady} localPreview={usingPreview} competition={competition} />;
 }
