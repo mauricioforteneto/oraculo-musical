@@ -4,9 +4,8 @@ import type { Pool, PoolClient } from "pg";
 import { databasePool } from "@/lib/db/pool";
 import { configuredDriveReader } from "./google";
 import { SourceError, type Candidate, type DriveReader } from "./drive";
-import { parseSourceWorkbook, WorkbookParseError, type ParsedSourceWorkbook, type WorkbookIssue } from "./workbook";
+import { parseSourceWorkbook, WorkbookParseError, WORKBOOK_PARSER_VERSION, type ParsedSourceWorkbook, type WorkbookIssue } from "./workbook";
 
-const PARSER_VERSION = "2026.1";
 type DownloadedSource = Awaited<ReturnType<DriveReader["download"]>>;
 
 type SourceRow = { id: string; season: number };
@@ -150,6 +149,16 @@ async function insertIssues(client: PoolClient, runId: string, issues: WorkbookI
   }
 }
 
+async function insertPlayoffResults(client: PoolClient, sourceId: string, sourceVersionId: string, parsed: ParsedSourceWorkbook) {
+  for (const [index, result] of parsed.playoffResults.entries()) {
+    await client.query(
+      `INSERT INTO oraculo.source_competition_results(source_id, source_version_id, parser_version, item_order, record)
+       VALUES ($1, $2, $3, $4, $5::jsonb) ON CONFLICT DO NOTHING`,
+      [sourceId, sourceVersionId, WORKBOOK_PARSER_VERSION, index + 1, JSON.stringify(result)],
+    );
+  }
+}
+
 async function finishFailedRun(pool: Pool, sourceId: string, runId: string, token: string, code: string, issues: WorkbookIssue[] = []) {
   const client = await pool.connect();
   try {
@@ -244,6 +253,7 @@ async function publish(
     if (existingVersion && existingVersion.sha256 !== download.sha256) throw new SyncServiceError("SOURCE_VERSION_CONTENT_CONFLICT");
     if (current && BigInt(candidate.sourceVersion) < BigInt(current.version)) throw new SyncServiceError("SOURCE_VERSION_REGRESSION");
     if (current && candidate.sourceVersion === current.version && current.sha256 === download.sha256) {
+      await insertPlayoffResults(client, source.id, current.id, parsed);
       await insertIssues(client, runId, issues);
       await client.query(
         `UPDATE oraculo.sync_runs SET status = 'unchanged', version_id = $2, finished_at = now(), counts = $3::jsonb
@@ -289,9 +299,10 @@ async function publish(
        VALUES ($1, $2::bigint, $3, $4, $5::timestamptz, $6, $7, $8, $9::jsonb)
        RETURNING id`,
       [source.id, candidate.sourceVersion, candidate.file.id, candidate.file.name, candidate.file.modifiedTime,
-        download.sha256, PARSER_VERSION, parsed.referenceDate, JSON.stringify(parsed.summary)],
+        download.sha256, WORKBOOK_PARSER_VERSION, parsed.referenceDate, JSON.stringify(parsed.summary)],
     );
     const sourceVersionId = versionInsert.rows[0].id;
+    await insertPlayoffResults(client, source.id, sourceVersionId, parsed);
 
     const albumIds: string[] = [];
     for (const album of parsed.albums) {

@@ -311,7 +311,7 @@
 .detailEmpty strong { color: #d6ddd4; font: 400 17px Georgia, serif; }
 .detailEmpty span { font-size: 9px; }
 
-.lowerGrid { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(270px, 0.8fr); gap: 13px; margin-top: 29px; }
+.lowerGrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 13px; margin-top: 29px; }
 .backlogCard { padding: 17px 18px 13px; scroll-margin-top: 18px; }
 .backlogCount { padding: 5px 7px; color: #c5ae8e; border: 1px solid #544735; border-radius: 4px; font-size: 8px; }
 .backlogList { display: grid; gap: 0; margin: 12px 0 0; padding: 0; list-style: none; }

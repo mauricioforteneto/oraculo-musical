@@ -1,6 +1,7 @@
 import "server-only";
-import type { BacklogRecord, LocalSourcePreview } from "./types";
+import type { BacklogRecord, LocalSourcePreview, PublishedPlayoffResult } from "./types";
 import { databasePool } from "@/lib/db/pool";
+import { WORKBOOK_PARSER_VERSION } from "@/lib/ingestion/workbook-parser";
 
 type PublishedSourceRow = {
   source_id: string;
@@ -73,7 +74,7 @@ export async function getPublishedSource(season: number, folderId: string): Prom
       )
       : null;
 
-    const [albumRows, backlogRows] = source.source_version_id ? await Promise.all([
+    const [albumRows, backlogRows, playoffResultRows] = source.source_version_id ? await Promise.all([
       client.query<{ record: LocalSourcePreview["albums"][number]; is_present: boolean }>(
         `SELECT st.record, st.is_present
            FROM oraculo.source_album_state st
@@ -88,7 +89,13 @@ export async function getPublishedSource(season: number, folderId: string): Prom
           ORDER BY item_order`,
         [source.source_id, source.source_version_id],
       ),
-    ]) : [{ rows: [] }, { rows: [] }];
+      client.query<{ record: PublishedPlayoffResult }>(
+        `SELECT record FROM oraculo.source_competition_results
+          WHERE source_id = $1 AND source_version_id = $2 AND parser_version = $3
+          ORDER BY item_order`,
+        [source.source_id, source.source_version_id, WORKBOOK_PARSER_VERSION],
+      ),
+    ]) : [{ rows: [] }, { rows: [] }, { rows: [] }];
 
     return {
       version: source.version,
@@ -114,6 +121,7 @@ export async function getPublishedSource(season: number, folderId: string): Prom
       summary: source.summary ?? {},
       albums: albumRows.rows.map(({ record, is_present }) => ({ ...record, isPresent: is_present })),
       backlog: backlogRows.rows.map(({ record }) => record),
+      playoffResults: playoffResultRows.rows.map(({ record }) => record),
     };
   } finally {
     client.release();

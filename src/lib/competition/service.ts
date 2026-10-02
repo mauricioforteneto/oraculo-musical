@@ -2,13 +2,12 @@ import "server-only";
 import { databasePool } from "@/lib/db/pool";
 import { configuredDriveReader } from "@/lib/ingestion/google";
 import { SourceError } from "@/lib/ingestion/drive";
-import { parseSourceWorkbook, WorkbookParseError } from "@/lib/ingestion/workbook";
+import { parseSourceWorkbook, WorkbookParseError, WORKBOOK_PARSER_VERSION } from "@/lib/ingestion/workbook";
 import type { AlbumRecord } from "@/lib/catalog/types";
 import { albumIdentity, buildParticipants, CUTOFF_UTC, firstRound, participantChanges, projectResidualTop50, RULES_VERSION, type Participant } from "./rules";
 import { freezeTokenMatches, type FreezeToken } from "./token";
 export type { FreezeToken } from "./token";
 
-const PARSER_VERSION = "2026.1";
 export class CompetitionError extends Error {
   constructor(public readonly code: string) { super(code); this.name = "CompetitionError"; }
 }
@@ -143,7 +142,7 @@ export async function confirmFreeze(input: { mode: FreezeMode; token: FreezeToke
        rules_version, parser_version, frozen_by, supersedes_id, correction_reason, eligibility_attested, backup_attested, no_match_attested)
       VALUES ($1, $2, $3, $4, $5::bigint, $6, $7, $8, $9::jsonb, $10, $11, $12, $13, $14, $15, $16, $17) RETURNING id`,
       [id, season, candidate.file.id, candidate.file.name, candidate.sourceVersion, candidate.file.version, candidate.file.modifiedTime,
-        downloaded.sha256, JSON.stringify(parsed.albums.map(a => albumIdentity(a))), RULES_VERSION, PARSER_VERSION, userId, activeId,
+        downloaded.sha256, JSON.stringify(parsed.albums.map(a => albumIdentity(a))), RULES_VERSION, WORKBOOK_PARSER_VERSION, userId, activeId,
         input.mode === "correction" ? input.reason!.trim() : null, input.mode === "correction", true, input.mode === "correction"]);
     const freezeId = freeze.rows[0].id;
     for (const p of built.participants) await client.query(`INSERT INTO oraculo.competition_freeze_participants

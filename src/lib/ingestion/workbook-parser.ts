@@ -1,4 +1,4 @@
-import type { AlbumRecord, BacklogRecord } from "../catalog/types";
+import type { AlbumRecord, BacklogRecord, PublishedPlayoffResult } from "../catalog/types";
 
 export type WorkbookIssue = {
   code: string;
@@ -6,6 +6,8 @@ export type WorkbookIssue = {
   sourceLocator: string;
   message: string;
 };
+
+export const WORKBOOK_PARSER_VERSION = "2026.2";
 
 export type WorkbookSheetData = {
   sheet: string;
@@ -21,6 +23,7 @@ export type ParsedSourceWorkbook = {
   summary: Record<string, string>;
   albums: ParsedAlbum[];
   backlog: BacklogRecord[];
+  playoffResults: PublishedPlayoffResult[];
   issues: WorkbookIssue[];
   counts: {
     albumRows: number;
@@ -82,6 +85,17 @@ const BACKLOG_HEADERS: HeaderConfig = {
   },
   required: ["order", "artist", "title", "priority", "source"],
   markers: ["order", "artist", "title"],
+};
+
+const PLAYOFF_RESULT_HEADERS: HeaderConfig = {
+  headers: {
+    seedA: ["seed a"],
+    artistA: ["artista a"],
+    seedB: ["seed b"],
+    artistB: ["artista b"],
+  },
+  required: ["seedA", "artistA", "seedB", "artistB"],
+  markers: ["seedA", "artistA", "seedB", "artistB"],
 };
 
 const EXCEL_ERROR = /^#(?:REF!|DIV\/0!|VALUE!|NAME\?|N\/A|NUM!|NULL!|SPILL!|CALC!)$/i;
@@ -233,6 +247,42 @@ function addSummaryIssues(summary: Record<string, string>, albums: AlbumRecord[]
       issues.push({ code: "SUMMARY_AVERAGE_MISMATCH", severity: "warning", sourceLocator: "Resumo", message: "A média informada no resumo difere da média recalculada das notas da tabela." });
     }
   }
+}
+
+function parsePublishedPlayoffResults(sheets: readonly WorkbookSheetData[], issues: WorkbookIssue[]) {
+  const sheet = sheets.find((candidate) => candidate.sheet === "Playoffs");
+  if (!sheet) return [] as PublishedPlayoffResult[];
+  const header = findHeader(sheet, PLAYOFF_RESULT_HEADERS);
+  if (!header) return [] as PublishedPlayoffResult[];
+
+  const columns = mapHeaders(sheet.sheet, header.rowIndex, header.row, PLAYOFF_RESULT_HEADERS, []);
+  const optionalColumn = (aliases: string[]) => header.row.findIndex((value) => aliases.some((alias) => headerToken(alias) === headerToken(value)));
+  const resultColumn = optionalColumn(["resultado 1ª rodada", "resultado 1a rodada"]);
+  const winnerColumn = optionalColumn(["vencedor"]);
+  const criterionColumn = optionalColumn(["critério", "criterio"]);
+  const results: PublishedPlayoffResult[] = [];
+
+  for (let rowIndex = header.rowIndex + 1; rowIndex < sheet.data.length; rowIndex += 1) {
+    const row = sheet.data[rowIndex];
+    const result = readText(resultColumn < 0 ? undefined : row[resultColumn]);
+    const winner = readText(winnerColumn < 0 ? undefined : row[winnerColumn]);
+    const criterion = readText(criterionColumn < 0 ? undefined : row[criterionColumn]);
+    if (!result && !winner && !criterion) continue;
+
+    const seedAValue = valueAt(row, columns, "seedA");
+    const seedBValue = valueAt(row, columns, "seedB");
+    const seedA = typeof seedAValue === "number" && Number.isInteger(seedAValue) && seedAValue > 0 ? seedAValue : null;
+    const seedB = typeof seedBValue === "number" && Number.isInteger(seedBValue) && seedBValue > 0 ? seedBValue : null;
+    const artistA = readText(valueAt(row, columns, "artistA"));
+    const artistB = readText(valueAt(row, columns, "artistB"));
+    if (seedA === null || seedB === null || seedA === seedB || !artistA || !artistB) {
+      issues.push({ code: "PLAYOFF_RESULT_ROW_INVALID", severity: "warning", sourceLocator: `${sheet.sheet}!${rowIndex + 1}`, message: "Um resultado publicado da primeira rodada não tem dois seeds e artistas válidos; não foi associado a um confronto." });
+      continue;
+    }
+
+    results.push({ seedA, artistA, seedB, artistB, result, winner, criterion, sourceRow: rowIndex + 1 });
+  }
+  return results;
 }
 
 function summaryRecord(sheet?: WorkbookSheetData): Record<string, string> {
@@ -399,6 +449,7 @@ export function parseWorkbookSheets(
 
   const summary = summaryRecord(summarySheet);
   if (summarySheet) addSummaryIssues(summary, albums, backlog, issues);
+  const playoffResults = parsePublishedPlayoffResults(sheets, issues);
   const reportedOriginalDifferences = issues.filter((issue) => issue.code === "REPORTED_ORIGINAL_DIFFERENCE").length;
   const errors = issues.filter((issue) => issue.severity === "error").length;
   const warnings = issues.length - errors;
@@ -411,6 +462,7 @@ export function parseWorkbookSheets(
     summary,
     albums,
     backlog,
+    playoffResults,
     issues,
     counts: {
       albumRows,

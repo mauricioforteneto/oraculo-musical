@@ -38,6 +38,17 @@ export type BacklogRecord = {
   source: string;
 };
 
+export type PublishedPlayoffResult = {
+  seedA: number;
+  artistA: string;
+  seedB: number;
+  artistB: string;
+  result: string;
+  winner: string;
+  criterion: string;
+  sourceRow: number;
+};
+
 export type LocalSourcePreview = {
   version: number | string | null;
   referenceDate: string;
@@ -62,4 +73,5 @@ export type LocalSourcePreview = {
   summary: Record<string, string>;
   albums: AlbumRecord[];
   backlog: BacklogRecord[];
+  playoffResults: PublishedPlayoffResult[];
 };

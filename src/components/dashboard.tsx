@@ -228,6 +228,9 @@ export function Dashboard({ source, syncReady, localPreview, competition }: { so
             </div>
           </section>
 
+          <CompetitionPanel state={competition} ready={syncReady} sourceTop50Positions={sourceTop50Positions}
+            playoffResults={source?.playoffResults ?? []} resultsVersion={latestVersion} />
+
           {showSyncReport && <section className={styles.syncReport} aria-labelledby="sync-report-title">
             <div className={styles.alertIcon}><AlertTriangle size={18} aria-hidden="true" /></div>
             <div className={styles.alertCopy}>
@@ -337,7 +340,6 @@ export function Dashboard({ source, syncReady, localPreview, competition }: { so
               <p className={styles.readOnlyNote}><LockKeyhole size={13} aria-hidden="true" />O backlog é exibido como está na planilha.</p>
             </div>
 
-            <CompetitionPanel state={competition} ready={syncReady} sourceTop50Positions={sourceTop50Positions} />
           </section>
 
           <footer className={styles.footer}>

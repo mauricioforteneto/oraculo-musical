@@ -38,3 +38,4 @@ export async function parseSourceWorkbook(
 }
 
 export type { ParsedAlbum, ParsedSourceWorkbook, WorkbookIssue, WorkbookSheetData } from "./workbook-parser";
+export { WORKBOOK_PARSER_VERSION } from "./workbook-parser";

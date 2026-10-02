@@ -1,7 +1,7 @@
 import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { AlbumRecord, BacklogRecord, LocalSourcePreview } from "./types";
+import type { AlbumRecord, BacklogRecord, LocalSourcePreview, PublishedPlayoffResult } from "./types";
 
 const text = (value: unknown) => typeof value === "string" ? value : "";
 const number = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -63,6 +63,18 @@ function backlogRecord(value: unknown): BacklogRecord | null {
   return { order, artist, title, priority: text(item.priority), source: text(item.source) };
 }
 
+function playoffResult(value: unknown): PublishedPlayoffResult | null {
+  if (!value || typeof value !== "object") return null;
+  const item = value as Record<string, unknown>;
+  const seedA = number(item.seedA);
+  const seedB = number(item.seedB);
+  const sourceRow = number(item.sourceRow);
+  const artistA = text(item.artistA).trim();
+  const artistB = text(item.artistB).trim();
+  if (seedA === null || seedB === null || sourceRow === null || !artistA || !artistB) return null;
+  return { seedA, artistA, seedB, artistB, result: text(item.result), winner: text(item.winner), criterion: text(item.criterion), sourceRow };
+}
+
 export async function getLocalSourcePreview(): Promise<LocalSourcePreview | null> {
   // The workbook copy is a development-only preview. Production reads from the database.
   if (process.env.NODE_ENV === "production") return null;
@@ -80,6 +92,7 @@ export async function getLocalSourcePreview(): Promise<LocalSourcePreview | null
   const data = parsed as Record<string, unknown>;
   const albums = Array.isArray(data.albums) ? data.albums.map(albumRecord).filter((item): item is AlbumRecord => item !== null) : [];
   const backlog = Array.isArray(data.backlog) ? data.backlog.map(backlogRecord).filter((item): item is BacklogRecord => item !== null) : [];
+  const playoffResults = Array.isArray(data.playoffResults) ? data.playoffResults.map(playoffResult).filter((item): item is PublishedPlayoffResult => item !== null) : [];
   const summary = data.summary && typeof data.summary === "object" ? data.summary as Record<string, unknown> : {};
 
   return {
@@ -88,5 +101,6 @@ export async function getLocalSourcePreview(): Promise<LocalSourcePreview | null
     summary: Object.fromEntries(Object.entries(summary).map(([key, value]) => [key, text(value)])),
     albums,
     backlog,
+    playoffResults,
   };
 }
