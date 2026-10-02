@@ -6,6 +6,7 @@ import { ArrowDown, ArrowUpRight, Disc3, LockKeyhole, Radio, Sparkles, Trophy } 
 import type { getCompetitionState, previewFreeze, FreezeMode } from "@/lib/competition/service";
 import type { PublishedPlayoffResult } from "@/lib/catalog/types";
 import type { Bracket, Participant } from "@/lib/competition/rules";
+import type { CompetitionPhaseHistory, HistoricalPhase, PhaseHistoryEntry } from "@/lib/competition/history";
 import styles from "./competition-panel.module.css";
 
 type State = Awaited<ReturnType<typeof getCompetitionState>>;
@@ -23,12 +24,23 @@ function resultForMatch(high: Participant, low: Participant, results: PublishedP
   return matches.length === 1 ? matches[0] : null;
 }
 
-export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffResults, resultsVersion }: {
+const HISTORICAL_PHASES: { id: HistoricalPhase; label: string; caption: string }[] = [
+  { id: "preplayoff", label: "Pré-playoff", caption: "Última seleção antes da chave" },
+  { id: "playin", label: "Play-in", caption: "Disputa pelas vagas seguintes" },
+  { id: "repescagem", label: "Repescagem", caption: "Registros mencionados na fonte" },
+];
+
+function phaseScore(score: number | null) {
+  return score === null ? "—" : score.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
+}
+
+export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffResults, resultsVersion, history }: {
   state: State | null;
   ready: boolean;
   sourceTop50Positions: number;
   playoffResults: PublishedPlayoffResult[];
   resultsVersion: string | null;
+  history: CompetitionPhaseHistory | null;
 }) {
   const router = useRouter();
   const [preview, setPreview] = useState<Preview | null>(null);
@@ -38,6 +50,7 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
   const [eligibility, setEligibility] = useState(false);
   const [noMatch, setNoMatch] = useState(false);
   const [reason, setReason] = useState("");
+  const [selectedHistoricalPhase, setSelectedHistoricalPhase] = useState<HistoricalPhase>("preplayoff");
   const mode: FreezeMode = state?.active ? "correction" : "initial";
 
   async function loadPreview(selectedMode: FreezeMode) {
@@ -84,6 +97,8 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
   const reserved = projection?.reserved ?? participants.length;
   const firstRoundStatus = active ? "CHAVE CONGELADA" : draft ? "PRÉVIA DO CORTE" : "CHAVE A PUBLICAR";
   const publishedMatchCount = bracket?.matches.filter(match => resultForMatch(match.high, match.low, playoffResults) !== null).length ?? 0;
+  const historicalEntries = history?.entries.filter(entry => entry.phase === selectedHistoricalPhase)
+    .sort((a, b) => (b.latest.score ?? -1) - (a.latest.score ?? -1) || a.artist.localeCompare(b.artist, "pt-BR")) ?? [];
 
   return <section className={styles.panel} id="top-50" aria-labelledby="competition-title">
     <div className={styles.hero}>
@@ -190,6 +205,24 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
     </section>}
     {!projection && sourceTop50Positions > 0 && <p className={styles.pendingProjection}>{sourceTop50Positions} posições informadas pela fonte aguardam a projeção calculada.</p>}
 
+    {history && <section className={styles.historySection} id="historico-competitivo" aria-labelledby="historical-title">
+      <div className={styles.sectionHeading}>
+        <div><span className={styles.sectionKicker}>CAMINHOS ATÉ OS PLAYOFFS</span><h3 id="historical-title">Histórico das fases</h3></div>
+        <span className={styles.sectionCount}>FONTE V{history.sourceVersion}</span>
+      </div>
+      <p className={styles.historyIntro}>Scores e resultados como registrados na planilha. A versão indica quando o app observou cada informação, sem atribuir data à partida.</p>
+      <div className={styles.phaseSelector} role="group" aria-label="Filtrar histórico por fase">
+        {HISTORICAL_PHASES.map(phase => <button key={phase.id} type="button"
+          className={selectedHistoricalPhase === phase.id ? styles.phaseSelected : styles.phaseButton}
+          aria-pressed={selectedHistoricalPhase === phase.id} onClick={() => setSelectedHistoricalPhase(phase.id)}>
+          <strong>{phase.label}</strong><span>{history.entries.filter(entry => entry.phase === phase.id).length} registros</span><small>{phase.caption}</small>
+        </button>)}
+      </div>
+      {historicalEntries.length > 0 ? <div className={styles.phaseHistoryGrid}>
+        {historicalEntries.map(entry => <HistoricalPhaseCard key={entry.identityKey + entry.phase} entry={entry} currentVersion={history.sourceVersion} />)}
+      </div> : <p className={styles.historyEmpty}>Nenhum registro desta fase nas versões publicadas.</p>}
+    </section>}
+
     {participants.length > 0 && <details className={styles.details}>
       <summary>{active ? "Elenco e seeds congelados" : "Participantes e seeds da prévia"} ({participants.length})</summary><div className={styles.participantGrid}>{participants.map(p => <div key={p.identityKey}>
         <span>#{p.seed}</span><strong>{p.artist}</strong><small>{p.title} · {routeLabel(p.route)} · nota {p.originalScore}</small>
@@ -225,6 +258,26 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
       </div>
     </details>
   </section>;
+}
+
+function HistoricalPhaseCard({ entry, currentVersion }: { entry: PhaseHistoryEntry; currentVersion: string }) {
+  return <article className={styles.phaseHistoryCard}>
+    <div className={styles.phaseHistoryTop}><span>{entry.current ? `REGISTRADO NA V${currentVersion}` : `ÚLTIMA EVIDÊNCIA V${entry.lastSeenVersion}`}</span>
+      <strong>{entry.phase === "repescagem" ? "REGISTRO" : entry.latest.score === null ? "SEM SCORE" : `${phaseScore(entry.latest.score)} / 25`}</strong></div>
+    <div className={styles.phaseHistoryIdentity}><strong>{entry.artist}</strong><span>{entry.title}</span></div>
+    <p className={styles.phaseHistoryResult}>{entry.latest.result || "Resultado não informado na fonte"}</p>
+    {entry.latest.detail && <p className={styles.phaseHistoryDetail}>{entry.latest.detail}</p>}
+    <div className={styles.phaseHistorySource}>Álbuns 2026 · linha {entry.latest.sourceRow} · primeira evidência v{entry.firstSeenVersion}</div>
+    {!entry.current && <p className={styles.phaseHistoryStale}>Esta fase não consta na v{currentVersion} publicada.</p>}
+    {entry.revisions.length > 1 && <details className={styles.phaseHistoryRevisions}>
+      <summary>Ver alterações observadas ({entry.revisions.length})</summary>
+      <ol>{entry.revisions.map((revision, index) => <li key={revision.version + "-" + index}>
+        <strong>v{revision.version} · linha {revision.sourceRow}</strong>
+        <span>{revision.score === null ? "Sem score" : `${phaseScore(revision.score)} / 25`}{revision.result ? ` · ${revision.result}` : ""}</span>
+        {revision.detail && <small>{revision.detail}</small>}
+      </li>)}</ol>
+    </details>}
+  </article>;
 }
 
 function MatchCard({ high, low, index, result, resultsVersion }: {

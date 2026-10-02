@@ -1,5 +1,22 @@
 # Backlog e critérios de aceite
 
+## Estado atual — 02/10/2026
+
+O corte de 30/09 seleciona a v82 para participantes e seeds porque v83 e v84 foram modificadas após o horário de corte. A interface separa os dois papéis: a chave usa a fonte de corte; o resultado de partida vem da versão sincronizada. A leitura do banco em 02/10 confirmou v84 como publicação atual, um resultado de playoff armazenado e o snapshot v82 ativo. Os registros imutáveis de álbuns estão nas versões importadas v81 (120 linhas) e v84 (122 linhas); a v84 contém 29 evidências de Repescagem, 16 de Play-in e 14 de Pré-playoff. A planilha v82 de corte é lida diretamente do Drive para o snapshot, sem exigir publicação no catálogo.
+
+### Próximos itens, em ordem
+
+- [x] Mostrar primeira rodada, byes, oitavas condicionais e projeção residual do Top 50 em um painel visual.
+- [x] Ler resultados publicados da aba `Playoffs` sem trocar participantes ou seeds do corte; associar cada resultado por seeds e artistas e exibir versão/linha da fonte.
+- [x] Criar visão de histórico da Repescagem, Play-in e Pré-playoff a partir dos registros imutáveis por versão já armazenados em `source_album_records`. Exibir score, resultado literal, versão da primeira evidência, versão atual/última evidência e alterações observadas. Implementado localmente nesta atualização; a consulta de leitura confirmou que há registros nas três fases, mas a renderização no navegador ainda não foi conferida.
+- [x] Auditar a divergência de Repescagem da v84. A linha 52 informa fase e bônus de Repescagem, mas a observação afirma que a avaliação ocorreu após o fechamento da fase e ficou fora da pós-temporada; a mesma combinação já constava na v81. O app mantém o registro sem posição provisória.
+- [ ] Resolver a contradição desse registro na planilha ou por decisão explícita documentada. Conferir se o bônus e a indicação de fase devem permanecer; nenhuma interpretação automática pode substituí-los sem evidência.
+- [ ] Fechar as regras ainda necessárias para posições definitivas dos participantes e empate na última vaga residual, incluindo comparabilidade de desempenho entre eliminados da mesma rodada e critérios que a fonte não resolve. Registrar adendo datado em [decisions.md](decisions.md) antes de calcular posições finais.
+- [ ] Consolidar Top 50 definitivo quando resultados e regras estiverem completos; manter 1–N reservados até conhecer a ordem final dos participantes.
+- [ ] Evoluir a chave conforme novos resultados publicados: identificar vencedores com segurança, completar a primeira rodada e fazer o único reseeding antes das oitavas. Não inferir vencedor de texto ambíguo.
+
+P01, P02, P04, P08, P10, P12 e P14 tiveram seu recorte de 2026 definido pelo adendo aprovado em [decisions.md](decisions.md); a matriz antiga abaixo continua como registro das propostas originais e não deve ser lida como bloqueio integral dessas partes. Resultados /20, Late Challenger, médias/projeções anuais e reprodução algorítmica de todas as fases históricas continuam fora do recorte confirmado.
+
 Atualização da entrega competitiva em 28/09/2026: prévia privada do arquivo de corte, validação de participantes/seeds, chave da primeira rodada, espaços condicionais das oitavas e projeção residual do Top 50 implementados. As migrações 0003/0004 adicionam snapshots imutáveis de participantes, ponteiro ativo e declarações auditáveis; foram aplicadas no Supabase, cada uma após nova cópia GPG criptografada. A leitura hospedada confirmou zero snapshots ativos e papel leitor sem permissão de inserção. A confirmação exige corte atingido, nova leitura/hash do XLSX e declaração de backup restaurável; essa declaração é do proprietário, não uma verificação automática da restauração naquele momento. Correções exigem XLSX posterior ao corte, versão superior, justificativa, comparação auditável e declarações de elegibilidade e ausência de primeira partida. Testes fictícios, integração PostgreSQL isolada, build, lint e tipos passaram. A leitura privada atual aponta 24 participantes e uma divergência de Repescagem sem posição provisória. Resultados de partidas, posições finais, Late Challenger, médias/projeções anuais e reprodução geral das fases históricas seguem fora desta entrega. O congelamento real não foi executado: depende do corte e de ação explícita do proprietário. A segunda conta e a pasta de teste no Drive continuam dispensadas e não constam como validadas.
 
 Status inicial em 27/09/2026: documentação e base funcional de acesso implementadas após instrução de avançar. Autenticação real, serviços hospedados e importação ainda não validados.
@@ -99,9 +116,9 @@ Aceite central: nova avaliação fictícia em fonte de teste privada → botão 
 
 Recorte aprovado para 2026: posições 1–N reservadas sem ordem final; vagas N+1–50 usam a maior fase comprovada, bônus não cumulativo e fonte publicada mais recente. Álbuns após o corte disputam apenas as vagas residuais. Divergências de fase ficam sem posição provisória; empate irredutível na última vaga aguarda decisão manual. Os campos históricos das fases anteriores seguem como evidência, sem algoritmo geral para reexecutar torneios encerrados.
 
-Depende das decisões pertinentes P01/P03/P04/P05/P07/P12/P13/P14. Importar fases encerradas como histórico, preservando evidência; nunca reexecutar a seleção para inventar resultados.
+O recorte de 2026 para reserva de vagas, revisões e elegibilidade posterior ao corte está aprovado no adendo de [decisions.md](decisions.md). Ainda faltam critérios para posições finais dos participantes, empate irredutível na vaga residual e métricas anuais oficiais. O histórico de fases exibe evidências por versão publicada; seleção histórica não é reexecutada para inventar resultados.
 
-Os campos competitivos da versão publicada estão preservados nos registros da fonte e podem ser consultados no detalhe de cada álbum como evidência provisória. Isso não confirma fases encerradas nem libera projeção oficial; a modelagem de participações e snapshots históricos continua pendente das decisões e da conferência da fonte.
+Os campos competitivos da versão publicada estão preservados no detalhe de cada álbum. A nova visão reúne evidências das três fases encerradas e suas alterações observadas entre versões publicadas, reutilizando `source_album_records`; não atribui data real à partida nem recalcula classificados históricos. A conferência das divergências da fonte e os critérios para posições finais continuam pendentes.
 
 Testar: bônus máximo e não cumulativo (+1, +3, +6); Repescagem Etapas 1 e 2 ambas +1, Etapa 2 vence desempate; sem fase 79 elegível e 78 inelegível; participantes podem ter original menor; Play-in inteiro /25 e Pré-playoff meios pontos /25; desempates por fase/desempenho/original/residual aprovado. Índice não ordena participantes dos Playoffs. Casos N=24 e N>24 devem respeitar decisão P01; enquanto não resolvida, resultado final indisponível.
 
@@ -109,7 +126,7 @@ Testar: bônus máximo e não cumulativo (+1, +3, +6); Repescagem Etapas 1 e 2 a
 
 Recorte aprovado para 2026: seed da planilha governa a rodada inicial; ordem Elite → entrada direta → Pré-playoff e nota original apenas apontam divergências. Campo de 24–32: `32−N` byes, `N−16` jogos entre melhor e pior seed dos que jogam. Após resultados reais, um reseeding único posicionará A–H; até lá as oitavas são espaços condicionais. Snapshot de corte e correções são auditados, sem partidas presumidas pelo calendário.
 
-Depende de P02/P06/P08/P10/P11. Testar todos os N de 24 a 32: byes=32−N, jogos=N−16, exatamente 16 sobreviventes e nenhum participante repetido. N=24 produz 8 byes e pares 9×24 até 16×17; N=25 produz 7 byes e 9 jogos; N=32 não tem bye.
+Seeds da fonte, corte e distribuição A–H foram aprovados para 2026. Fora do intervalo de 24 a 32 participantes, a chave continua bloqueada para decisão. Incrementos de notas de confronto ainda exigem regra própria; os resultados publicados são exibidos como fatos da fonte. Conferir todos os N de 24 a 32: byes=32−N, jogos=N−16, exatamente 16 sobreviventes e nenhum participante repetido. N=24 produz 8 byes e pares 9×24 até 16×17; N=25 produz 7 byes e 9 jogos; N=32 não tem bye.
 
 Testar: 85+ no prazo pode entrar; 84 não entra em fase encerrada; 90+ é Elite e Playoff direto; nenhum classificado é expulso. Após corte, não entrar automaticamente. Congelamento cria snapshot imutável e ajuste de calendário não inventa partida realizada.
 

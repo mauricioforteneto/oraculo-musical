@@ -24,6 +24,7 @@ import { parseSummaryNumber } from "@/lib/catalog/summary";
 import styles from "./dashboard.module.css";
 import { CompetitionPanel } from "./competition-panel";
 import type { getCompetitionState } from "@/lib/competition/service";
+import type { CompetitionPhaseHistory } from "@/lib/competition/history";
 
 type ScoreFilter = "all" | "90" | "80" | "70";
 
@@ -65,7 +66,7 @@ function scoreDifference(a: AlbumRecord) {
   return a.reportedScore !== null && a.originalScore !== null && a.reportedScore !== a.originalScore;
 }
 
-export function Dashboard({ source, syncReady, localPreview, competition }: { source: LocalSourcePreview | null; syncReady: boolean; localPreview: boolean; competition: Awaited<ReturnType<typeof getCompetitionState>> | null }) {
+export function Dashboard({ source, syncReady, localPreview, competition, competitionHistory }: { source: LocalSourcePreview | null; syncReady: boolean; localPreview: boolean; competition: Awaited<ReturnType<typeof getCompetitionState>> | null; competitionHistory: CompetitionPhaseHistory | null }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<ScoreFilter>("all");
@@ -184,6 +185,7 @@ export function Dashboard({ source, syncReady, localPreview, competition }: { so
         <nav className={styles.navigation} aria-label="Seções da temporada">
           <a className={styles.navItem} href="#top-50"><Trophy size={17} aria-hidden="true" />Top 50 <span className={styles.pendingDot}>Provisório</span></a>
           <a className={styles.navItem} href="#chaveamento"><Sparkles size={17} aria-hidden="true" />Chaveamento</a>
+          <a className={styles.navItem} href="#historico-competitivo"><Trophy size={17} aria-hidden="true" />Histórico das fases</a>
         </nav>
 
         <div className={styles.sidebarBottom}>
@@ -228,7 +230,7 @@ export function Dashboard({ source, syncReady, localPreview, competition }: { so
             </div>
           </section>
 
-          <CompetitionPanel state={competition} ready={syncReady} sourceTop50Positions={sourceTop50Positions}
+          <CompetitionPanel state={competition} ready={syncReady} sourceTop50Positions={sourceTop50Positions} history={competitionHistory}
             playoffResults={source?.playoffResults ?? []} resultsVersion={latestVersion} />
 
           {showSyncReport && <section className={styles.syncReport} aria-labelledby="sync-report-title">

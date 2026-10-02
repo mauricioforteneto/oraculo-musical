@@ -122,7 +122,7 @@
 .scoreboard .scoreboardNote { flex-direction: row; align-items: center; gap: 9px; border-right: 0; color: #9ca69a; font-size: 9px; }
 .scoreboardNote .pulseDot { width: 5px; height: 5px; }
 
-.roundSection, .top50Section { margin-top: 16px; padding: 16px 15px 14px; border: 1px solid #303b33; border-radius: 8px; background: #151c17; scroll-margin-top: 18px; }
+.roundSection, .top50Section, .historySection { margin-top: 16px; padding: 16px 15px 14px; border: 1px solid #303b33; border-radius: 8px; background: #151c17; scroll-margin-top: 18px; }
 .sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
 .sectionHeading h3 { margin: 6px 0 0; color: #f0eee5; font: 400 22px/1.05 Georgia, "Times New Roman", serif; letter-spacing: -.03em; }
 .sectionKicker { color: #8e9b8f; font-size: 7px; }
@@ -224,6 +224,34 @@
 .conflictList strong { color: #dfe2d8; font-size: 8px; }
 .conflictList span { margin-top: 2px; }
 .pendingProjection { margin: 12px 0 0; color: #a9b2a7; font-size: 9px; }
+.historyIntro { margin: 0 0 13px; color: #a4afa3; font-size: 10px; line-height: 1.55; }
+.phaseSelector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.phaseButton, .phaseSelected { min-width: 0; display: grid; gap: 4px; padding: 10px 11px; border: 1px solid #344036; border-radius: 6px; background: #182019; text-align: left; cursor: pointer; }
+.phaseButton:hover { border-color: #655239; background: #20271e; }
+.phaseSelected { border-color: #b08356; background: linear-gradient(125deg, #302b20, #22291e); }
+.phaseButton strong, .phaseSelected strong { color: #e7e9df; font: 400 14px Georgia, serif; }
+.phaseButton span, .phaseSelected span { color: #d4a879; font-size: 10px; }
+.phaseButton small, .phaseSelected small { color: #8d9a8b; font-size: 8px; }
+.phaseButton:focus-visible, .phaseSelected:focus-visible, .phaseHistoryRevisions summary:focus-visible { outline: 2px solid #e3ad75; outline-offset: 3px; }
+.phaseHistoryGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 11px; }
+.phaseHistoryCard { min-width: 0; padding: 12px; border: 1px solid #354037; border-radius: 6px; background: linear-gradient(140deg, #1c251d, #171e19); }
+.phaseHistoryTop { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid #303b32; }
+.phaseHistoryTop span { color: #af9b79; font-size: 7px; font-weight: 700; letter-spacing: .1em; }
+.phaseHistoryTop strong { color: #e2b889; font: 400 14px Georgia, serif; white-space: nowrap; }
+.phaseHistoryIdentity { display: grid; gap: 3px; margin-top: 10px; }
+.phaseHistoryIdentity strong { color: #f0eee5; font: 400 17px/1.2 Georgia, serif; }
+.phaseHistoryIdentity span { color: #a8b3a8; font-size: 10px; }
+.phaseHistoryResult { margin: 11px 0 0; color: #d3dfce; font-size: 10px; line-height: 1.4; }
+.phaseHistoryDetail { margin: 6px 0 0; color: #bfa88b; font-size: 9px; line-height: 1.45; }
+.phaseHistorySource { margin-top: 11px; padding-top: 8px; border-top: 1px solid #303b32; color: #819083; font-size: 8px; }
+.phaseHistoryStale { margin: 7px 0 0; color: #d0a675; font-size: 9px; }
+.phaseHistoryRevisions { margin-top: 9px; color: #aeb9aa; font-size: 9px; }
+.phaseHistoryRevisions summary { color: #d8b48a; cursor: pointer; }
+.phaseHistoryRevisions ol { display: grid; gap: 8px; margin: 9px 0 0; padding-left: 18px; }
+.phaseHistoryRevisions li strong, .phaseHistoryRevisions li span, .phaseHistoryRevisions li small { display: block; line-height: 1.45; }
+.phaseHistoryRevisions li strong { color: #e0e2d8; }
+.phaseHistoryRevisions li small { color: #a0ad9e; }
+.historyEmpty { margin: 12px 0 0; color: #aab6a9; font-size: 10px; }
 .activeMeta { display: flex; align-items: center; gap: 7px; margin-top: 10px; padding: 8px 10px; color: #c6b18e; border: 1px solid #3f493d; border-radius: 5px; background: #181f19; font-size: 8px; }
 .activeMeta small { min-width: 0; margin-left: auto; overflow: hidden; color: #828e83; font-size: 7px; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -284,7 +312,7 @@
   .scoreboard > div > strong { font-size: 16px; }
   .scoreboard > div > span:not(.pulseDot) { font-size: 7px; }
   .scoreboard .scoreboardNote { min-height: 35px; }
-  .roundSection, .top50Section { margin-top: 10px; padding: 11px 9px; }
+  .roundSection, .top50Section, .historySection { margin-top: 10px; padding: 11px 9px; }
   .sectionHeading h3 { font-size: 19px; }
   .sectionCount { padding: 5px 6px; font-size: 7px; }
   .byeBlock { padding: 8px; }
@@ -301,6 +329,11 @@
   .residualPhase { display: none; }
   .residualMath { font-size: 7px; }
   .participantGrid { grid-template-columns: minmax(0, 1fr); }
+  .phaseSelector { gap: 5px; }
+  .phaseButton, .phaseSelected { padding: 8px 6px; }
+  .phaseButton strong, .phaseSelected strong { font-size: 11px; }
+  .phaseButton small, .phaseSelected small { display: none; }
+  .phaseHistoryGrid { grid-template-columns: minmax(0, 1fr); }
   .activeMeta { flex-wrap: wrap; }
   .activeMeta small { width: 100%; margin-left: 20px; white-space: normal; overflow-wrap: anywhere; }
 }

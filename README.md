@@ -35,6 +35,6 @@ Requer Node.js 24 (versão fixada em `.nvmrc`). Use `npm ci` e `npm run dev`; no
 
 Verificações: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run test:e2e` e `npm run build`. A integração local usa PostgreSQL WASM isolado (PGlite); CI está configurada para PostgreSQL 17 descartável. Os testes E2E atuais verificam HTTP, sem navegador nem credenciais de produção.
 
-Próxima entrega: decidir as regras competitivas pendentes antes de calcular Top 50 e chaveamento. A cópia externa e a rotação do backup ainda pendem. Não habilitar cobranças ou planos pagos.
+Próxima entrega: conferir o histórico competitivo transcrito das versões publicadas e resolver as divergências de fase da projeção; posições finais do Top 50 dependem dos resultados e critérios ainda pendentes. A cópia externa e a rotação do backup ainda pendem. Não habilitar cobranças ou planos pagos.
 
 Dados reais, exportações, dumps e credenciais ficam fora do Git. Evidências locais de descoberta, se presentes, ficam em `.private/`, ignorada pelo Git. Acesso pelo conector usado na descoberta não fornece credenciais para a aplicação hospedada.
