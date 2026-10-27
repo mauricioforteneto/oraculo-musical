@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import type { AlbumRecord } from "../../src/lib/catalog/types";
-import { albumIdentity, buildParticipants, CUTOFF_UTC, firstRound, participantChanges, projectResidualTop50, reseedRoundOf16 } from "../../src/lib/competition/rules";
+import type { AlbumRecord, PublishedPlayoffResult } from "../../src/lib/catalog/types";
+import { albumIdentity, buildParticipants, CUTOFF_UTC, firstRound, participantChanges, projectResidualTop50, reseedRoundOf16, resolveRoundOf16 } from "../../src/lib/competition/rules";
 import { DriveReader, type DriveFile } from "../../src/lib/ingestion/drive";
 import { freezeTokenMatches } from "../../src/lib/competition/token";
 
@@ -60,6 +60,59 @@ describe("congelamento e chave fictícios", () => {
     expect(diff.added).toHaveLength(1);
     expect(diff.removed).toHaveLength(1);
     expect(diff.changed).toHaveLength(1);
+  });
+});
+
+describe("oitavas a partir dos resultados publicados", () => {
+  const bracket = firstRound(buildParticipants(field(24)).participants)!;
+  // Todos os seeds inferiores vencem: o reseeding não pode assumir favoritos.
+  const results: PublishedPlayoffResult[] = bracket.matches.map(({ high, low }, i) => ({
+    seedA: high.seed, artistA: high.artist, seedB: low.seed, artistB: low.artist,
+    result: "Vitória publicada", winner: low.artist, criterion: "Fonte", sourceRow: i + 2,
+  }));
+
+  it("junta oito vencedores e oito byes, preservando identidade e seeds congelados", () => {
+    const round = resolveRoundOf16(bracket, results)!;
+    expect(round.map(({ slot, high, low }) => [slot, high.seed, low.seed])).toEqual([
+      ["A", 1, 24], ["B", 8, 17], ["C", 4, 21], ["D", 5, 20],
+      ["E", 2, 23], ["F", 7, 18], ["G", 3, 22], ["H", 6, 19],
+    ]);
+    const survivors = round.flatMap(({ high, low }) => [high, low]);
+    expect(new Set(survivors.map(p => p.identityKey)).size).toBe(16);
+    expect(survivors).toEqual(expect.arrayContaining([...bracket.byes, ...bracket.matches.map(m => m.low)]));
+    expect(round[0].low).toMatchObject({ seed: 24, artist: "Fictional Artist 24", title: "Fictional Album 24" });
+  });
+
+  it("mantém placeholders enquanto faltar qualquer resultado ou vencedor", () => {
+    const placeholders = structuredClone(bracket.roundOf16);
+    expect(resolveRoundOf16(bracket, [])).toBeNull();
+    for (let i = 0; i < results.length; i++) {
+      expect(resolveRoundOf16(bracket, results.filter((_, index) => index !== i))).toBeNull();
+      expect(resolveRoundOf16(bracket, results.map((r, index) => index === i ? { ...r, winner: " " } : r))).toBeNull();
+    }
+    expect(bracket.roundOf16).toEqual(placeholders);
+  });
+
+  it("aceita lados invertidos, ordem diferente e nomes normalizados", () => {
+    const reversed = results.map(r => ({ ...r, seedA: r.seedB, artistA: r.artistB.toUpperCase(),
+      seedB: r.seedA, artistB: r.artistA, winner: `  ${r.winner.toLowerCase()}  ` })).reverse();
+    expect(resolveRoundOf16(bracket, reversed)).toEqual(resolveRoundOf16(bracket, results));
+  });
+
+  it("resolve vitórias dos dois lados sem inferir o vencedor pelo placar", () => {
+    const mixed = results.map((r, i) => i % 2 ? { ...r, winner: r.artistA } : r);
+    const survivors = resolveRoundOf16(bracket, mixed)!.flatMap(m => [m.high.seed, m.low.seed]);
+    expect(survivors.sort((a, b) => a - b)).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 10, 12, 14, 16, 18, 20, 22, 24]);
+  });
+
+  it("recusa resultados duplicados, incompatíveis ou sem vencedor identificável", () => {
+    expect(resolveRoundOf16(bracket, [...results, results[0]])).toBeNull();
+    for (const patch of [{ winner: "Outro artista" }, { artistA: "Outro artista" }, { seedA: 1 }]) {
+      expect(resolveRoundOf16(bracket, [{ ...results[0], ...patch }, ...results.slice(1)])).toBeNull();
+    }
+    const ambiguous = structuredClone(bracket);
+    ambiguous.matches[0].high.artist = ambiguous.matches[0].low.artist;
+    expect(resolveRoundOf16(ambiguous, [{ ...results[0], artistA: results[0].artistB }, ...results.slice(1)])).toBeNull();
   });
 });
 

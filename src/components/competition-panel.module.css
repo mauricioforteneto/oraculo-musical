@@ -348,3 +348,6 @@
   .byeGrid { grid-template-columns: minmax(0, 1fr); }
   .sectionCount { font-size: 6px; }
 }
+
+.resolvedSlotCard { min-width: 0; padding: 10px; border: 1px solid #333d34; border-radius: 5px; background: #141b16; }
+.resolvedVersus { display: block; text-align: center; color: #798579; }

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { ArrowDown, ArrowUpRight, Disc3, LockKeyhole, Radio, Sparkles, Trophy } from "lucide-react";
 import type { getCompetitionState, previewFreeze, FreezeMode } from "@/lib/competition/service";
 import type { PublishedPlayoffResult } from "@/lib/catalog/types";
-import type { Bracket, Participant } from "@/lib/competition/rules";
+import { resolveRoundOf16, resultForMatch, type Bracket, type Participant } from "@/lib/competition/rules";
 import type { CompetitionPhaseHistory, HistoricalPhase, PhaseHistoryEntry } from "@/lib/competition/history";
 import styles from "./competition-panel.module.css";
 
@@ -14,16 +14,6 @@ type Preview = Awaited<ReturnType<typeof previewFreeze>>;
 function dateTime(value: string) { return new Date(value).toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short", timeZone: "America/Sao_Paulo" }); }
 function label(p: Participant) { return `#${p.seed} ${p.artist} — ${p.title}`; }
 function routeLabel(route: Participant["route"]) { return route === "elite" ? "Elite" : route === "direct" ? "Entrada direta" : "Pré-playoff"; }
-function foldName(value: string) { return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().toLocaleLowerCase("pt-BR"); }
-function resultForMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]) {
-  const matches = results.filter(result => (
-    result.seedA === high.seed && result.seedB === low.seed && foldName(result.artistA) === foldName(high.artist) && foldName(result.artistB) === foldName(low.artist)
-  ) || (
-    result.seedA === low.seed && result.seedB === high.seed && foldName(result.artistA) === foldName(low.artist) && foldName(result.artistB) === foldName(high.artist)
-  ));
-  return matches.length === 1 ? matches[0] : null;
-}
-
 const HISTORICAL_PHASES: { id: HistoricalPhase; label: string; caption: string }[] = [
   { id: "preplayoff", label: "Pré-playoff", caption: "Última seleção antes da chave" },
   { id: "playin", label: "Play-in", caption: "Disputa pelas vagas seguintes" },
@@ -91,6 +81,7 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
 
   const participants = preview?.participants ?? state?.active?.participants ?? [];
   const bracket: Bracket | null = preview?.bracket ?? state?.active?.bracket ?? null;
+  const roundOf16 = bracket ? resolveRoundOf16(bracket, playoffResults) : null;
   const projection = preview?.projection ?? state?.projection;
   const active = Boolean(state?.active);
   const draft = Boolean(preview?.draft);
@@ -159,8 +150,13 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
 
       <div className={styles.nextRound}>
         <div className={styles.nextRoundHeading}><div><span className={styles.sectionKicker}>PRÓXIMA FASE</span><h4>Oitavas de final</h4></div><span className={styles.reseedTag}>RESEEDING ÚNICO</span></div>
-        <p>Os 16 classificados serão reordenados pelos seeds congelados. Os cruzamentos abaixo mostram os caminhos previstos.</p>
-        <div className={styles.slotGrid}>{bracket.roundOf16.map(slot => <div className={styles.slotCard} key={slot.slot}>
+        <p>{roundOf16 ? "Os 16 classificados foram reordenados pelos seeds congelados: vencedores da primeira rodada e participantes com bye." : "Os 16 classificados serão reordenados pelos seeds congelados. Os cruzamentos abaixo mostram os caminhos previstos."}</p>
+        <div className={styles.slotGrid}>{roundOf16 ? roundOf16.map(slot => <div className={styles.resolvedSlotCard} key={slot.slot}>
+          <span className={styles.slotLetter}>{slot.slot}</span>
+          <MatchSide participant={slot.high} />
+          <span className={styles.resolvedVersus}>×</span>
+          <MatchSide participant={slot.low} />
+        </div>) : bracket.roundOf16.map(slot => <div className={styles.slotCard} key={slot.slot}>
           <span className={styles.slotLetter}>{slot.slot}</span><div><strong>#{slot.highRank}</strong><span>×</span><strong>#{slot.lowRank}</strong></div><small>entre os 16 sobreviventes</small>
         </div>)}</div>
       </div>

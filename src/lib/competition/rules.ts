@@ -1,4 +1,4 @@
-import type { AlbumRecord } from "@/lib/catalog/types";
+import type { AlbumRecord, PublishedPlayoffResult } from "@/lib/catalog/types";
 
 export const CUTOFF_UTC = "2026-10-01T03:00:00.000Z";
 export const RULES_VERSION = "2026-freeze-1";
@@ -75,6 +75,27 @@ export function reseedRoundOf16(survivors: Participant[]) {
   if (survivors.length !== 16 || new Set(survivors.map(p => p.seed)).size !== 16) return null;
   const ordered = [...survivors].sort((a, b) => a.seed - b.seed);
   return [[0, 15], [7, 8], [3, 12], [4, 11], [1, 14], [6, 9], [2, 13], [5, 10]].map(([a, b], i) => ({ slot: "ABCDEFGH"[i], high: ordered[a], low: ordered[b] }));
+}
+
+export function resultForMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]) {
+  const matches = results.filter(result => (
+    result.seedA === high.seed && result.seedB === low.seed && folded(result.artistA) === folded(high.artist) && folded(result.artistB) === folded(low.artist)
+  ) || (
+    result.seedA === low.seed && result.seedB === high.seed && folded(result.artistA) === folded(low.artist) && folded(result.artistB) === folded(high.artist)
+  ));
+  return matches.length === 1 ? matches[0] : null;
+}
+
+export function resolveRoundOf16(bracket: Bracket, results: PublishedPlayoffResult[]) {
+  const winners: Participant[] = [];
+  for (const match of bracket.matches) {
+    const result = resultForMatch(match.high, match.low, results);
+    if (!result?.winner.trim()) return null;
+    const candidates = [match.high, match.low].filter(p => folded(p.artist) === folded(result.winner));
+    if (candidates.length !== 1) return null;
+    winners.push(candidates[0]);
+  }
+  return reseedRoundOf16([...bracket.byes, ...winners]);
 }
 
 type Phase = "pre" | "playin" | "rep" | "none";
