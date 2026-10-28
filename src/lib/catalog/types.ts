@@ -38,7 +38,12 @@ export type BacklogRecord = {
   source: string;
 };
 
+export type PlayoffPhase = "first" | "roundOf16" | "quarters" | "semis" | "final";
 export type PublishedPlayoffResult = {
+  // Missing phase denotes a legacy first-round record.
+  phase?: PlayoffPhase;
+  gameId?: string;
+  sourceSheet?: string;
   seedA: number;
   artistA: string;
   seedB: number;

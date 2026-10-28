@@ -124,7 +124,7 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
       <div><strong>{bracket?.byes.length ?? "—"}</strong><span>avançam direto</span></div>
       <div className={styles.scoreboardNote}><span className={styles.pulseDot} />
         {publishedMatchCount > 0
-          ? `${publishedMatchCount} resultado${publishedMatchCount === 1 ? "" : "s"} publicado${publishedMatchCount === 1 ? "" : "s"}${resultsVersion ? ` · fonte v${resultsVersion}` : ""}`
+          ? `${publishedMatchCount} resultado${publishedMatchCount === 1 ? "" : "s"} publicado${publishedMatchCount === 1 ? "" : "s"} na primeira rodada${resultsVersion ? ` · fonte v${resultsVersion}` : ""}`
           : `Nenhum resultado de confronto identificado${resultsVersion ? ` na v${resultsVersion} sincronizada` : " na fonte sincronizada"}`}
       </div>
     </div>}

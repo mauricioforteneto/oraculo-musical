@@ -117,3 +117,46 @@ describe("parser da fonte XLSX", () => {
     expect(parseSummaryNumber("sem valor")).toBeNull();
   });
 });
+
+const resultHeaders = ["Fase", "Jogo", "Seed A", "Artista A", "Seed B", "Artista B", "Resultado", "Vencedor", "Critério"];
+function playoffSource(rows: unknown[][]) {
+  return [...workbook([albumRow()]),
+    { sheet: "Playoffs", data: [["Seed A", "Artista A", "Seed B", "Artista B", "Resultado 1ª rodada", "Vencedor", "Critério"],
+      [9, "Artista fictício A", 24, "Artista fictício B", "13 × 12", "Artista fictício A (#9)", "Placar direto"]] },
+    { sheet: "Resultados Playoffs", data: [resultHeaders, ...rows] }];
+}
+const firstResult = ["1ª rodada", "Jogo 01", 9, "Artista fictício A", 24, "Artista fictício B", "13 × 12", "Artista fictício A (#9)", "Placar direto"];
+
+describe("resultados por fase na planilha", () => {
+  it("prefere a nova primeira rodada, ignora agendamentos e preserva proveniência", () => {
+    const source = parseWorkbookSheets(playoffSource([firstResult,
+      ["Oitavas", "O1", 1, "Artista fictício C", 24, "Artista fictício B", null, null, null],
+      ["Quartas", "QF1", null, null, null, null, null, null, null],
+    ]), { season: 2026, sourceVersion: "99" });
+    expect(source.canPublish).toBe(true);
+    expect(source.playoffResults).toHaveLength(1);
+    expect(source.playoffResults[0]).toMatchObject({ phase: "first", gameId: "Jogo 01", sourceSheet: "Resultados Playoffs", sourceRow: 2 });
+  });
+  it("mantém primeira rodada legada quando a nova aba contém somente fases seguintes", () => {
+    const source = parseWorkbookSheets(playoffSource([
+      ["Oitavas", "O8", 8, "Artista fictício C", 9, "Artista fictício A", "10 × 11", "Artista fictício A (#9)", "Placar direto"],
+    ]), { season: 2026, sourceVersion: "99" });
+    expect(source.playoffResults).toHaveLength(2);
+    expect(source.playoffResults[0].phase).toBeUndefined();
+    expect(source.playoffResults[1]).toMatchObject({ phase: "roundOf16", gameId: "O8", sourceRow: 2 });
+  });
+  it("não recupera resultado antigo quando a nova tabela declara a primeira rodada vazia", () => {
+    const blank = [...firstResult]; blank[6] = ""; blank[7] = ""; blank[8] = "";
+    expect(parseWorkbookSheets(playoffSource([blank]), { season: 2026, sourceVersion: "99" }).playoffResults).toEqual([]);
+  });
+  it("bloqueia fatos com fase, jogo ou participantes inválidos sem mascarar com a aba antiga", () => {
+    for (const [column, value] of [[0, "Desconhecida"], [1, "O99"], [2, "1"], [3, ""], [4, 9]] as const) {
+      const row = [...firstResult]; row[column] = value;
+      const parsed = parseWorkbookSheets(playoffSource([row]), { season: 2026, sourceVersion: "99" });
+      expect(parsed.canPublish).toBe(false);
+      expect(parsed.issues.some(i => i.code === "PLAYOFF_RESULT_ROW_INVALID")).toBe(true);
+    }
+    const sheets = playoffSource([]); sheets[4] = { sheet: "Resultados Playoffs", data: [["Formato desconhecido"]] };
+    expect(parseWorkbookSheets(sheets, { season: 2026, sourceVersion: "99" }).canPublish).toBe(false);
+  });
+});

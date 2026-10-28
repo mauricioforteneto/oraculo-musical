@@ -21,7 +21,7 @@ describe("apresentação da chave", () => {
     expect(html).toContain("Final");
     expect(html).toContain("Álbum fictício com título extenso 24");
     expect(html).not.toContain("Álbum fictício com título extenso 16");
-    expect(html).toContain("Resultados das oitavas ainda não disponíveis no app.");
+    expect(html).toContain("Sem resultados publicados nesta fase.");
     expect(html).toContain("Nota original: 90 de 100");
     expect(html).not.toContain("RESULTADO PUBLICADO");
   });

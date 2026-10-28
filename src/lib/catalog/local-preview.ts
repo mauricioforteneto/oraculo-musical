@@ -72,7 +72,9 @@ function playoffResult(value: unknown): PublishedPlayoffResult | null {
   const artistA = text(item.artistA).trim();
   const artistB = text(item.artistB).trim();
   if (seedA === null || seedB === null || sourceRow === null || !artistA || !artistB) return null;
-  return { seedA, artistA, seedB, artistB, result: text(item.result), winner: text(item.winner), criterion: text(item.criterion), sourceRow };
+  const phase = item.phase;
+  if (phase !== undefined && phase !== "first" && phase !== "roundOf16" && phase !== "quarters" && phase !== "semis" && phase !== "final") return null;
+  return { phase, gameId: text(item.gameId) || undefined, sourceSheet: text(item.sourceSheet) || undefined, seedA, artistA, seedB, artistB, result: text(item.result), winner: text(item.winner), criterion: text(item.criterion), sourceRow };
 }
 
 export async function getLocalSourcePreview(): Promise<LocalSourcePreview | null> {

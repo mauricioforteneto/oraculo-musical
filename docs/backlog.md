@@ -7,7 +7,8 @@
 - [x] Mostrar os caminhos fixos A×B, C×D, E×F e G×H nas quartas, quartas 1×2 e 3×4 nas semis e seus vencedores na final. Nenhum participante ou resultado é presumido.
 - [x] Explicar por jogo os bloqueios da primeira rodada: resultado não associado, duplicidade, vencedor ausente ou incompatível. Preservar versão, linha e texto dos resultados publicados.
 - [x] Exibir um confronto por linha em telas pequenas, com nomes de artistas e álbuns sem truncamento.
-- [ ] Confirmar o formato real dos resultados de oitavas e fases seguintes na planilha antes de implementar sua importação e o avanço dos vencedores. Essas fases ainda não possuem resultados, conforme informado pelo proprietário; a chave está preparada com caminhos, não com resultados importados.
+- [x] Confirmar o formato na v99 e implementar a leitura de `Resultados Playoffs` e o avanço dos vencedores até o campeão, preservando o caminho fixo e os seeds originais. A v99 contém oito resultados da primeira rodada; as fases seguintes continuam sem resultados reais.
+- [ ] Após o deploy, sincronizar a v99 pelo Drive e conferir a primeira importação hospedada da nova aba. Validar resultados das fases seguintes quando forem publicados; progressão completa e campeão foram exercitados somente com dados fictícios.
 
 Validação desta atualização: testes unitários de resolução, caminhos e apresentação; integração em PGlite; navegação em Chromium com fonte sintética a 360 px, incluindo primeira rodada incompleta, byes, evidência da fonte e ausência de rolagem horizontal. A confirmação visual das oitavas no Railway foi fornecida pelo proprietário antes desta atualização; não valida o deploy da nova navegação.
 
@@ -24,7 +25,7 @@ O corte de 30/09 seleciona a v82 para participantes e seeds porque v83 e v84 for
 - [ ] Resolver a contradição desse registro na planilha ou por decisão explícita documentada. Conferir se o bônus e a indicação de fase devem permanecer; nenhuma interpretação automática pode substituí-los sem evidência.
 - [ ] Fechar as regras ainda necessárias para posições definitivas dos participantes e empate na última vaga residual, incluindo comparabilidade de desempenho entre eliminados da mesma rodada e critérios que a fonte não resolve. Registrar adendo datado em [decisions.md](decisions.md) antes de calcular posições finais.
 - [ ] Consolidar Top 50 definitivo quando resultados e regras estiverem completos; manter 1–N reservados até conhecer a ordem final dos participantes.
-- [x] Identificar os vencedores da primeira rodada com segurança e fazer o único reseeding antes das oitavas. A evolução com resultados de fases seguintes permanece pendente conforme a atualização acima. Não inferir vencedor de texto ambíguo.
+- [x] Identificar os vencedores da primeira rodada com segurança e fazer o único reseeding antes das oitavas. A importação das fases seguintes está implementada conforme a atualização acima; sua validação com resultados reais permanece pendente. Não inferir vencedor de texto ambíguo.
 
 P01, P02, P04, P08, P10, P12 e P14 tiveram seu recorte de 2026 definido pelo adendo aprovado em [decisions.md](decisions.md); a matriz antiga abaixo continua como registro das propostas originais e não deve ser lida como bloqueio integral dessas partes. Resultados /20, Late Challenger, médias/projeções anuais e reprodução algorítmica de todas as fases históricas continuam fora do recorte confirmado.
 

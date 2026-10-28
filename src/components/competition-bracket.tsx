@@ -49,9 +49,12 @@ export function CompetitionBracket({ bracket, results, resultsVersion }: {
       {phase.id === "roundOf16" && <p className={styles.bracketIntro}>{phase.defined
         ? "Os 16 classificados foram reordenados pelos seeds congelados: vencedores da primeira rodada e participantes com bye. A partir daqui, a chave fica fixa."
         : "Os cruzamentos indicam posições entre os 16 sobreviventes. Os participantes serão definidos após resolver todos os vencedores da primeira rodada."}</p>}
-      {phase.id !== "first" && <p className={styles.bracketIntro}>{phase.id === "roundOf16"
-        ? "Resultados das oitavas ainda não disponíveis no app."
-        : "Caminhos previstos, sem novo reseeding. Os participantes aguardam os vencedores da fase anterior; os resultados desta fase ainda não estão disponíveis no app."}</p>}
+      {phase.id !== "first" && <p className={styles.bracketIntro}>{phase.games.some(g => g.resolution?.result)
+        ? `${phase.games.filter(g => g.resolution?.result).length} de ${phase.games.length} resultados publicados nesta fase. Os vencedores avançam sem novo reseeding.`
+        : "Sem resultados publicados nesta fase. As vagas seguintes aguardam os vencedores, sem novo reseeding."}</p>}
+      {phase.id === "final" && view.champion && <div className={styles.bracketChampion}>
+        <Trophy size={24} aria-hidden="true" /><div><strong>Campeão · #{view.champion.seed} {view.champion.artist}</strong><span>{view.champion.title}</span></div>
+      </div>}
 
       <div className={styles.matchGrid}>{phase.games.map(game => <BracketGameCard key={game.id} game={game} resultsVersion={resultsVersion} />)}</div>
     </div>
@@ -71,6 +74,7 @@ function BracketGameCard({ game, resultsVersion }: { game: BracketGame; resultsV
       <span className={styles.outcomeIcon}><Trophy size={14} aria-hidden="true" /></span>
       <div><small>RESULTADO PUBLICADO · LINHA {result.sourceRow}</small><strong>{result.result || "Resultado informado na fonte"}</strong>
         {result.winner && <span><b>Vencedor:</b> {result.winner}</span>}
+        {result.sourceSheet && <small>FONTE: {result.sourceSheet} · {result.gameId}</small>}
         {result.criterion && <small className={styles.outcomeCriterion}>{result.criterion}</small>}
       </div>
     </div>}

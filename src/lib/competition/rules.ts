@@ -1,4 +1,4 @@
-import type { AlbumRecord, PublishedPlayoffResult } from "@/lib/catalog/types";
+import type { AlbumRecord, PlayoffPhase, PublishedPlayoffResult } from "@/lib/catalog/types";
 
 export const CUTOFF_UTC = "2026-10-01T03:00:00.000Z";
 export const RULES_VERSION = "2026-freeze-1";
@@ -77,12 +77,12 @@ export function reseedRoundOf16(survivors: Participant[]) {
   return [[0, 15], [7, 8], [3, 12], [4, 11], [1, 14], [6, 9], [2, 13], [5, 10]].map(([a, b], i) => ({ slot: "ABCDEFGH"[i], high: ordered[a], low: ordered[b] }));
 }
 
+function matchesParticipants(high: Participant, low: Participant, result: PublishedPlayoffResult) {
+  return (result.seedA === high.seed && result.seedB === low.seed && folded(result.artistA) === folded(high.artist) && folded(result.artistB) === folded(low.artist))
+    || (result.seedA === low.seed && result.seedB === high.seed && folded(result.artistA) === folded(low.artist) && folded(result.artistB) === folded(high.artist));
+}
 function resultsForMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]) {
-  return results.filter(result => (
-    result.seedA === high.seed && result.seedB === low.seed && folded(result.artistA) === folded(high.artist) && folded(result.artistB) === folded(low.artist)
-  ) || (
-    result.seedA === low.seed && result.seedB === high.seed && folded(result.artistA) === folded(low.artist) && folded(result.artistB) === folded(high.artist)
-  ));
+  return results.filter(result => (result.phase ?? "first") === "first" && matchesParticipants(high, low, result));
 }
 
 export function resultForMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]) {
@@ -93,7 +93,7 @@ export function resultForMatch(high: Participant, low: Participant, results: Pub
 export type MatchResolution = {
   result: PublishedPlayoffResult | null;
   winner: Participant | null;
-  pending: "missing-result" | "duplicate-results" | "missing-winner" | "invalid-winner" | null;
+  pending: "missing-result" | "duplicate-results" | "missing-winner" | "invalid-winner" | "incompatible-result" | null;
 };
 
 export const MATCH_PENDING_LABELS = {
@@ -101,12 +101,15 @@ export const MATCH_PENDING_LABELS = {
   "duplicate-results": "Há resultados duplicados para este confronto; confira a fonte.",
   "missing-winner": "O resultado não informa o vencedor.",
   "invalid-winner": "O vencedor informado não identifica um único participante deste confronto.",
+  "incompatible-result": "Os participantes do resultado não correspondem aos classificados para este jogo.",
 };
 
-export function resolvePublishedMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]): MatchResolution {
-  const matches = resultsForMatch(high, low, results);
+export function resolvePublishedMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[], phase: PlayoffPhase = "first", gameId?: string): MatchResolution {
+  const matches = gameId ? results.filter(r => (r.phase ?? "first") === phase
+    && (r.gameId === gameId || (phase === "first" && !r.gameId && matchesParticipants(high, low, r)))) : resultsForMatch(high, low, results);
   if (matches.length !== 1) return { result: null, winner: null, pending: matches.length ? "duplicate-results" : "missing-result" };
   const result = matches[0];
+  if (!matchesParticipants(high, low, result)) return { result, winner: null, pending: "incompatible-result" };
   if (!result.winner.trim()) return { result, winner: null, pending: "missing-winner" };
   const winner = folded(result.winner);
   const candidates = [high, low].filter(p => winner === folded(p.artist) || winner === folded(`${p.artist} (#${p.seed})`));
@@ -117,8 +120,8 @@ export function resolvePublishedMatch(high: Participant, low: Participant, resul
 
 export function resolveRoundOf16(bracket: Bracket, results: PublishedPlayoffResult[]) {
   const winners: Participant[] = [];
-  for (const match of bracket.matches) {
-    const { winner } = resolvePublishedMatch(match.high, match.low, results);
+  for (const [i, match] of bracket.matches.entries()) {
+    const { winner } = resolvePublishedMatch(match.high, match.low, results, "first", `Jogo ${String(i + 1).padStart(2, "0")}`);
     if (!winner) return null;
     winners.push(winner);
   }

@@ -1,4 +1,4 @@
-import type { AlbumRecord, BacklogRecord, PublishedPlayoffResult } from "../catalog/types";
+import type { AlbumRecord, BacklogRecord, PlayoffPhase, PublishedPlayoffResult } from "../catalog/types";
 
 export type WorkbookIssue = {
   code: string;
@@ -7,7 +7,8 @@ export type WorkbookIssue = {
   message: string;
 };
 
-export const WORKBOOK_PARSER_VERSION = "2026.2";
+export const WORKBOOK_PARSER_VERSION = "2026.3";
+export const PLAYOFF_PARSER_REVISION = 3;
 
 export type WorkbookSheetData = {
   sheet: string;
@@ -249,7 +250,7 @@ function addSummaryIssues(summary: Record<string, string>, albums: AlbumRecord[]
   }
 }
 
-function parsePublishedPlayoffResults(sheets: readonly WorkbookSheetData[], issues: WorkbookIssue[]) {
+function parseLegacyPlayoffResults(sheets: readonly WorkbookSheetData[], issues: WorkbookIssue[]) {
   const sheet = sheets.find((candidate) => candidate.sheet === "Playoffs");
   if (!sheet) return [] as PublishedPlayoffResult[];
   const header = findHeader(sheet, PLAYOFF_RESULT_HEADERS);
@@ -283,6 +284,59 @@ function parsePublishedPlayoffResults(sheets: readonly WorkbookSheetData[], issu
     results.push({ seedA, artistA, seedB, artistB, result, winner, criterion, sourceRow: rowIndex + 1 });
   }
   return results;
+}
+
+const PHASE_NAMES: Record<string, PlayoffPhase> = {
+  "1ª rodada": "first", "1a rodada": "first", "primeira rodada": "first",
+  "oitavas": "roundOf16", "quartas": "quarters", "semifinais": "semis", "final": "final",
+};
+
+function parsePublishedPlayoffResults(sheets: readonly WorkbookSheetData[], issues: WorkbookIssue[]) {
+  const sheet = sheets.find(s => s.sheet === "Resultados Playoffs");
+  if (!sheet) return parseLegacyPlayoffResults(sheets, issues);
+  const config: HeaderConfig = {
+    headers: { ...PLAYOFF_RESULT_HEADERS.headers, phase: ["fase"], gameId: ["jogo"], result: ["resultado"], winner: ["vencedor"], criterion: ["critério"] },
+    required: ["phase", "gameId", "seedA", "artistA", "seedB", "artistB", "result", "winner", "criterion"],
+    markers: ["phase", "gameId"],
+  };
+  const header = findHeader(sheet, config);
+  if (!header) {
+    issues.push({ code: "PLAYOFF_RESULTS_HEADER_INVALID", severity: "error", sourceLocator: sheet.sheet, message: "A aba Resultados Playoffs não possui o cabeçalho esperado." });
+    return [];
+  }
+  const columns = mapHeaders(sheet.sheet, header.rowIndex, header.row, config, issues);
+  const results: PublishedPlayoffResult[] = [];
+  let declaresFirst = false;
+  for (let i = header.rowIndex + 1; i < sheet.data.length; i++) {
+    const row = sheet.data[i];
+    const phase = PHASE_NAMES[headerToken(valueAt(row, columns, "phase"))];
+    if (phase === "first") declaresFirst = true;
+    const result = readText(valueAt(row, columns, "result"));
+    const winner = readText(valueAt(row, columns, "winner"));
+    const criterion = readText(valueAt(row, columns, "criterion"));
+    // Scheduled games and empty future slots are not result facts.
+    if (!result && !winner && !criterion) continue;
+    const rawGame = readText(valueAt(row, columns, "gameId"));
+    const gameId = phase === "first" ? /^jogo\s*0*([1-9]\d?)$/i.exec(rawGame)?.[1] : rawGame.toUpperCase();
+    const validGame = phase === "first" ? Number(gameId) >= 1 && Number(gameId) <= 16
+      : phase === "roundOf16" ? /^O[1-8]$/.test(gameId ?? "")
+      : phase === "quarters" ? /^QF[1-4]$/.test(gameId ?? "")
+      : phase === "semis" ? /^SF[12]$/.test(gameId ?? "") : phase === "final" && gameId === "FINAL";
+    const seedA = valueAt(row, columns, "seedA");
+    const seedB = valueAt(row, columns, "seedB");
+    const artistA = readText(valueAt(row, columns, "artistA"));
+    const artistB = readText(valueAt(row, columns, "artistB"));
+    if (!phase || !validGame || typeof seedA !== "number" || !Number.isInteger(seedA) || seedA < 1 || seedA > 32
+      || typeof seedB !== "number" || !Number.isInteger(seedB) || seedB < 1 || seedB > 32 || seedA === seedB || !artistA || !artistB) {
+      issues.push({ code: "PLAYOFF_RESULT_ROW_INVALID", severity: "error", sourceLocator: `${sheet.sheet}!${i + 1}`, message: "Resultado com fase, jogo, seeds ou artistas inválidos; corrija a linha antes de publicar." });
+      continue;
+    }
+    results.push({ phase, gameId: phase === "first" ? `Jogo ${gameId!.padStart(2, "0")}` : gameId!, sourceSheet: sheet.sheet,
+      seedA, artistA, seedB, artistB, result, winner, criterion, sourceRow: i + 1 });
+  }
+  // A new table may contain only the later rounds. Once it declares the first
+  // round, that round is authoritative and must not be merged with the old copy.
+  return declaresFirst ? results : [...parseLegacyPlayoffResults(sheets, issues), ...results];
 }
 
 function summaryRecord(sheet?: WorkbookSheetData): Record<string, string> {

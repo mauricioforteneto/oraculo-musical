@@ -1,7 +1,8 @@
 import "server-only";
 import type { BacklogRecord, LocalSourcePreview, PublishedPlayoffResult } from "./types";
 import { databasePool } from "@/lib/db/pool";
-import { WORKBOOK_PARSER_VERSION } from "@/lib/ingestion/workbook-parser";
+import { WORKBOOK_PARSER_VERSION, PLAYOFF_PARSER_REVISION } from "@/lib/ingestion/workbook-parser";
+import { PUBLISHED_PLAYOFF_RESULTS_SQL } from "@/lib/competition/results-query";
 
 type PublishedSourceRow = {
   source_id: string;
@@ -90,10 +91,8 @@ export async function getPublishedSource(season: number, folderId: string): Prom
         [source.source_id, source.source_version_id],
       ),
       client.query<{ record: PublishedPlayoffResult }>(
-        `SELECT record FROM oraculo.source_competition_results
-          WHERE source_id = $1 AND source_version_id = $2 AND parser_version = $3
-          ORDER BY item_order`,
-        [source.source_id, source.source_version_id, WORKBOOK_PARSER_VERSION],
+        PUBLISHED_PLAYOFF_RESULTS_SQL,
+        [source.source_id, source.source_version_id, WORKBOOK_PARSER_VERSION, String(PLAYOFF_PARSER_REVISION)],
       ),
     ]) : [{ rows: [] }, { rows: [] }, { rows: [] }];
 

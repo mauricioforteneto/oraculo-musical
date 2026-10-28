@@ -47,6 +47,16 @@ Tipos devem distinguir resultado ausente por regra pendente de valor zero. Conta
 
 Esses serviços internos permitem futura exposição de consultas por um único adaptador, Actions ou MCP, a escolher posteriormente. Nenhum deles será implementado agora. Fluxo de gravação pelo Chat comum fica fora do escopo read-only; eventual mudança exigiria outra especificação de origem e conflito.
 
+## Resultados dos Playoffs
+
+O parser `2026.3` lê a aba `Resultados Playoffs`, com cabeçalho `Fase | Jogo | Seed A | Artista A | Seed B | Artista B | Resultado | Vencedor | Critério`. A estrutura foi conferida no XLSX v99 fornecido pelo proprietário. Resultados, vencedores e critérios são preservados literalmente; linhas agendadas sem esses três campos não representam partidas realizadas.
+
+Fases e IDs: `1ª rodada` com `Jogo 01` até `Jogo 16` conforme o tamanho do campo; `Oitavas` com `O1`–`O8`; `Quartas` com `QF1`–`QF4`; `Semifinais` com `SF1`–`SF2`; `Final` com `FINAL`. As posições A–H correspondem a O1, O8, O4, O5, O2, O7, O3 e O6. Vencedores seguem QF1–QF4, SF1–SF2 e FINAL, sem novo reseeding. O app valida os seeds e artistas contra os classificados de cada jogo antes de avançá-los; duplicidade e vencedor incompatível mantêm a vaga pendente.
+
+Sem a nova aba, continua a leitura antiga de `Playoffs`. Se a nova aba declarar a primeira rodada, essa cópia é autoritativa, sem somar os resultados da aba antiga. Se trouxer apenas fases seguintes, os resultados da primeira rodada continuam vindo de `Playoffs`. Cabeçalho incompatível ou fato com fase, jogo ou participantes inválidos impede a publicação do lote e mantém a última publicação válida.
+
+A persistência usa o JSON versionado já existente; não exige migração. Sincronizar novamente o mesmo XLSX reprocessa os resultados com a nova versão do parser sem duplicar o catálogo. Um marcador numérico em `sync_runs.counts.playoffParserRevision` identifica a extração bem-sucedida: até ela ocorrer, a leitura preserva o formato anterior. Depois, usa somente a nova extração, inclusive quando vazia. O deploy por si só não reprocessa a planilha: após disponibilizar a v99 na pasta do Drive e concluir o deploy, usar **Sincronizar** no app.
+
 ## Last.fm: etapa posterior
 
 Usar `user.getRecentTracks`, com chave de API guardada no servidor e usuário configurado. O método documenta paginação, limite máximo de 200 e filtros `from`/`to` em Unix UTC; não exige sessão do usuário para a chamada pública. [Documentação oficial](https://www.last.fm/api/show/user.getRecentTracks).

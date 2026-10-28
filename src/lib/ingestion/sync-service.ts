@@ -4,6 +4,7 @@ import type { Pool, PoolClient } from "pg";
 import { databasePool } from "@/lib/db/pool";
 import { configuredDriveReader } from "./google";
 import { SourceError, type Candidate, type DriveReader } from "./drive";
+import { PLAYOFF_PARSER_REVISION } from "./workbook-parser";
 import { parseSourceWorkbook, WorkbookParseError, WORKBOOK_PARSER_VERSION, type ParsedSourceWorkbook, type WorkbookIssue } from "./workbook";
 
 type DownloadedSource = Awaited<ReturnType<DriveReader["download"]>>;
@@ -22,6 +23,7 @@ type ExistingAlbum = {
 };
 type ExistingVersion = { id: string; version: string; sha256: string };
 type SyncCounts = {
+  playoffParserRevision: number;
   albumRows: number;
   albums: number;
   backlogRows: number;
@@ -222,6 +224,7 @@ async function publish(
   const client = await pool.connect();
   const counts: SyncCounts = {
     ...parsed.counts,
+    playoffParserRevision: PLAYOFF_PARSER_REVISION,
     new: 0,
     changed: 0,
     unchanged: 0,

@@ -364,3 +364,7 @@
   .bracketNavigation > button { flex-basis: 90px; padding: 10px; min-height: 64px; }
   .bracketNavigation > button strong { font-size: 14px; }
 }
+
+.bracketChampion { display: flex; align-items: center; gap: 12px; padding: 16px; margin: 12px 0; border: 1px solid #b08356; border-radius: 6px; color: #e3bd8b; background: #28291e; }
+.bracketChampion > div { min-width: 0; display: grid; gap: 6px; overflow-wrap: anywhere; }
+.bracketChampion span { color: #d2d8cd; font-size: 13px; }
