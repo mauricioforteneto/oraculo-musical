@@ -11,6 +11,13 @@ test("estado de preparação não expõe dados pessoais", async ({ request }) =>
   expect(response.headers()["cache-control"]).toContain("no-store");
   expect(await response.text()).toContain("Seu espaço está em preparação");
 });
+test("estatísticas exigem sessão e não expõem dados sem configuração", async ({ request }) => {
+  const response = await request.get("/estatisticas", { maxRedirects: 0 });
+  expect(response.status()).toBe(307);
+  expect(response.headers().location).toContain("/login");
+  expect(response.headers()["cache-control"]).toContain("no-store");
+  expect(await response.text()).not.toContain("Resumo estatístico");
+});
 test("POST exige origem válida e autenticação configurada", async ({ request }) => {
   const foreign = await request.post("/auth/login", { headers: { origin: "https://foreign.example" }, form: { email: "synthetic@example.com", password: "fictional" } });
   expect(foreign.status()).toBe(403);

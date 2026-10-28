@@ -23,12 +23,15 @@ Excel versionado em pasta privada do Google Drive → sincronização solicitada
 | [Arquitetura](docs/architecture.md) | Módulos, infraestrutura, segurança e recuperação |
 | [Modelo de dados](docs/data-model.md) | Entidades, identidade, proveniência e histórico |
 | [Integrações](docs/integrations.md) | Drive, Last.fm, AOTY e contratos internos |
+| [Estatísticas do acervo](docs/statistics.md) | Página privada, contagens, médias e exploração por gênero, país e artista |
 | [Top 50 vigente](docs/top50-2026.md) | Regra 2026-top50-2, reservas dinâmicas e mensagem para o chat gerador |
 | [Regulamento 2026](docs/campeonato/regras-2026.md) | Os 22 tópicos fornecidos, preservados |
 | [Decisões](docs/decisions.md) | Confirmados, propostas e 14 pendências do regulamento |
 | [Backlog](docs/backlog.md) | Ordem de implementação e testes de aceite |
 | [Setup e operação](docs/setup.md) | Executar localmente, configurar acesso e aplicar migrações |
 | [Identidade visual](docs/design-system.md) | Tema escuro, componentes e padrões visuais |
+
+A página privada `/estatisticas` explora os gêneros, países e artistas da versão publicada atual. Cada gênero informado conta separadamente; as médias usam notas originais disponíveis. Não requer nova planilha ou integração.
 
 ## Preparação local
 

@@ -1,11 +1,20 @@
 # Backlog e critérios de aceite
 
+## Atualização — estatísticas do acervo
+
+- [x] Página privada `/estatisticas`, ligada à navegação, com contagens e médias originais por gênero, país e artista.
+- [x] Todos os gêneros por álbum, sem duplicação dentro da categoria; países e créditos de colaborações preservados; recorte somente da versão atual e notas ausentes tratadas separadamente.
+- [x] Seleção dos álbuns por grupo, troca de dimensão, limpeza, expansão e uso em 360 px. Totais gerais permanecem estáveis durante a exploração.
+- [x] Testes de cálculo e apresentação, autorização antes da leitura, build, E2E HTTP e conferência local da v100. Detalhes em [statistics.md](statistics.md).
+- [ ] Conferir a nova página autenticada no Railway após o deploy.
+
+
 ## Atualização — Top 50 2026-top50-2
 
 - [x] Reservas dinâmicas, eliminados por índice com bônus de +8/+10/+12/+14 e finalistas protegidos; seed desempata eliminados da mesma fase. Contrato e mensagem para o chat da planilha em [top50-2026.md](top50-2026.md).
 - [x] Recalcular pela chave validada, preservando a nota congelada e sem duplicar álbuns. Resultados ausentes, inválidos ou corrigidos não deixam eliminações presumidas persistirem.
 - [x] Distinguir avisos de colunas derivadas da planilha de conflitos em fatos; mostrar regra, reservas, bônus, índices e posições provisórias no painel.
-- [ ] Conferir o novo Top 50 no Railway após o deploy e comparar com a próxima versão do XLSX gerada pelo chat. A v99 ainda contém a regra antiga nas colunas derivadas.
+- [x] Importação da v100 confirmada pelo proprietário; conferência local mostrou reservas, eliminados, bônus, índices e posições compatíveis com a nova regra. A contradição factual de Interpol e o empate no corte continuam sinalizados.
 - [ ] Resolver as contradições factuais já documentadas de participação na Repescagem e eventual empate na última vaga; não inventar resolução automática.
 
 ## Atualização — navegação da chave até a final

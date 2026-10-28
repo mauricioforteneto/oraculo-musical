@@ -2,10 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   AlertTriangle,
   ArrowDownRight,
   AudioLines,
+  BarChart3,
   ChevronRight,
   CircleHelp,
   Disc3,
@@ -178,6 +180,7 @@ export function Dashboard({ source, syncReady, localPreview, competition, compet
         <nav className={styles.navigation}>
           <a className={styles.navItem + " " + styles.navActive} href="#visao-geral" aria-current="page"><AudioLines size={17} aria-hidden="true" />Visão geral</a>
           <a className={styles.navItem} href="#acervo"><LibraryBig size={17} aria-hidden="true" />Álbuns <span className={styles.navCount}>{albums.length || "—"}</span></a>
+          <Link className={styles.navItem} href="/estatisticas"><BarChart3 size={17} aria-hidden="true" />Estatísticas</Link>
           <a className={styles.navItem} href="#backlog"><ListMusic size={17} aria-hidden="true" />Backlog <span className={styles.navCount}>{source?.backlog.length ?? "—"}</span></a>
         </nav>
 
