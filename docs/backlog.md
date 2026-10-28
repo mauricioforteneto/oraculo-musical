@@ -1,12 +1,21 @@
 # Backlog e critérios de aceite
 
+## Atualização — histórico de versões
+
+- [x] Página privada `/historico` com versões importadas e comparação com a anterior disponível; snapshots de álbuns, backlog e resultados dos Playoffs.
+- [x] Adições, alterações, ausências e reaparecimentos com proveniência; distinção entre extração vazia comprovada e histórico indisponível, sem presumir exclusões ou datas de escuta/partida.
+- [x] Busca, filtros de bloco/tipo, controle separado de posições e índices, expansão antes/depois e paginação numérica de publicações.
+- [x] Testes unitários e consultas reais em PGlite para isolamento de fontes, papel leitor, compatibilidade de extração e autorização. Comparação local v99 → v100: 37 álbuns com mudanças somente derivadas, sem alterações em backlog ou resultados. Contrato em [version-history.md](version-history.md).
+- [ ] Conferir a página autenticada no Railway após o deploy, com as versões disponíveis no banco.
+
+
 ## Atualização — estatísticas do acervo
 
 - [x] Página privada `/estatisticas`, ligada à navegação, com contagens e médias originais por gênero, país e artista.
 - [x] Todos os gêneros por álbum, sem duplicação dentro da categoria; países e créditos de colaborações preservados; recorte somente da versão atual e notas ausentes tratadas separadamente.
 - [x] Seleção dos álbuns por grupo, troca de dimensão, limpeza, expansão e uso em 360 px. Totais gerais permanecem estáveis durante a exploração.
 - [x] Testes de cálculo e apresentação, autorização antes da leitura, build, E2E HTTP e conferência local da v100. Detalhes em [statistics.md](statistics.md).
-- [ ] Conferir a nova página autenticada no Railway após o deploy.
+- [x] Conferir a página de estatísticas no Railway (confirmado pelo proprietário).
 
 
 ## Atualização — Top 50 2026-top50-2
