@@ -1,5 +1,13 @@
 # Backlog e critérios de aceite
 
+## Atualização — Top 50 2026-top50-2
+
+- [x] Reservas dinâmicas, eliminados por índice com bônus de +8/+10/+12/+14 e finalistas protegidos; seed desempata eliminados da mesma fase. Contrato e mensagem para o chat da planilha em [top50-2026.md](top50-2026.md).
+- [x] Recalcular pela chave validada, preservando a nota congelada e sem duplicar álbuns. Resultados ausentes, inválidos ou corrigidos não deixam eliminações presumidas persistirem.
+- [x] Distinguir avisos de colunas derivadas da planilha de conflitos em fatos; mostrar regra, reservas, bônus, índices e posições provisórias no painel.
+- [ ] Conferir o novo Top 50 no Railway após o deploy e comparar com a próxima versão do XLSX gerada pelo chat. A v99 ainda contém a regra antiga nas colunas derivadas.
+- [ ] Resolver as contradições factuais já documentadas de participação na Repescagem e eventual empate na última vaga; não inventar resolução automática.
+
 ## Atualização — navegação da chave até a final
 
 - [x] Resolver os vencedores publicados da primeira rodada, incluindo o formato `Artista (#seed)`, e materializar as oitavas com os byes e o único reseeding.
@@ -8,7 +16,8 @@
 - [x] Explicar por jogo os bloqueios da primeira rodada: resultado não associado, duplicidade, vencedor ausente ou incompatível. Preservar versão, linha e texto dos resultados publicados.
 - [x] Exibir um confronto por linha em telas pequenas, com nomes de artistas e álbuns sem truncamento.
 - [x] Confirmar o formato na v99 e implementar a leitura de `Resultados Playoffs` e o avanço dos vencedores até o campeão, preservando o caminho fixo e os seeds originais. A v99 contém oito resultados da primeira rodada; as fases seguintes continuam sem resultados reais.
-- [ ] Após o deploy, sincronizar a v99 pelo Drive e conferir a primeira importação hospedada da nova aba. Validar resultados das fases seguintes quando forem publicados; progressão completa e campeão foram exercitados somente com dados fictícios.
+- [x] Sincronizar a v99 e conferir a importação hospedada da nova aba (confirmado pelo proprietário).
+- [ ] Validar resultados das fases seguintes quando forem publicados; progressão completa e campeão foram exercitados somente com dados fictícios.
 
 Validação desta atualização: testes unitários de resolução, caminhos e apresentação; integração em PGlite; navegação em Chromium com fonte sintética a 360 px, incluindo primeira rodada incompleta, byes, evidência da fonte e ausência de rolagem horizontal. A confirmação visual das oitavas no Railway foi fornecida pelo proprietário antes desta atualização; não valida o deploy da nova navegação.
 
@@ -126,7 +135,7 @@ Aceite central: nova avaliação fictícia em fonte de teste privada → botão 
 
 ## Entrega 3 — Top 50 e histórico competitivo
 
-Recorte aprovado para 2026: posições 1–N reservadas sem ordem final; vagas N+1–50 usam a maior fase comprovada, bônus não cumulativo e fonte publicada mais recente. Álbuns após o corte disputam apenas as vagas residuais. Divergências de fase ficam sem posição provisória; empate irredutível na última vaga aguarda decisão manual. Os campos históricos das fases anteriores seguem como evidência, sem algoritmo geral para reexecutar torneios encerrados.
+Recorte histórico de 28/09, substituído por [2026-top50-2](top50-2026.md): posições 1–N reservadas sem ordem final; vagas N+1–50 usam a maior fase comprovada, bônus não cumulativo e fonte publicada mais recente. Álbuns após o corte disputam apenas as vagas residuais. Divergências de fase ficam sem posição provisória; empate irredutível na última vaga aguarda decisão manual. Os campos históricos das fases anteriores seguem como evidência, sem algoritmo geral para reexecutar torneios encerrados.
 
 O recorte de 2026 para reserva de vagas, revisões e elegibilidade posterior ao corte está aprovado no adendo de [decisions.md](decisions.md). Ainda faltam critérios para posições finais dos participantes, empate irredutível na vaga residual e métricas anuais oficiais. O histórico de fases exibe evidências por versão publicada; seleção histórica não é reexecutada para inventar resultados.
 

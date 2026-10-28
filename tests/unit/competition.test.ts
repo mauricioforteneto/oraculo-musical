@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AlbumRecord, PublishedPlayoffResult } from "../../src/lib/catalog/types";
-import { albumIdentity, buildParticipants, CUTOFF_UTC, firstRound, participantChanges, projectResidualTop50, reseedRoundOf16, resolveRoundOf16, resolvePublishedMatch } from "../../src/lib/competition/rules";
+import { albumIdentity, buildParticipants, CUTOFF_UTC, firstRound, participantChanges, reseedRoundOf16, resolveRoundOf16, resolvePublishedMatch } from "../../src/lib/competition/rules";
 import { buildBracketView } from "../../src/lib/competition/bracket";
+import { projectTop50 } from "../../src/lib/competition/top50";
 import { DriveReader, type DriveFile } from "../../src/lib/ingestion/drive";
 import { freezeTokenMatches } from "../../src/lib/competition/token";
 
@@ -206,27 +207,28 @@ describe("Top 50 residual fictício", () => {
     const records = [entrant(41, 70, { repescagem: "Eliminado — Etapa 2", playInScore: 12, playInResult: "Eliminado", prePlayoffScore: 10, prePlayoffResult: "Eliminado" }),
       entrant(42, 70, { playInScore: 10, playInResult: "Eliminado" }), entrant(43, 70, { repescagem: "Eliminado — Etapa 1" }),
       entrant(44, 79), entrant(45, 78)];
-    const result = projectResidualTop50(records, participants, records.map(albumIdentity));
+    const result = projectTop50(records, participants, [], records.map(a => albumIdentity(a)))!;
     expect(result.entries.map(e => e.bonus)).toEqual([0, 6, 3, 1]);
     expect(result.entries.find(e => e.title === "Fictional Album 45")).toBeUndefined();
   });
-  it("mantém entrada tardia fora dos Playoffs e conflito de fase sem posição", () => {
+  it("mantém entrada tardia fora dos Playoffs e avisa sobre fase derivada divergente", () => {
     const records = [entrant(51, 85), entrant(52, 80, { top50BestPhase: "Pré-playoff" })];
-    const result = projectResidualTop50(records, participants, []);
+    const result = projectTop50(records, participants, [], [])!;
     expect(result.entries[0].late).toBe(true);
     expect(result.entries[0].position).toBe(25);
-    expect(result.entries[1].position).toBeNull();
-    expect(result.unresolved).toBe(1);
+    expect(result.entries[1].position).toBe(26);
+    expect(result.entries[1].warnings).toContain("Melhor fase informada difere da fase calculada.");
+    expect(result.unresolved).toBe(0);
   });
   it("bloqueia posição da última vaga quando o desempate continua igual", () => {
     const records = Array.from({ length: 27 }, (_, i) => entrant(100 + i, 80));
-    const result = projectResidualTop50(records, participants, records.map(albumIdentity));
+    const result = projectTop50(records, participants, [], records.map(a => albumIdentity(a)))!;
     expect(result.tieAtCut).toBe(true);
     expect(result.entries.filter(e => e.position !== null)).toHaveLength(0);
   });
   it("mantém a mesma posição provisória para empate interno", () => {
     const records = [entrant(140, 80), entrant(141, 80), entrant(142, 79)];
-    const result = projectResidualTop50(records, participants, records.map(albumIdentity));
+    const result = projectTop50(records, participants, [], records.map(a => albumIdentity(a)))!;
     expect(result.entries.map(e => e.position)).toEqual([25, 25, 27]);
   });
 });

@@ -8,6 +8,10 @@ Oferecer a um único usuário uma visão privada de sua escuta anual. A planilha
 
 No MVP: autenticação pessoal, ranking anual, detalhe da avaliação, sincronização manual e relatório de importação. Depois: Top 50, histórico competitivo, chave, backlog/reescutas e Last.fm. Mixtapes e análises de gosto ficam futuras. Chatbot, escrita no Drive, sincronização bidirecional, Actions/MCP públicos e agendamento ficam fora do MVP.
 
+## Top 50 atual
+
+Aplicar [2026-top50-2](top50-2026.md): reserva dinâmica dos sobreviventes, índice de eliminados e demais elegíveis, campeão/vice em 1º/2º. Recalcular com resultados validados e exibir diferenças da planilha como avisos; fatos contraditórios deixam a classificação afetada pendente. A regra não muda o ranking anual.
+
 ## Jornada de consulta
 
 1. Entrar com a conta previamente cadastrada. Sem cadastro público.
@@ -24,7 +28,7 @@ Interface em português, datas em America/Sao_Paulo; instantes armazenados em UT
 
 Ordenar por nota original decrescente. Nunca usar `Nota` promovida, seed, índice Top 50 ou score competitivo como nota anual. Comparar o resultado com o rank informado na fonte e reportar diferenças.
 
-Empates de nota recebem a mesma posição por competição (exemplo fictício: 90, 90, 88 → 1, 1, 3). Ordenação alfabética de artista/álbum dentro do grupo serve somente à apresentação e não desempata competição. Ranking anual residual para o Top 50 permanece bloqueado até decisão P07. Nenhum seed é calculado usando esse fallback.
+Empates de nota recebem a mesma posição por competição (exemplo fictício: 90, 90, 88 → 1, 1, 3). Ordenação alfabética de artista/álbum dentro do grupo serve somente à apresentação e não desempata competição. O Top 50 segue [2026-top50-2](top50-2026.md); igualdade persistente não usa ordenação alfabética como desempate competitivo. Nenhum seed é calculado usando esse fallback.
 
 Registros com total original válido e sem todos os pilares podem entrar no ranking, marcados como avaliação incompleta. Não distribuir o total artificialmente entre os pilares. Quando os quatro pilares estiverem presentes, validar limites e soma; para registros sem o conjunto completo, manter os valores ausentes como nulos e sinalizar que a soma não foi validada.
 

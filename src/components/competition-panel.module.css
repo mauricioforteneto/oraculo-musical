@@ -368,3 +368,27 @@
 .bracketChampion { display: flex; align-items: center; gap: 12px; padding: 16px; margin: 12px 0; border: 1px solid #b08356; border-radius: 6px; color: #e3bd8b; background: #28291e; }
 .bracketChampion > div { min-width: 0; display: grid; gap: 6px; overflow-wrap: anywhere; }
 .bracketChampion span { color: #d2d8cd; font-size: 13px; }
+
+.top50Summary { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 14px; border: 1px solid #354037; border-radius: 6px; }
+.top50Summary > div { display: grid; gap: 6px; }
+.top50Summary strong { color: #e2b889; font: 22px Georgia, serif; }
+.top50Summary span { color: #aeb8aa; font-size: 12px; line-height: 1.5; }
+.top50Details { margin: 14px 0; color: #b8c2b4; font-size: 13px; line-height: 1.6; overflow-wrap: anywhere; }
+.top50Details summary { cursor: pointer; color: #e0bc90; padding: 8px 0; }
+.top50Details summary:focus-visible { outline: 2px solid #e3ad75; outline-offset: 3px; }
+.top50List { list-style: none; padding: 0; margin: 12px 0; }
+.top50List li { display: grid; grid-template-columns: 42px minmax(0, 1fr) 65px; gap: 10px; align-items: center; padding: 14px 0; border-bottom: 1px solid #354037; }
+.top50Position { color: #e2b889; font: 20px Georgia, serif; }
+.top50Identity { min-width: 0; display: grid; gap: 5px; overflow-wrap: anywhere; }
+.top50Identity strong { color: #e4e8dc; font-size: 14px; }
+.top50Identity span { color: #bec7b8; font-size: 13px; line-height: 1.4; }
+.top50Identity small { color: #9eac9a; font-size: 11px; line-height: 1.5; }
+.top50Index { display: grid; gap: 4px; color: #b6c2ac; text-align: right; }
+.top50Index strong { color: #e2b889; font: 20px Georgia, serif; }
+.top50Index span { font-size: 12px; line-height: 1.4; }
+.top50Index small { font-size: 9px; }
+.top50Notice { color: #dfc093; font-size: 13px; line-height: 1.5; }
+.top50Notes { padding-left: 20px; }
+.top50Notes li { margin-bottom: 12px; }
+.top50Notes strong, .top50Notes span { display: block; overflow-wrap: anywhere; }
+@media (max-width: 380px) { .top50List li { grid-template-columns: 35px minmax(0, 1fr) 60px; gap: 7px; } }

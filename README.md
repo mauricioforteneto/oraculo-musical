@@ -23,6 +23,7 @@ Excel versionado em pasta privada do Google Drive → sincronização solicitada
 | [Arquitetura](docs/architecture.md) | Módulos, infraestrutura, segurança e recuperação |
 | [Modelo de dados](docs/data-model.md) | Entidades, identidade, proveniência e histórico |
 | [Integrações](docs/integrations.md) | Drive, Last.fm, AOTY e contratos internos |
+| [Top 50 vigente](docs/top50-2026.md) | Regra 2026-top50-2, reservas dinâmicas e mensagem para o chat gerador |
 | [Regulamento 2026](docs/campeonato/regras-2026.md) | Os 22 tópicos fornecidos, preservados |
 | [Decisões](docs/decisions.md) | Confirmados, propostas e 14 pendências do regulamento |
 | [Backlog](docs/backlog.md) | Ordem de implementação e testes de aceite |
@@ -35,6 +36,6 @@ Requer Node.js 24 (versão fixada em `.nvmrc`). Use `npm ci` e `npm run dev`; no
 
 Verificações: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run test:e2e` e `npm run build`. A integração local usa PostgreSQL WASM isolado (PGlite); CI está configurada para PostgreSQL 17 descartável. Os testes E2E atuais verificam HTTP, sem navegador nem credenciais de produção.
 
-Próxima entrega: conferir o histórico competitivo transcrito das versões publicadas e resolver as divergências de fase da projeção; posições finais do Top 50 dependem dos resultados e critérios ainda pendentes. A cópia externa e a rotação do backup ainda pendem. Não habilitar cobranças ou planos pagos.
+Top 50: a regra `2026-top50-2` reserva vagas aos sobreviventes e inclui eliminados pelo índice, com campeão e vice protegidos em 1º/2º. O painel recalcula pelos resultados publicados e sinaliza diferenças das colunas derivadas do XLSX. Próxima verificação: conferir o novo painel hospedado e a próxima planilha produzida pelo chat; a ordem segue provisória e fatos contraditórios ou empates na última vaga exigem resolução. A cópia externa e a rotação do backup ainda pendem. Não habilitar cobranças ou planos pagos.
 
 Dados reais, exportações, dumps e credenciais ficam fora do Git. Evidências locais de descoberta, se presentes, ficam em `.private/`, ignorada pelo Git. Acesso pelo conector usado na descoberta não fornece credenciais para a aplicação hospedada.

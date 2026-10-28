@@ -1,5 +1,7 @@
 # Regulamento do campeonato de 2026
 
+**Regra vigente do Top 50 — adendo de 27/10/2026:** aplicar [2026-top50-2](../top50-2026.md): reservas dinâmicas para sobreviventes, eliminados no índice e apenas campeão/vice protegidos. As reservas e a ordenação do Top 50 nas seções históricas abaixo e no adendo de 28/09 foram substituídas onde houver conflito.
+
 **Adendo aprovado em 28/09/2026:** para o congelamento e a projeção provisória de 2026, aplicar as decisões em [decisions.md](../decisions.md). A reserva do Top 50 é 1–N (N entre 24 e 32); a incompatibilidade histórica descrita na seção 13 foi resolvida para esta entrega. As posições dos participantes e os resultados dependem das partidas reais.
 
 Texto dos 22 tópicos fornecidos pelo usuário, preservado sem resolver ambiguidades. Referência: 27/09/2026. Fuso: America/Sao_Paulo.

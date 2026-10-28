@@ -34,7 +34,7 @@ export default async function Home() {
   const syncReady = !usingPreview && authConfigured()
     && Boolean(process.env.DATABASE_READ_URL && process.env.DATABASE_SYNC_URL && process.env.GOOGLE_DRIVE_FOLDER_ID
       && process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
-  const competition = !usingPreview && source?.version ? await getCompetitionState(source.albums) : null;
+  const competition = !usingPreview && source?.version ? await getCompetitionState(source.albums, source.playoffResults) : null;
   const competitionHistory = source?.version
     ? usingPreview
       ? buildCompetitionPhaseHistory(source.albums.map(album => ({

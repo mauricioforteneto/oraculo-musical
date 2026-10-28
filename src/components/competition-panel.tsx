@@ -9,6 +9,7 @@ import { resultForMatch, type Bracket, type Participant } from "@/lib/competitio
 import type { CompetitionPhaseHistory, HistoricalPhase, PhaseHistoryEntry } from "@/lib/competition/history";
 import styles from "./competition-panel.module.css";
 import { CompetitionBracket } from "./competition-bracket";
+import { Top50Panel } from "./top50-panel";
 
 type State = Awaited<ReturnType<typeof getCompetitionState>>;
 type Preview = Awaited<ReturnType<typeof previewFreeze>>;
@@ -85,7 +86,6 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
   const projection = preview?.projection ?? state?.projection;
   const active = Boolean(state?.active);
   const draft = Boolean(preview?.draft);
-  const reserved = projection?.reserved ?? participants.length;
   const firstRoundStatus = active ? "CHAVE CONGELADA" : draft ? "PRÉVIA DO CORTE" : "CHAVE A PUBLICAR";
   const publishedMatchCount = bracket?.matches.filter(match => resultForMatch(match.high, match.low, playoffResults) !== null).length ?? 0;
   const historicalEntries = history?.entries.filter(entry => entry.phase === selectedHistoricalPhase)
@@ -136,38 +136,7 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
       <div><strong>A chave ainda não foi publicada</strong><p>Seeds, confrontos e projeção aparecem após a leitura e confirmação do corte oficial.</p></div>
     </div>}
 
-    {projection && <section className={styles.top50Section} aria-labelledby="top50-title">
-      <div className={styles.sectionHeading}>
-        <div><span className={styles.sectionKicker}>CORRIDA PELAS 50 POSIÇÕES</span><h3 id="top50-title">Top 50 provisório</h3></div>
-        <span className={styles.projectionTag}>PROJEÇÃO</span>
-      </div>
-      <div className={styles.projectionIntro}>
-        <div><strong>01–{reserved}</strong><span>vagas reservadas aos participantes dos Playoffs</span></div>
-        <div className={styles.projectionArrow}><ArrowDown size={15} aria-hidden="true" /></div>
-        <div><strong>{projection.slots}</strong><span>vagas residuais calculadas pela versão publicada</span></div>
-        <p>Índice = nota original + maior bônus comprovado.</p>
-      </div>
-      {projection.tieAtCut && <p className={styles.warning}>Empate na última vaga: posição depende de decisão manual.</p>}
-      {projection.unresolved > 0 && <p className={styles.warning}>{projection.unresolved} divergência(s) de fase ou fonte sem posição definitiva.</p>}
-      <ol className={styles.residualList}>
-        {projection.entries.filter(entry => entry.position !== null).slice(0, 6).map(entry => <li key={entry.identityKey}>
-          <span className={styles.residualPosition}>#{entry.position}</span><span className={styles.residualIdentity}><strong>{entry.artist}</strong><small>{entry.title}</small></span>
-          <span className={styles.residualPhase}>{entry.phase}</span><span className={styles.residualMath}>{entry.originalScore} <i>+</i> {entry.bonus} <i>=</i> <strong>{entry.index}</strong></span>
-        </li>)}
-      </ol>
-      {projection.entries.filter(entry => entry.position !== null).length > 6 && <details className={styles.details}>
-        <summary>Ver todas as {projection.entries.filter(entry => entry.position !== null).length} posições provisórias</summary>
-        <ol className={styles.residualList}>{projection.entries.filter(entry => entry.position !== null).slice(6).map(entry => <li key={entry.identityKey}>
-          <span className={styles.residualPosition}>#{entry.position}</span><span className={styles.residualIdentity}><strong>{entry.artist}</strong><small>{entry.title}</small></span>
-          <span className={styles.residualPhase}>{entry.phase}</span><span className={styles.residualMath}>{entry.originalScore} <i>+</i> {entry.bonus} <i>=</i> <strong>{entry.index}</strong></span>
-        </li>)}</ol>
-      </details>}
-      {projection.entries.some(entry => entry.conflicts.length > 0 || entry.position === null) && <details className={styles.details}>
-        <summary>Itens sem posição provisória</summary><ul className={styles.conflictList}>{projection.entries.filter(entry => entry.conflicts.length > 0 || entry.position === null).map(entry => <li key={entry.identityKey}>
-          <strong>{entry.artist} — {entry.title}</strong><span>{entry.conflicts.join("; ") || "Fora das vagas / empate na última vaga"}</span>
-        </li>)}</ul>
-      </details>}
-    </section>}
+    {projection && <Top50Panel projection={projection} />}
     {!projection && sourceTop50Positions > 0 && <p className={styles.pendingProjection}>{sourceTop50Positions} posições informadas pela fonte aguardam a projeção calculada.</p>}
 
     {history && <section className={styles.historySection} id="historico-competitivo" aria-labelledby="historical-title">
