@@ -13,6 +13,12 @@ try {
   await server.listen();
   browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || "/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
   const page = await browser.newPage({viewport:{width:390,height:844}});
+  await page.addInitScript(()=>{
+    Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{
+      if(window.fixtureClipboardBlocked) throw new Error("synthetic clipboard denial");
+      window.fixtureClipboardText=text;
+    }}});
+  });
   const errors = []; const mutations = [];
   const artworkSummary={ready:true,total:44,found:44,missing:0,ambiguous:0,error:0,hidden:0,pending:0,due:0};
   const artworkValue={status:"found",selection:"manual",releaseGroupId:"11111111-1111-4111-8111-111111111111",thumbnailUrl:"https://archive.org/download/synthetic/250.jpg",imageUrl:"https://archive.org/download/synthetic/500.jpg",checkedAt:"2026-10-01",nextAttemptAt:null};
@@ -51,7 +57,7 @@ try {
   const origin = "http://127.0.0.1:3216";
   for (const width of [360,390,768,1280]) {
     await page.setViewportSize({width,height:844});
-    for (const path of ["/","/albuns","/albuns?capas=revisar","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao"]) {
+    for (const path of ["/","/pendencias","/albuns","/albuns?capas=revisar","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao"]) {
       await page.goto(origin+path);
       await page.locator("main h1").waitFor();
       assert.equal(await page.locator("main").count(),1);
@@ -65,7 +71,7 @@ try {
         assert(sizes.every(h => h >= 44));
         assert.equal(await nav.getByRole("link").count(),4);
         if (path.startsWith("/albuns/")) assert.equal(await nav.getByRole("link",{name:"Álbuns",exact:true}).getAttribute("aria-current"),"page");
-        if (["/estatisticas","/historico","/sincronizacao"].includes(path)) assert.equal(await nav.getByRole("button",{name:"Mais",exact:true}).getAttribute("aria-current"),"page");
+        if (["/pendencias","/estatisticas","/historico","/sincronizacao"].includes(path)) assert.equal(await nav.getByRole("button",{name:"Mais",exact:true}).getAttribute("aria-current"),"page");
         await page.evaluate(() => scrollTo(0,document.body.scrollHeight));
         const footer = await page.locator("footer").boundingBox(); const bar = await nav.boundingBox();
         assert(footer.y+footer.height <= bar.y,`covered footer at ${width}`);
@@ -78,7 +84,40 @@ try {
   await page.getByText("Ver falhas das capas (2)",{exact:true}).click();
   assert(await page.getByText(/MusicBrainz respondeu com erro HTTP 503/).isVisible());
   assert(await page.getByText(/A tentativa anterior não registrou o motivo detalhado/).isVisible());
+  await page.goto(origin+"/pendencias");
+  await page.getByRole("heading",{name:"Central de pendências",exact:true}).waitFor();
+  const initialPending=await page.getByRole("region",{name:"Lista de pendências",exact:true}).locator("article").count();
+  assert(initialPending>=5);
+  await page.getByLabel("Tipo de pendência",{exact:true}).selectOption("facts");
+  await page.getByRole("searchbox").fill("repescagem");
+  assert.equal(await page.getByRole("region",{name:"Lista de pendências",exact:true}).locator("article").count(),1);
+  assert.equal(new URL(page.url()).searchParams.get("tipo"),"facts");
+  await page.getByRole("button",{name:"Copiar orientação desta pendência",exact:true}).click();
+  await page.getByRole("status").filter({hasText:/Orientação copiada/}).waitFor();
+  const copied=await page.evaluate(()=>window.fixtureClipboardText);
+  assert(copied.includes("Albuns 2026!52"));assert(copied.includes("Preserve notas originais"));
+  await page.getByRole("region",{name:"Lista de pendências",exact:true}).getByRole("link").first().click();
+  await page.getByRole("heading",{name:"Detalhe do álbum",exact:true}).waitFor();
+  await page.goBack();
+  assert.equal(new URL(page.url()).searchParams.get("tipo"),"facts");
+  await page.getByRole("button",{name:"Limpar filtros",exact:true}).click();
+  await page.getByLabel("Origem da pendência",{exact:true}).selectOption("attempt");
+  const rejected=page.getByRole("region",{name:"Lista de pendências",exact:true});
+  assert.equal(await rejected.locator("article").count(),1);
+  assert.equal(await rejected.getByRole("link").count(),0,"Rejected rows must not link to active albums");
+  assert(await rejected.locator('li').filter({hasText:'Tentativa recusada · v101'}).first().isVisible());
+  await page.evaluate(()=>{window.fixtureClipboardBlocked=true;});
+  await page.getByRole("button",{name:"Copiar pendências filtradas",exact:true}).click();
+  await page.getByRole("status").filter({hasText:/Não foi possível copiar automaticamente/}).waitFor();
+  await page.getByText("Texto para o chat da planilha",{exact:true}).first().click();
+  assert((await page.getByRole("textbox",{name:"Texto das pendências filtradas",exact:true}).inputValue()).includes("tentativa recusada"));
+  await page.getByRole("searchbox").fill("inexistente");
+  assert(await page.getByRole("heading",{name:"Nenhuma pendência corresponde aos filtros",exact:true}).isVisible());
+  await page.evaluate(()=>window.dispatchEvent(new Event("fixture-pending-corrected")));
+  await page.getByRole("heading",{name:"Nenhuma pendência identificada",exact:true}).waitFor();
+  assert(await page.getByText("Fonte v102",{exact:true}).isVisible());
   assert.equal(mutations.length,0,"Visiting pages must never issue mutations or previews");
+  await page.goto(origin+"/sincronizacao");
   await page.setViewportSize({width:390,height:844});
   await page.getByRole("link",{name:"Revisar capas (1)",exact:true}).click();
   await page.getByRole("heading",{name:"Capas para revisar",exact:true}).waitFor();
@@ -220,5 +259,5 @@ try {
   assert.equal(batchCalls,beforeWaiting+1);
   recoveryMode=null;
   assert.deepEqual(errors,[]);
-  console.log("Layout Chromium: 10 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
+  console.log("Layout Chromium: 11 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, central de pendências, cópia/fallback, correção da fonte, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
 } finally { await browser?.close(); await server?.close(); await rm(root,{recursive:true,force:true}); }

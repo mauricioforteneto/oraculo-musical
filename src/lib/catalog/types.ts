@@ -3,6 +3,8 @@ export type AlbumRecord = {
   /** Database identity supplied only when reading the published source. */
   albumId?: string;
   artwork?: AlbumArtwork;
+  /** Last workbook containing this record; retained rows may predate the publication. */
+  provenance?: { version: string; fileName: string; sourceLocator: string | null };
   sourceRow: number;
   sourceRank: number | null;
   artist: string;
@@ -63,11 +65,16 @@ export type LocalSourcePreview = {
   version: number | string | null;
   referenceDate: string;
   publishedAt?: string | null;
+  fileName?: string | null;
+  /** Undefined means no successful import report was found, rather than zero warnings. */
+  publicationIssues?: Array<{ code: string; severity: "warning" | "error"; sourceLocator: string; message: string }>;
   lastAttempt?: {
     status: "running" | "succeeded" | "unchanged" | "failed";
     startedAt: string;
     finishedAt: string | null;
     errorCode: string | null;
+    version?: string | null;
+    fileName?: string | null;
     counts: Record<string, number>;
     issues: Array<{ code: string; severity: "warning" | "error"; sourceLocator: string; message: string }>;
   } | null;

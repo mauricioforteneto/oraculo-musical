@@ -13,6 +13,7 @@ type PublishedSourceRow = {
   summary: Record<string, string> | null;
   source_version_id: string | null;
   published_at: string | null;
+  file_name: string | null;
 };
 
 type SyncRunRow = {
@@ -25,6 +26,7 @@ type SyncRunRow = {
   error_code: string | null;
   counts: Record<string, number>;
   issue_count: number;
+  file_name: string | null;
 };
 
 type ImportIssueRow = {
@@ -41,7 +43,7 @@ export async function getPublishedSource(season: number, folderId: string): Prom
   try {
     const published = await client.query<PublishedSourceRow>(
       `SELECT s.id AS source_id, sv.version::text, sv.reference_date, sv.summary,
-              sv.id AS source_version_id, p.published_at::text
+              sv.id AS source_version_id, p.published_at::text, sv.file_name
          FROM oraculo.sources s
          LEFT JOIN oraculo.source_publications p ON p.source_id = s.id
          LEFT JOIN oraculo.source_versions sv ON sv.source_id = p.source_id AND sv.id = p.source_version_id
@@ -54,6 +56,7 @@ export async function getPublishedSource(season: number, folderId: string): Prom
     const historyResult = await client.query<SyncRunRow>(
       `SELECT r.id, r.status, r.started_at::text, r.finished_at::text,
               COALESCE(v.version::text, r.candidate_version::text) AS version,
+              COALESCE(v.file_name, r.candidate_file_name) AS file_name,
               COALESCE(p.source_version_id = r.version_id, false) AS is_current_publication,
               r.error_code, r.counts,
               (SELECT count(*)::integer FROM oraculo.import_issues i WHERE i.sync_run_id = r.id) AS issue_count
@@ -77,10 +80,20 @@ export async function getPublishedSource(season: number, folderId: string): Prom
       )
       : null;
 
+    const publicationRun = source.source_version_id ? await client.query<{id:string}>(
+      `SELECT id FROM oraculo.sync_runs WHERE source_id=$1 AND version_id=$2 AND status IN ('succeeded','unchanged')
+       ORDER BY finished_at DESC NULLS LAST, started_at DESC, id DESC LIMIT 1`, [source.source_id,source.source_version_id]) : null;
+    const publicationRunId = publicationRun?.rows[0]?.id;
+    const publicationIssues = publicationRunId ? publicationRunId === latestRun?.id ? issues?.rows ?? []
+      : (await client.query<ImportIssueRow>(`SELECT code,severity,COALESCE(source_locator,'') AS "sourceLocator",message
+          FROM oraculo.import_issues WHERE sync_run_id=$1 ORDER BY id`,[publicationRunId])).rows : undefined;
+
     const [albumRows, backlogRows, playoffResultRows] = source.source_version_id ? await Promise.all([
-      client.query<{ record: LocalSourcePreview["albums"][number]; is_present: boolean; album_id: string }>(
-        `SELECT st.record, st.is_present, st.album_id
+      client.query<{ record: LocalSourcePreview["albums"][number]; is_present: boolean; album_id: string; record_version: string; record_file: string; source_locator: string | null }>(
+        `SELECT st.record, st.is_present, st.album_id, sv.version::text AS record_version, sv.file_name AS record_file, r.source_locator
            FROM oraculo.source_album_state st
+           JOIN oraculo.source_versions sv ON sv.source_id=st.source_id AND sv.id=st.last_seen_source_version_id
+           LEFT JOIN oraculo.source_album_records r ON r.source_id=st.source_id AND r.source_version_id=st.last_seen_source_version_id AND r.album_id=st.album_id
           WHERE st.source_id = $1
           ORDER BY (st.record->>'originalScore')::numeric DESC NULLS LAST,
                    st.record->>'artist', st.record->>'title'`,
@@ -99,10 +112,13 @@ export async function getPublishedSource(season: number, folderId: string): Prom
     ]) : [{ rows: [] }, { rows: [] }, { rows: [] }];
 
     const covers = await readArtwork((sql, params) => client.query(sql, params), source.source_id);
-    const albums = albumRows.rows.map(({ record, is_present, album_id }) => ({ ...record, isPresent: is_present, albumId: album_id, artwork: covers.records.get(album_id) }));
+    const albums = albumRows.rows.map(({ record, is_present, album_id, record_version, record_file, source_locator }) => ({ ...record, isPresent: is_present, albumId: album_id,
+      provenance: {version:record_version,fileName:record_file,sourceLocator:source_locator}, artwork: covers.records.get(album_id) }));
     return {
       artworkSummary: summaryFor(albums, covers.records, covers.ready),
       version: source.version,
+      fileName: source.file_name,
+      publicationIssues,
       referenceDate: source.reference_date ?? "",
       publishedAt: source.published_at,
       lastAttempt: latestRun ? {
@@ -110,6 +126,8 @@ export async function getPublishedSource(season: number, folderId: string): Prom
         startedAt: latestRun.started_at,
         finishedAt: latestRun.finished_at,
         errorCode: latestRun.error_code,
+        version: latestRun.version,
+        fileName: latestRun.file_name,
         counts: latestRun.counts ?? {},
         issues: issues?.rows ?? [],
       } : null,

@@ -36,6 +36,7 @@ export function Dashboard({ source, competition }: { source: LocalSourcePreview 
     <div className={styles.grid}>
       <section className={styles.card}><span className={styles.eyebrow}>TEMPORADA EM DISPUTA</span><h2>Playoffs</h2><p>{competition?.active ? `Chave congelada na versão ${competition.active.fileVersion}. Acompanhe os resultados publicados e os classificados de cada fase.` : "A chave aparecerá após a confirmação do corte oficial."}</p><Link className={styles.action} href="/playoffs">Acompanhar confrontos</Link></section>
       <section className={styles.card}><span className={styles.eyebrow}>RANKING DA TEMPORADA</span><h2>Top 50 provisório</h2><p>{competition?.projection ? "Confira a classificação calculada pela nota original e pela melhor fase comprovada de cada álbum." : "A projeção estará disponível após a confirmação dos participantes."}</p><Link className={styles.action} href="/top-50">Ver classificação</Link></section>
+      <section className={styles.card}><span className={styles.eyebrow}>CONFERÊNCIA DA FONTE</span><h2>Pendências da planilha</h2><p>Reúna conflitos, resultados e avisos que precisam de correção ou decisão na próxima versão.</p><Link className={styles.action} href="/pendencias">Abrir central de pendências</Link></section>
     </div>
   </div>;
 }

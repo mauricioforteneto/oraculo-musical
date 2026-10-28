@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { AudioLines, LibraryBig, Trophy, GitBranch, MoreHorizontal, BarChart3, History, RefreshCw, LogOut, X } from "lucide-react";
+import { AudioLines, LibraryBig, Trophy, GitBranch, MoreHorizontal, BarChart3, History, RefreshCw, ClipboardList, LogOut, X } from "lucide-react";
 import { Brand } from "./brand";
 import styles from "./app-shell.module.css";
 
@@ -14,6 +14,7 @@ const primary = [
   { href: "/playoffs", label: "Playoffs", icon: GitBranch },
 ];
 const secondary = [
+  { href: "/pendencias", label: "Pendências", icon: ClipboardList },
   { href: "/estatisticas", label: "Estatísticas", icon: BarChart3 },
   { href: "/historico", label: "Histórico de versões", icon: History },
   { href: "/sincronizacao", label: "Sincronização", icon: RefreshCw },

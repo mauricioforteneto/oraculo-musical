@@ -1,6 +1,9 @@
 import { useSyncExternalStore } from "react";
 import { createRoot } from "react-dom/client";
 import "../../src/app/globals.css";
+import { PendingIssuesPage } from "../../src/components/pending-issues-page";
+import { buildIssueReport } from "../../src/lib/issues/report";
+import { syntheticIssues } from "../fixtures/synthetic/issues";
 import { AppShell } from "../../src/components/app-shell";
 import { Dashboard } from "../../src/components/dashboard";
 import { CatalogPage } from "../../src/components/catalog-page";
@@ -54,9 +57,14 @@ const competition = { cutoff:"2026-10-01", active:{id:"synthetic",fileName:"synt
 let version = "100";
 window.addEventListener("fixture-refresh", () => { version = "101"; });
 const subscribeVersion = (fn: () => void) => { window.addEventListener("fixture-refresh",fn); return () => window.removeEventListener("fixture-refresh",fn); };
+let pendingCorrected=false;
+window.addEventListener("fixture-pending-corrected",()=>{pendingCorrected=true;});
+const subscribePending=(fn:()=>void)=>{window.addEventListener("fixture-pending-corrected",fn);return ()=>window.removeEventListener("fixture-pending-corrected",fn);};
 function Fixture() {
   const path = usePathname(); const params = useSearchParams();
   const currentVersion = useSyncExternalStore(subscribeVersion,() => version);
+  const corrected=useSyncExternalStore(subscribePending,()=>pendingCorrected);
+  if(path==="/pendencias") { const fixture=syntheticIssues(corrected ? "102":currentVersion,corrected);return <PendingIssuesPage report={buildIssueReport(fixture.source,fixture.competition)}/>; }
   const source = {artworkSummary:{ready:true,total:44,found:2,missing:1,ambiguous:1,error:2,hidden:0,pending:38,due:38},version:currentVersion,referenceDate:"2026-10-01",summary:{},albums,playoffResults:results,backlog:[{order:1,artist:"OCULTO BACKLOG",title:"Oculto",priority:"",source:""}],lastAttempt:{status:"failed" as const,startedAt:"2026-10-01T03:00:00Z",finishedAt:null,errorCode:"SYNTHETIC",counts:{},issues:[{severity:"warning" as const,code:"BACKLOG_WARNING",sourceLocator:"Backlog",message:"OCULTO BACKLOG"},{severity:"error" as const,code:"MISSING_SHEET",sourceLocator:"Backlog",message:"Aba obrigatória ausente"}]}};
   if (path === "/estatisticas") return <StatisticsPage statistics={buildCatalogStatistics(albums)} version={currentVersion} />;
   if (path === "/historico") {
@@ -66,7 +74,7 @@ function Fixture() {
   }
   const title = path === "/albuns" ? "Álbuns" : path.startsWith("/albuns/") ? "Detalhe do álbum" : path === "/top-50" ? "Top 50" : path === "/playoffs" ? "Playoffs" : path === "/sincronizacao" ? "Sincronização" : "O ano em discos.";
   return <AppShell title={title} version={currentVersion}>
-    {path === "/albuns" ? <CatalogPage albums={albums} /> : path.startsWith("/albuns/") ? <><Link href={`/albuns${catalogQuery(catalogFilters(params))}`}>Voltar aos álbuns</Link><ArtworkEditor key={path} initialOpen={Boolean(catalogFilters(params).capas)} album={albums.find(a => a.albumId === path.split("/")[2])!} /><AlbumDetails album={rankAnnualAlbums(albums).find(a => a.albumId === path.split("/")[2]) ?? null} /></> : path === "/top-50" ? <Top50Panel projection={competition.projection} /> : path === "/playoffs" ? <><Link href="/playoffs?aba=historico">Histórico das fases</Link>{params.get("aba") === "historico" ? <CompetitionHistory history={buildCompetitionPhaseHistory(albums.map(a => ({identityKey:a.albumId!,version:"100",current:true,record:a})),"100")} /> : <CompetitionBracket bracket={field.bracket} results={results} resultsVersion={currentVersion} />}</> : path === "/sincronizacao" ? <SynchronizationPage source={source} competition={competition} ready /> : <Dashboard source={source} competition={competition} />}
+    {path === "/albuns" ? <CatalogPage albums={albums} /> : path.startsWith("/albuns/") ? <><Link href={`/albuns${catalogQuery(catalogFilters(params))}`}>Voltar aos álbuns</Link><ArtworkEditor key={path} initialOpen={Boolean(catalogFilters(params).capas)} album={(albums.find(a => a.albumId === path.split("/")[2]) ?? syntheticIssues().source.albums.find(a=>a.albumId===path.split("/")[2]))!} /><AlbumDetails album={rankAnnualAlbums(albums).find(a => a.albumId === path.split("/")[2]) ?? rankAnnualAlbums(syntheticIssues().source.albums).find(a=>a.albumId===path.split("/")[2]) ?? null} /></> : path === "/top-50" ? <Top50Panel projection={competition.projection} /> : path === "/playoffs" ? <><Link href="/playoffs?aba=historico">Histórico das fases</Link>{params.get("aba") === "historico" ? <CompetitionHistory history={buildCompetitionPhaseHistory(albums.map(a => ({identityKey:a.albumId!,version:"100",current:true,record:a})),"100")} /> : <CompetitionBracket bracket={field.bracket} results={results} resultsVersion={currentVersion} />}</> : path === "/sincronizacao" ? <SynchronizationPage source={source} competition={competition} ready /> : <Dashboard source={source} competition={competition} />}
   </AppShell>;
 }
 createRoot(document.getElementById("root")!).render(<Fixture />);

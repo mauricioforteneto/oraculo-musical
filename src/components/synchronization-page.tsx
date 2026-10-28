@@ -1,6 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from 'next/link';
 import type { LocalSourcePreview } from "@/lib/catalog/types";
 import type { getCompetitionState } from "@/lib/competition/service";
 import { dateTime, scoreLabel } from "@/lib/catalog/presentation";
@@ -39,6 +40,7 @@ export function SynchronizationPage({ source, ready, competition }: { source: Lo
       <p>{source?.version != null ? `Última publicação válida: v${source.version}${source.publishedAt ? ` · ${dateTime(source.publishedAt)}` : ""}.` : "Ainda não há publicação válida."} A leitura da planilha preserva a última publicação válida se houver falha.</p>
       {!ready && <p>A configuração privada de sincronização está pendente.</p>}
       <button className={styles.action} disabled={!ready || syncing} type="button" onClick={synchronize}>{syncing ? "Lendo…" : "Sincronizar"}</button>
+      <p><Link href="/pendencias">Abrir central de pendências</Link> para conferir a publicação e a última tentativa recusada.</p>
       {feedback && <p role="status">{feedback}</p>}
     </section>
     {attempt && <section className={styles.card} aria-label="Relatório da última tentativa"><h2>Última tentativa: {statusLabel(attempt.status)}</h2>

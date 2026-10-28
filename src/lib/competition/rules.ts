@@ -104,9 +104,12 @@ export const MATCH_PENDING_LABELS = {
   "incompatible-result": "Os participantes do resultado não correspondem aos classificados para este jogo.",
 };
 
-export function resolvePublishedMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[], phase: PlayoffPhase = "first", gameId?: string): MatchResolution {
-  const matches = gameId ? results.filter(r => (r.phase ?? "first") === phase
+export function publishedResultsForMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[], phase: PlayoffPhase = "first", gameId?: string) {
+  return gameId ? results.filter(r => (r.phase ?? "first") === phase
     && (r.gameId === gameId || (phase === "first" && !r.gameId && matchesParticipants(high, low, r)))) : resultsForMatch(high, low, results);
+}
+export function resolvePublishedMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[], phase: PlayoffPhase = "first", gameId?: string): MatchResolution {
+  const matches = publishedResultsForMatch(high, low, results, phase, gameId);
   if (matches.length !== 1) return { result: null, winner: null, pending: matches.length ? "duplicate-results" : "missing-result" };
   const result = matches[0];
   if (!matchesParticipants(high, low, result)) return { result, winner: null, pending: "incompatible-result" };

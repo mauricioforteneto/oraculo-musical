@@ -1,4 +1,5 @@
 import type { Top50Entry, Top50Projection } from "@/lib/competition/top50";
+import Link from 'next/link';
 import styles from "./competition-panel.module.css";
 
 export function Top50Panel({ projection }: { projection: Top50Projection }) {
@@ -30,6 +31,7 @@ export function Top50Panel({ projection }: { projection: Top50Projection }) {
       <ul className={styles.top50Notes}>{projection.survivors.map(e => <li key={e.identityKey}><strong>Seed #{e.seed} · {e.artist}</strong><span>{e.title} · Em disputa, sem bônus nem índice definidos</span></li>)}</ul>
     </details>}
     {projection.tieAtCut && <p className={styles.top50Notice}>Empate na última vaga: o grupo empatado fica sem posição até decisão manual.</p>}
+    {(projection.tieAtCut || projection.unresolved>0 || projection.resultIssues.length>0 || warnings.length>0) && <p className={styles.top50Notice}><Link href="/pendencias">Conferir a central de pendências e copiar orientações para a planilha</Link></p>}
     {projection.unresolved > 0 && <p className={styles.top50Notice}>{projection.unresolved} álbum(ns) com fatos conflitantes, sem posição provisória.</p>}
     {projection.resultIssues.length > 0 && <details className={styles.top50Details}>
       <summary>Resultados pendentes de conferência</summary><ul>{projection.resultIssues.map((issue, i) => <li key={i}>{issue}</li>)}</ul>

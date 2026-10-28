@@ -34,7 +34,7 @@ test("POST exige origem válida e autenticação configurada", async ({ request 
   expect((await request.get("/auth/callback?code=synthetic")).status()).toBe(503);
 });
 
-for (const path of ["/albuns?capas=revisar", "/albuns?q=jazz&nota=80&limite=45", "/albuns/00000000-0000-4000-8000-000000000001", "/albuns/invalid", "/top-50", "/playoffs", "/playoffs?aba=historico", "/sincronizacao"]) {
+for (const path of ["/pendencias?tipo=facts&origem=publication", "/albuns?capas=revisar", "/albuns?q=jazz&nota=80&limite=45", "/albuns/00000000-0000-4000-8000-000000000001", "/albuns/invalid", "/top-50", "/playoffs", "/playoffs?aba=historico", "/sincronizacao"]) {
   test(`nova rota exige sessão: ${path}`, async ({ request }) => {
     const response = await request.get(path, { maxRedirects: 0 });
     expect(response.status()).toBe(307);

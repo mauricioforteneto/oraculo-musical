@@ -55,4 +55,28 @@ describe("identidade dos álbuns na publicação", () => {
     expect(await getPublishedSource(2025,"configured-folder")).toBeNull();
     expect(await getPublishedSource(2026,"unknown-folder")).toBeNull();
   });
+  it('preserva avisos da publicação após falha mais recente e mantém a proveniência real de ausentes',async()=>{
+    await db.exec('BEGIN');
+    try {
+      const row=(await db.query<{source_id:string;version_id:string}>(`SELECT source_id,last_seen_source_version_id AS version_id FROM oraculo.source_album_state WHERE album_id=$1`,[ids[0]])).rows[0];
+      await db.query(`INSERT INTO oraculo.source_album_records(source_id,source_version_id,album_id,source_locator,record)
+        SELECT source_id,last_seen_source_version_id,album_id,'Albuns 2026!3',record FROM oraculo.source_album_state WHERE album_id=$1`,[ids[0]]);
+      await db.query(`UPDATE oraculo.source_album_state SET record=record || '{"provenance":{"version":"spoofed","fileName":"foreign.xlsx","sourceLocator":"foreign!99"}}'::jsonb WHERE album_id=$1`,[ids[0]]);
+      const success=(await db.query<{id:string}>(`INSERT INTO oraculo.sync_runs(source_id,version_id,requested_by,status,started_at,finished_at)
+        VALUES($1,$2,'11111111-1111-4111-8111-111111111111','succeeded','2026-10-27 10:00Z','2026-10-27 10:01Z') RETURNING id`,[row.source_id,row.version_id])).rows[0].id;
+      await db.query(`INSERT INTO oraculo.import_issues(sync_run_id,code,severity,source_locator,message) VALUES($1,'SUMMARY_AVERAGE_MISMATCH','warning','Resumo','Aviso da publicação v100')`,[success]);
+      const failed=(await db.query<{id:string}>(`INSERT INTO oraculo.sync_runs(source_id,requested_by,status,started_at,finished_at,candidate_version,candidate_file_name,error_code)
+        VALUES($1,'11111111-1111-4111-8111-111111111111','failed','2026-10-27 11:00Z','2026-10-27 11:01Z',101,'rejected-v101.xlsx','WORKBOOK_INVALID') RETURNING id`,[row.source_id])).rows[0].id;
+      await db.query(`INSERT INTO oraculo.import_issues(sync_run_id,code,severity,source_locator,message) VALUES($1,'DUPLICATE_IDENTITY','error','Albuns 2026!3','Erro somente na versão recusada')`,[failed]);
+      const source=(await getPublishedSource(2026,'configured-folder'))!;
+      expect(source.fileName).toBe('synthetic-v100.xlsx');
+      expect(source.publicationIssues).toEqual([{code:'SUMMARY_AVERAGE_MISMATCH',severity:'warning',sourceLocator:'Resumo',message:'Aviso da publicação v100'}]);
+      expect(source.lastAttempt).toMatchObject({status:'failed',version:'101',fileName:'rejected-v101.xlsx',issues:[{code:'DUPLICATE_IDENTITY'}]});
+      expect(source.albums[0].provenance).toEqual({version:'100',fileName:'synthetic-v100.xlsx',sourceLocator:'Albuns 2026!3'});
+      expect((await getPublishedSource(2026,'foreign-folder'))!.publicationIssues).toBeUndefined();
+      await db.query(`INSERT INTO oraculo.sync_runs(source_id,version_id,requested_by,status,started_at,finished_at)
+        VALUES($1,$2,'11111111-1111-4111-8111-111111111111','unchanged','2026-10-27 12:00Z','2026-10-27 12:01Z')`,[row.source_id,row.version_id]);
+      expect((await getPublishedSource(2026,'configured-folder'))!.publicationIssues).toEqual([]);
+    } finally {await db.exec('ROLLBACK');}
+  });
 });

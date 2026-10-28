@@ -121,6 +121,7 @@ export function projectTop50(albums: AlbumRecord[], participants: Participant[],
     if (album.top50SourceRank !== null && album.top50SourceRank !== entry.position) entry.warnings.push("Posição informada difere da posição calculada pela regra atual.");
   }
   return { rulesVersion: TOP50_RULES_VERSION, completed: !!champion, reserved, slots, survivors, entries, tieAtCut, resultIssues,
+    cutTieKeys: tieAtCut ? eligible.filter(e => compare(e,boundary) === 0).map(e => e.identityKey) : [],
     unresolved: entries.filter(e => e.conflicts.length > 0).length,
     warningCount: [...entries, ...survivors].filter(e => e.warnings.length > 0).length };
 }

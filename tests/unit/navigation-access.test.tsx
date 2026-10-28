@@ -13,6 +13,7 @@ import Album from "../../src/app/albuns/[id]/page";
 import Top50 from "../../src/app/top-50/page";
 import Playoffs from "../../src/app/playoffs/page";
 import Synchronization from "../../src/app/sincronizacao/page";
+import PendingIssues from '../../src/app/pendencias/page';
 const id = "00000000-0000-4000-8000-000000000001";
 beforeEach(() => {
   vi.resetAllMocks(); vi.stubEnv("SOURCE_SEASON", "2026"); vi.stubEnv("GOOGLE_DRIVE_FOLDER_ID", "configured-folder");
@@ -25,6 +26,7 @@ const routes = [
   ["álbuns", () => Albums()], ["avaliação", () => Album({ params: Promise.resolve({ id }), searchParams: Promise.resolve({}) })],
   ["Top 50", () => Top50()], ["playoffs", () => Playoffs({ searchParams: Promise.resolve({}) })],
   ["sincronização", () => Synchronization()],
+  ['pendências',()=>PendingIssues()],
 ] as const;
 describe("novas rotas privadas", () => {
   for (const [name, route] of routes) {
@@ -63,5 +65,14 @@ describe("novas rotas privadas", () => {
     await Playoffs({searchParams:Promise.resolve({aba:"historico"})});
     expect(deps.history).toHaveBeenCalledWith(2026,"configured-folder","100");
     expect(deps.competition).not.toHaveBeenCalled();
+  });
+  it('mostra falha segura ao não conseguir conferir as pendências, sem afirmar que a lista está limpa',async()=>{
+    deps.catalog.mockRejectedValue(new Error('sensitive connection string'));
+    const logger=vi.spyOn(console,'error').mockImplementation(()=>{});
+    try {
+      const html=renderToStaticMarkup(await PendingIssues());
+      expect(html).toContain('Não foi possível carregar as pendências');expect(html).not.toContain('sensitive connection string');
+      expect(html).not.toContain('Nenhuma pendência identificada');expect(logger).toHaveBeenCalledWith('Pending issue report load failed');
+    } finally {logger.mockRestore();}
   });
 });

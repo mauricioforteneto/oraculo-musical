@@ -34,3 +34,7 @@ O backlog foi retirado de menus, início e histórico, incluindo contagens, filt
 `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration` e `npm run test:e2e` verificam código, regras, isolamento da fonte, persistência e acesso HTTP. `npm run test:layout` usa o Vite já instalado pelo Vitest e Chromium local (`CHROMIUM_PATH` pode selecionar outro executável) para renderizar os componentes reais com dados sintéticos e um adaptador de navegação exclusivo de teste. Não cria rotas ou exceções de autenticação na aplicação.
 
 O ensaio de interface cobre nove telas em 360, 390, 768 e 1280 px, ausência de overflow, acesso ao menu, Tab/Escape, foco, fechamento, links, filtros/retorno, sincronização, confirmação auditada e hashes antigos. Não substitui a conferência autenticada no Railway com a fonte pessoal, que permanece pendente para este novo layout.
+
+## Central de pendências
+
+`/pendencias` reúne apontamentos da publicação e da última tentativa recusada, sem misturar suas linhas. Está no menu desktop e em **Mais**, com atalhos no Início, Top 50 e Sincronização. Filtros de tipo/origem/impacto e busca ficam na URL; links de avaliação usam apenas UUIDs lidos da fonte configurada. Cópia de orientações é local, por clique, com texto selecionável se o clipboard não estiver disponível. Detalhes em [pending-issues.md](pending-issues.md).

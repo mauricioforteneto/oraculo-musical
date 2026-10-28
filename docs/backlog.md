@@ -194,3 +194,13 @@ Implementada a busca MusicBrainz + Cover Art Archive para Início, catálogo e a
 A revisão manual agora possui listas em Álbuns, com contagens e filtros por situação da capa, além do atalho em Sincronização. Não exige nova estrutura de banco.
 
 Melhoria das capas: alternativa iTunes para ausências/falhas, seleção manual por provedor, atribuição Apple e retomada automática limitada à página aberta. Limites/backoff separados e persistidos; preserva associações existentes. A migração `0007` e o SQL pronto para Supabase estão em [artwork.md](artwork.md); aplicação em produção e consulta real ao iTunes ainda pendentes. Worker independente da página permanece para outra etapa.
+
+## Central de pendências
+
+- [x] Página privada `/pendencias` com fatos conflitantes do Top 50, grupo empatado no corte, problemas em resultados e avisos/erros de importação.
+- [x] Separar a publicação ativa de tentativas recusadas; conservar versão/arquivo/linha dos álbuns ausentes e evidência do corte quando disponível, sem vincular linhas rejeitadas ao catálogo ativo.
+- [x] Buscar/filtrar por tipo, origem e impacto; copiar orientação individual ou do conjunto filtrado para o chat que gera a planilha, com alternativa de cópia manual.
+- [x] Recalcular após importação sem persistir estados artificiais de resolução; preservar regras, notas, seeds e resultados.
+- [ ] Conferir a central autenticada no Railway após o deploy. Contrato e validação em [pending-issues.md](pending-issues.md).
+
+O proprietário confirmou a aplicação da migração `0007` e a conclusão da retomada da busca de capas. Não se presume cobertura de todas as capas; worker independente da página segue para outra etapa.
