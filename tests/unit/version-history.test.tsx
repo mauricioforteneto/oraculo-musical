@@ -86,6 +86,15 @@ describe("apresentação do histórico", () => {
     expect(html).toContain("Antes"); expect(html).toContain("não recalcula rankings antigos");
     expect(html).toContain("Incluir posições e índices"); expect(html).toContain("não de escuta ou realização de partidas");
   });
+  it("oculta backlog em blocos, filtros, resultados e contagens sem alterar a comparação", () => {
+    const data = syntheticHistoryData();
+    const original = structuredClone(data);
+    const visibleTotal = data.comparison.blocks.albums.changes.length + data.comparison.blocks.playoffs.changes.length;
+    const html = renderToStaticMarkup(<VersionHistoryPage history={data} />);
+    expect(html).not.toMatch(/backlog/i);
+    expect(html).toContain(`${visibleTotal} no total disponível`);
+    expect(data).toEqual(original);
+  });
   it("distingue ponto inicial, vazio e falha sem transformar indisponibilidade em zero mudanças", () => {
     const data = syntheticHistoryData(); data.previous = null; data.comparison = comparePublishedVersions(null, syntheticHistorySnapshots().after);
     expect(renderToStaticMarkup(<VersionHistoryPage history={data} />)).toContain("Ponto inicial");

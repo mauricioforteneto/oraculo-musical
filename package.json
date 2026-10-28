@@ -15,7 +15,8 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "npm run build && playwright test",
     "db:migrate": "node --env-file-if-exists=.env.migration.local scripts/migrate.mjs",
-    "db:backup": "node --env-file-if-exists=.env.migration.local scripts/backup.mjs"
+    "db:backup": "node --env-file-if-exists=.env.migration.local scripts/backup.mjs",
+    "test:layout": "node tests/browser/layout-check.mjs"
   },
   "dependencies": {
     "@radix-ui/react-slot": "1.3.3",

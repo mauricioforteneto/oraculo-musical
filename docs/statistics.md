@@ -18,7 +18,7 @@ O agregador puro `buildCatalogStatistics` retorna totais, álbuns ordenados por 
 
 A página abre em Gêneros e permite alternar para Países e Artistas. Gêneros e países usam barras horizontais por contagem; artistas usam lista. A ordem é quantidade decrescente e nome nos empates. Mostrar os dez primeiros grupos, com opção de expandir todos e recolher novamente.
 
-Selecionar um grupo mostra seus discos na própria página, por nota original decrescente, com notas ausentes ao final. A seleção não altera o resumo geral. Trocar de dimensão ou usar **Limpar seleção** limpa o recorte. A página mostra versão da fonte e caminho de volta ao acervo; a sincronização continua sendo feita pelo painel principal.
+Selecionar um grupo mostra seus discos na própria página, por nota original decrescente, com notas ausentes ao final. A seleção não altera o resumo geral. Trocar de dimensão ou usar **Limpar seleção** limpa o recorte. A página mostra versão da fonte e caminho de volta ao acervo; a sincronização fica em `/sincronizacao`. Cada disco listado oferece um link para sua avaliação completa.
 
 Quando todos os artistas têm um álbum, a página informa que a média descreve esse disco e não representa preferência recorrente. Não há ranking por gosto, evolução mensal, inferência de data de escuta ou integração com Last.fm nesta entrega.
 
@@ -28,4 +28,4 @@ O servidor executa `requireOwner` antes de consultar o catálogo. A página exig
 
 Validação: testes unitários de agregação, apresentação e autorização antes da leitura; integração existente; build e E2E HTTP incluindo redirecionamento para login e cache privado. O componente foi exercitado em Chromium a 360 px com dados fictícios, cobrindo seleção, limpeza, dimensões, teclado, expansão, estados de erro/vazio e ausência de rolagem horizontal. Na v100 fornecida pelo proprietário, a conferência local encontrou 126 álbuns, 20 países e 126 artistas; contagens e listas de todos os grupos coincidiram. Essa conferência não acessou o banco hospedado.
 
-Após o deploy, entrar como proprietário e abrir **Estatísticas** para conferir a publicação efetivamente disponível no Railway. A validação da nova página autenticada no ambiente hospedado permanece pendente.
+Após o deploy, entrar como proprietário e abrir **Estatísticas** para conferir a publicação efetivamente disponível no Railway. A página anterior foi confirmada pelo usuário; a conferência do novo layout compartilhado no ambiente hospedado permanece pendente.

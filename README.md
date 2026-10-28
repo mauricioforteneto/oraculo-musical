@@ -1,8 +1,8 @@
 # Oráculo Musical
 
-Aplicação web pessoal, confortável no celular, para consultar avaliações de álbuns, ranking anual e, em etapas posteriores, Top 50, campeonato, backlog, reescutas e histórico do Last.fm.
+Aplicação web pessoal, confortável no celular, para consultar avaliações de álbuns, ranking anual Top 50, campeonato, estatísticas e histórico de publicações.
 
-**Estado: acesso, sincronização e restauração validados localmente.** Login Google via Supabase, banco hospedado, leitura privada do Drive, publicação transacional e repetição idempotente foram exercitados com a fonte pessoal. Backup criptografado e restauração isolada conferiram. O painel permite consultar o backlog completo e os campos competitivos transcritos da fonte, sem calcular resultados oficiais. O usuário dispensou por ora os ensaios com segunda conta e pasta de teste; configuração hospedada e critérios de publicação ainda pendem. Dados pessoais permanecem fora do Git.
+**Estado: acesso, sincronização e restauração validados localmente.** Login Google via Supabase, banco hospedado, leitura privada do Drive, publicação transacional e repetição idempotente foram exercitados com a fonte pessoal. Backup criptografado e restauração isolada conferiram. A navegação foi dividida em páginas de consulta e operação; o backlog está temporariamente oculto, com os dados preservados. O usuário dispensou por ora os ensaios com segunda conta e pasta de teste; configuração hospedada e critérios de publicação ainda pendem. Dados pessoais permanecem fora do Git.
 
 ## Fluxo aprovado
 
@@ -30,17 +30,20 @@ Excel versionado em pasta privada do Google Drive → sincronização solicitada
 | [Decisões](docs/decisions.md) | Confirmados, propostas e 14 pendências do regulamento |
 | [Backlog](docs/backlog.md) | Ordem de implementação e testes de aceite |
 | [Setup e operação](docs/setup.md) | Executar localmente, configurar acesso e aplicar migrações |
+| [Navegação e páginas](docs/navigation.md) | Rotas, menu mobile, detalhes, filtros e backlog oculto |
 | [Identidade visual](docs/design-system.md) | Tema escuro, componentes e padrões visuais |
 
 A página privada `/estatisticas` explora os gêneros, países e artistas da versão publicada atual. Cada gênero informado conta separadamente; as médias usam notas originais disponíveis. Não requer nova planilha ou integração.
 
-A página privada `/historico` compara publicações importadas de álbuns, backlog e resultados dos Playoffs com a anterior disponível. Inclui busca, antes/depois, proveniência e filtro de posições/índices, preservando os registros originais.
+A página privada `/historico` compara publicações importadas de álbuns e resultados dos Playoffs com a anterior disponível. Inclui busca, antes/depois, proveniência e filtro de posições/índices, preservando os registros originais.
+
+A estrutura e as responsabilidades de cada página estão em [Navegação e páginas](docs/navigation.md). Sincronização e operação do corte ficam em `/sincronizacao`.
 
 ## Preparação local
 
 Requer Node.js 24 (versão fixada em `.nvmrc`). Use `npm ci` e `npm run dev`; no PowerShell com scripts desabilitados, use `npm.cmd`. Abra http://localhost:3000, igual ao `APP_ORIGIN`. Em desenvolvimento no loopback, `.private/source-preview.json` permite consultar a prévia local privada; fora desse caso, sem credenciais o acesso permanece fechado. Nenhum dado fictício é apresentado como acervo pessoal.
 
-Verificações: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run test:e2e` e `npm run build`. A integração local usa PostgreSQL WASM isolado (PGlite); CI está configurada para PostgreSQL 17 descartável. Os testes E2E atuais verificam HTTP, sem navegador nem credenciais de produção.
+Verificações: `npm run lint`, `npm run typecheck`, `npm test`, `npm run test:integration`, `npm run test:e2e` `npm run test:layout` e `npm run build`. A integração local usa PostgreSQL WASM isolado (PGlite); CI está configurada para PostgreSQL 17 descartável. Os testes E2E verificam acesso HTTP; o ensaio `test:layout` usa Chromium local e componentes com fixtures sintéticas, sem credenciais de produção.
 
 Top 50: a regra `2026-top50-2` reserva vagas aos sobreviventes e inclui eliminados pelo índice, com campeão e vice protegidos em 1º/2º. O painel recalcula pelos resultados publicados e sinaliza diferenças das colunas derivadas do XLSX. Próxima verificação: conferir o novo painel hospedado e a próxima planilha produzida pelo chat; a ordem segue provisória e fatos contraditórios ou empates na última vaga exigem resolução. A cópia externa e a rotação do backup ainda pendem. Não habilitar cobranças ou planos pagos.
 

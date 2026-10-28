@@ -1,4 +1,6 @@
 export type AlbumRecord = {
+  /** Database identity supplied only when reading the published source. */
+  albumId?: string;
   sourceRow: number;
   sourceRank: number | null;
   artist: string;

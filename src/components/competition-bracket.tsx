@@ -33,7 +33,7 @@ export function CompetitionBracket({ bracket, results, resultsVersion }: {
 
     <div id={panelId} role="region" aria-label={title}>
       <div className={styles.sectionHeading}>
-        <div><span className={styles.sectionKicker}>CHAVE PRINCIPAL</span><h3>{title}</h3></div>
+        <div><span className={styles.sectionKicker}>CHAVE PRINCIPAL</span><h2>{title}</h2></div>
         <span className={styles.reseedTag}>{phase.id === "first" ? "RODADA INICIAL" : phase.id === "roundOf16" ? "RESEEDING ÚNICO" : "CHAVE FIXA"}</span>
       </div>
 

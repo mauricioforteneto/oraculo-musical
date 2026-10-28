@@ -1,0 +1,52 @@
+.shell { min-height: 100svh; color: var(--foreground); }
+.shell a { text-decoration: none; }
+.shell button, .shell input, .shell select { font: inherit; }
+.shell :is(a,button,input,select,textarea,summary):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.skip { position: fixed; top: -100px; left: 16px; z-index: 100; padding: 14px; background: var(--primary); color: var(--background); }
+.skip:focus { top: 12px; }
+.sidebar { position: fixed; inset: 0 auto 0 0; width: 230px; padding: 34px 20px 20px; border-right: 1px solid var(--border); display: flex; flex-direction: column; background: #131a15; }
+.brand { color: inherit; padding: 0 10px; }
+.caption { color: var(--muted-foreground); font-size: 11px; letter-spacing: .14em; }
+.sidebar > .caption { margin: 46px 12px 18px; }
+.nav { display: grid; gap: 6px; }
+.navItem { display: flex; align-items: center; gap: 12px; padding: 13px 12px; min-height: 46px; width: 100%; border: 1px solid transparent; border-radius: 7px; background: transparent; color: #b9c4b9; text-align: left; font-size: 14px; }
+.navItem:hover { background: var(--secondary); color: var(--foreground); }
+.navItem[aria-current="page"] { background: #302b20; border-color: #655039; color: #ebbd91; }
+.sidebarFoot { margin-top: auto; padding-top: 28px; display: grid; gap: 12px; }
+.sidebarFoot > span { font-size: 12px; color: var(--muted-foreground); padding: 12px; border-top: 1px solid var(--border); }
+.workspace { margin-left: 230px; min-width: 0; }
+.topbar { min-height: 76px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 36px; border-bottom: 1px solid var(--border); }
+.desktopCaption { color: var(--muted-foreground); font-size: 10px; letter-spacing: .12em; }
+.version { font-size: 12px; color: #c6b08e; }
+.mobileBrand, .mobileNav { display: none; }
+.content { max-width: 1260px; margin: auto; padding: 36px; min-width: 0; }
+.heading { margin-bottom: 28px; }
+.heading h1 { margin: 12px 0; font: 400 clamp(36px,4vw,52px)/1.12 Georgia,serif; letter-spacing: -.04em; overflow-wrap: anywhere; }
+.heading p { color: var(--muted-foreground); max-width: 720px; font-size: 15px; margin: 0; }
+.footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 24px 36px; font-size: 11px; color: var(--muted-foreground); border-top: 1px solid var(--border); }
+.dialog { margin: auto; inset: 0; padding: 0; color: var(--foreground); background: var(--card); border: 1px solid #53604c; border-radius: 16px; width: min(440px,calc(100% - 32px)); max-height: calc(100svh - 48px); overflow-y: auto; }
+.dialog::backdrop { background: #030906c9; backdrop-filter: blur(4px); }
+.dialogBody { padding: 20px; }
+.dialogHeading { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 18px; }
+.dialogHeading h2 { margin: 0; font: 26px Georgia,serif; }
+.dialogHeading button { border: 1px solid var(--border); color: var(--foreground); background: transparent; display: grid; place-items: center; min-width: 44px; min-height: 44px; border-radius: 50%; }
+.dialogBody > form { border-top: 1px solid var(--border); margin-top: 16px; padding-top: 12px; }
+@media(max-width: 1000px) {
+  .sidebar { display: none; }
+  .workspace { margin-left: 0; padding-bottom: calc(82px + env(safe-area-inset-bottom,0px)); }
+  .topbar { padding: 16px 24px; }
+  .mobileBrand { display: block; color: inherit; }
+  .desktopCaption { display: none; }
+  .mobileNav { position: fixed; z-index: 30; inset: auto 0 0; display: grid; grid-template-columns: repeat(5,minmax(0,1fr)); padding: 8px 8px calc(8px + env(safe-area-inset-bottom,0px)); border-top: 1px solid #4b5648; background: #131b16f5; backdrop-filter: blur(12px); }
+  .mobileItem { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; min-height: 52px; background: transparent; border: 0; border-radius: 7px; color: #aeb9aa; font-size: 11px !important; }
+  .mobileItem[aria-current="page"] { color: var(--primary); background: #2c2b20; }
+  .content { padding: 28px 24px; }
+  .footer { padding: 24px; }
+}
+@media(max-width: 520px) {
+  .topbar { padding: 16px; }
+  .topbar :global(.brand) { font-size: 23px; }
+  .version { max-width: 130px; text-align: right; line-height: 1.6; }
+  .content { padding: 28px 16px; }
+  .footer { padding: 20px 16px; }
+}

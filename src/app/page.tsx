@@ -4,9 +4,7 @@ import { getPublishedSource } from "@/lib/catalog/database";
 import { authConfigured, requireOwner } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getCompetitionState } from "@/lib/competition/service";
-import { albumIdentity } from "@/lib/competition/rules";
-import { buildCompetitionPhaseHistory } from "@/lib/competition/history";
-import { getCompetitionPhaseHistory } from "@/lib/competition/history-database";
+import { AppShell } from "@/components/app-shell";
 
 export const dynamic = "force-dynamic";
 
@@ -31,17 +29,8 @@ export default async function Home() {
   const source = usingPreview
     ? await getLocalSourcePreview()
     : process.env.DATABASE_READ_URL ? await getPublishedSource(season, folderId) : null;
-  const syncReady = !usingPreview && authConfigured()
-    && Boolean(process.env.DATABASE_READ_URL && process.env.DATABASE_SYNC_URL && process.env.GOOGLE_DRIVE_FOLDER_ID
-      && process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
   const competition = !usingPreview && source?.version ? await getCompetitionState(source.albums, source.playoffResults) : null;
-  const competitionHistory = source?.version
-    ? usingPreview
-      ? buildCompetitionPhaseHistory(source.albums.map(album => ({
-          identityKey: albumIdentity(album, season),
-          version: String(source.version), current: true, record: album,
-        })), String(source.version))
-      : await getCompetitionPhaseHistory(season, folderId, String(source.version))
-    : null;
-  return <Dashboard source={source} syncReady={syncReady} localPreview={usingPreview} competition={competition} competitionHistory={competitionHistory} />;
+  return <AppShell title="O ano em discos." description="Um retrato da sua escuta, da primeira avaliação à disputa pelo Top 50." version={source?.version} localPreview={usingPreview}>
+    <Dashboard source={source} competition={competition} />
+  </AppShell>;
 }

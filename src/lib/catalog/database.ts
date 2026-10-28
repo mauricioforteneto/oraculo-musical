@@ -76,8 +76,8 @@ export async function getPublishedSource(season: number, folderId: string): Prom
       : null;
 
     const [albumRows, backlogRows, playoffResultRows] = source.source_version_id ? await Promise.all([
-      client.query<{ record: LocalSourcePreview["albums"][number]; is_present: boolean }>(
-        `SELECT st.record, st.is_present
+      client.query<{ record: LocalSourcePreview["albums"][number]; is_present: boolean; album_id: string }>(
+        `SELECT st.record, st.is_present, st.album_id
            FROM oraculo.source_album_state st
           WHERE st.source_id = $1
           ORDER BY (st.record->>'originalScore')::numeric DESC NULLS LAST,
@@ -118,7 +118,7 @@ export async function getPublishedSource(season: number, folderId: string): Prom
         issueCount: run.issue_count,
       })),
       summary: source.summary ?? {},
-      albums: albumRows.rows.map(({ record, is_present }) => ({ ...record, isPresent: is_present })),
+      albums: albumRows.rows.map(({ record, is_present, album_id }) => ({ ...record, isPresent: is_present, albumId: album_id })),
       backlog: backlogRows.rows.map(({ record }) => record),
       playoffResults: playoffResultRows.rows.map(({ record }) => record),
     };

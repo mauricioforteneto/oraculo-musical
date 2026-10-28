@@ -2,8 +2,8 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, BarChart3, Disc3, Globe2, Headphones, Music2 } from "lucide-react";
-import { Brand } from "./brand";
+import { BarChart3, Disc3, Globe2, Headphones, Music2 } from "lucide-react";
+import { AppShell } from "./app-shell";
 import { albumsForStatisticsGroup, type CatalogStatistics, type StatisticsDimension } from "@/lib/catalog/statistics";
 import styles from "./statistics-page.module.css";
 
@@ -21,18 +21,11 @@ export function StatisticsPage({ statistics, version, loadFailed = false }: { st
   const visibleGroups = showAll ? groups : groups.slice(0, 10);
   const maxCount = Math.max(1, ...groups.map(g => g.count));
 
-  return <main className={styles.page}>
-    <header className={styles.header}>
-      <Link href="/" aria-label="Oráculo Musical, início" className={styles.brand}><Brand /></Link>
-      <Link href="/#acervo" className={styles.back}><ArrowLeft size={16} aria-hidden="true" />Voltar ao acervo</Link>
-    </header>
-    <div className={styles.heading}><div><span className={styles.eyebrow}>SEU ACERVO EM PERSPECTIVA</span><h1>Estatísticas</h1></div>
-      {version !== null && <span className={styles.version}>Fonte v{version}</span>}
-    </div>
+  return <AppShell title="Estatísticas" description="Seu acervo em perspectiva: gêneros, países e artistas da publicação atual." version={version}><div className={styles.page}>
     {loadFailed ? <section className={styles.empty} role="alert"><h2>Não foi possível carregar as estatísticas</h2>
       <p>O catálogo está indisponível neste momento. Tente recarregar a página ou volte ao acervo.</p><a href="/estatisticas">Tentar novamente</a></section>
       : !statistics || statistics.total === 0 ? <section className={styles.empty}><Disc3 size={32} aria-hidden="true" />
-        <h2>Nenhum álbum presente para analisar</h2><p>As estatísticas aparecem quando houver álbuns na versão publicada. Volte ao acervo para conferir a sincronização.</p></section>
+        <h2>Nenhum álbum presente para analisar</h2><p>As estatísticas aparecem quando houver álbuns na versão publicada. Confira a página de Sincronização para publicar a fonte.</p></section>
       : <>
         <p className={styles.scope}>Somente álbuns presentes na versão publicada atual. Registros ausentes continuam preservados no histórico e ficam fora destas estatísticas.</p>
         <section className={styles.metrics} aria-label="Resumo estatístico">
@@ -68,12 +61,12 @@ export function StatisticsPage({ statistics, version, loadFailed = false }: { st
             {selected && <button className={styles.action} type="button" onClick={() => setSelectedKey(null)}>Limpar seleção</button>}</div>
           <p className={styles.explanation} role="status">{selected ? `${selectedAlbums.length} álbuns neste grupo, ordenados pela nota original.` : "Selecione um gênero, país ou artista para ver os álbuns correspondentes."}</p>
           {selected && <ol className={styles.albumList}>{selectedAlbums.map(a => <li key={a.key}>
-            <div><strong>{a.artist}</strong><span>{a.title}</span><small>{a.country || "País não informado"} · {a.genre || "Gênero não informado"}</small></div>
+            <div><strong>{a.albumId ? <Link href={`/albuns/${a.albumId}`}>{a.artist}</Link> : a.artist}</strong><span>{a.title}</span><small>{a.country || "País não informado"} · {a.genre || "Gênero não informado"}</small></div>
             <span className={styles.score}>{a.originalScore === null ? "—" : number(a.originalScore)}<small>NOTA ORIGINAL</small></span>
           </li>)}</ol>}
         </section>
       </>}
-  </main>;
+  </div></AppShell>;
 }
 
 function Metric({ icon, label, value, note }: { icon: React.ReactNode; label: string; value: string; note: string }) {

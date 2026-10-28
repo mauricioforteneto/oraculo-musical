@@ -73,7 +73,7 @@ describe("apresentação das estatísticas", () => {
     expect(html).toContain("4 álbuns com nota original");
     expect(html).toContain("podem somar mais de 100%");
     expect(html).toContain("aria-pressed=\"true\"");
-    expect(html).toContain("href=\"/#acervo\"");
+    expect(html).toContain("href=\"/albuns\"");
   });
   it("distingue falha de carregamento de catálogo vazio", () => {
     const error = renderToStaticMarkup(<StatisticsPage statistics={null} version={null} loadFailed />);

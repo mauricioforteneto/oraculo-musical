@@ -1,6 +1,6 @@
 # Histórico de versões
 
-Página privada em `/historico`, acessível por **Histórico de versões** na navegação principal. Mostra alterações em álbuns, backlog e resultados dos Playoffs; o histórico das fases competitivas continua separado.
+Página privada em `/historico`, acessível por **Histórico de versões** na navegação principal. Mostra alterações em álbuns e resultados dos Playoffs; o histórico das fases competitivas continua separado.
 
 ## Publicações e comparação
 
@@ -13,7 +13,7 @@ A primeira publicação disponível é um ponto inicial: mostra a quantidade de 
 ## Registros e mudanças
 
 - Álbuns usam a identidade estável armazenada. Artista, título, gênero, país, fonte, notas registradas e campos competitivos podem ser comparados. Não inferir renomeações nem alterar avaliações originais.
-- Backlog usa artista creditado e título, com NFC e espaços externos removidos. Ordem, prioridade e referência são campos alteráveis, não identidade. Duplicidades são sinalizadas e a associação afetada fica pendente.
+- O modelo preservado de backlog (temporariamente oculto na interface) usa artista creditado e título, com NFC e espaços externos removidos. Ordem, prioridade e referência são campos alteráveis, não identidade. Duplicidades são sinalizadas e a associação afetada fica pendente.
 - Playoffs usam fase/jogo; a primeira rodada usa o par de seeds para compatibilidade com os registros legados. Resultado, vencedor, critério e participantes são comparados literalmente. Mudanças apenas de linha, aba de origem, ID adicionado ao formato legado ou parser não viram alterações de resultado.
 - Registros novos são **adicionados**; os que deixam de aparecer ficam **ausentes nesta versão**, sem afirmar exclusão definitiva ou cancelamento. Se uma identidade ausente retorna e há evidência anterior, aparece como **reaparecida**.
 - Para reaparecimentos, a página informa a publicação em que o registro estava ausente e sua última evidência anterior. O antes/depois usa essa última evidência, identificando sua versão, mesmo quando os valores continuam iguais.
@@ -36,4 +36,6 @@ As consultas carregam os dois snapshots selecionados e buscam apenas a última e
 
 Testes cobrem adição, alteração, ausência, reaparecimento, identidade ambígua, campos derivados, metadados ignorados, ponto inicial, extração indisponível, isolamento de fontes, limites de versões, paginação e autorização antes da leitura. A integração executa as consultas reais em PGlite com as migrações existentes, inclusive usando o papel leitor. Na comparação local dos XLSX v99 e v100, foram encontrados 37 álbuns com mudanças somente em campos derivados; não houve novos álbuns, alterações factuais, mudanças de backlog ou resultados.
 
-A página autenticada no Railway precisa ser conferida após o deploy, com as publicações efetivamente disponíveis no banco. Essa conferência é distinta da comparação local dos arquivos anexados.
+O usuário confirmou a página anterior no Railway. O novo layout compartilhado precisa ser conferido após o deploy, com as publicações efetivamente disponíveis no banco. Essa conferência é distinta da comparação local dos arquivos anexados.
+
+A ocultação temporária do backlog também vale para blocos, contagens, filtros e busca do histórico. O comparador e os snapshots continuam preservados para uso futuro. Consulte [navigation.md](navigation.md).

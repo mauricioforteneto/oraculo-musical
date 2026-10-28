@@ -1,11 +1,4 @@
-.page { max-width: 1180px; margin: 0 auto; padding: 28px 36px 64px; min-height: 100svh; color: #eeeede; }
-.header { display: flex; justify-content: space-between; align-items: center; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid #354038; }
-.brand { color: inherit; text-decoration: none; }
-.back { display: inline-flex; align-items: center; gap: 8px; color: #d8b590; font-size: 13px; text-decoration: none; }
-.heading { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; padding: 32px 0 12px; }
-.eyebrow { color: #acb5a8; font-size: 10px; letter-spacing: .15em; }
-.heading h1 { margin: 10px 0; font: 48px/1.1 Georgia, serif; letter-spacing: -.04em; }
-.version { color: #b9c3b4; padding: 8px 12px; border: 1px solid #354038; border-radius: 20px; font-size: 12px; }
+.page { min-width: 0; }
 .scope, .explanation { color: #aeb9aa; font-size: 13px; line-height: 1.7; }
 .scope { margin-bottom: 24px; max-width: 760px; }
 .metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
@@ -44,7 +37,6 @@
 .page button:focus-visible, .page a:focus-visible { outline: 2px solid #e9b68b; outline-offset: 4px; }
 @media (max-width: 800px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 520px) {
-  .page { padding: 20px 14px 40px; }
   .header { align-items: flex-start; flex-wrap: wrap; gap: 22px; }
   .heading h1 { font-size: 38px; }
   .heading { padding-top: 24px; }
@@ -55,3 +47,6 @@
   .explorer h2, .albums h2 { font-size: 25px; }
   .selector button { flex: 1; padding: 10px 8px; }
 }
+.page :is(button,select,summary) { min-height: 44px; }
+.page :is(p,.note,.scope,.explanation,.groupNote) { font-size: 14px; }
+.albumList a { color: var(--primary); display: inline-block; padding: 8px 0; }

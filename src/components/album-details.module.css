@@ -1,0 +1,32 @@
+.detailCard { width: 100%; max-width: 850px; min-width: 0; padding: 28px; border: 1px solid var(--border); border-radius: 10px; background: var(--card); }
+.cardEyebrow { color: var(--muted-foreground); font-size: 11px; letter-spacing: .12em; }
+.detailHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.detailPosition { color: var(--primary); font: 20px Georgia,serif; }
+.detailArtist { margin-top: 24px; color: var(--primary); font-size: 18px; overflow-wrap: anywhere; }
+.detailCard h2 { margin: 8px 0 16px; font: 32px/1.2 Georgia,serif; overflow-wrap: anywhere; }
+.detailMeta { display: flex; flex-wrap: wrap; gap: 8px; color: var(--muted-foreground); font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.detailScore { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; margin-top: 24px; padding: 20px 0; border-block: 1px solid var(--border); }
+.detailScore > div { display: grid; gap: 8px; }
+.detailScore > div > span { color: var(--muted-foreground); font-size: 11px; letter-spacing: .1em; }
+.detailScore strong { color: #eac096; font: 36px Georgia,serif; }
+.detailScore strong small { margin-left: 4px; color: var(--muted-foreground); font: 13px Arial,sans-serif; }
+.reportedScore { padding-left: 20px; border-left: 1px solid var(--border); }
+.reportedScore strong { color: #bcc3b9; font-size: 24px; }
+.detailNotice { display: flex; gap: 10px; margin-top: 16px; padding: 12px; color: #d2b48c; border: 1px solid #554633; border-radius: 6px; background: #211f19; font-size: 14px; line-height: 1.6; }
+.detailNotice svg, .detailDisclaimer svg { flex-shrink: 0; }
+.detailFacts { display: grid; margin: 20px 0 0; }
+.detailFacts > div { display: flex; align-items: flex-start; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.detailFacts dt { flex: 1; min-width: 0; color: var(--muted-foreground); font-size: 14px; overflow-wrap: anywhere; }
+.detailFacts dd { flex: 1; min-width: 0; margin: 0; color: #cbd1c8; font-size: 14px; text-align: right; overflow-wrap: anywhere; }
+.sourceText { white-space: pre-wrap; }
+.observation { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--border); }
+.observation span { color: var(--muted-foreground); font-size: 11px; letter-spacing: .12em; }
+.observation p { margin: 8px 0 0; color: #b0b7ac; font-size: 14px; line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; }
+.competitiveEvidence { margin-top: 20px; padding: 12px; border: 1px solid var(--border); border-radius: 6px; background: #19221b; }
+.competitiveEvidence summary { min-height: 44px; padding-block: 12px; color: #d7bd99; font-size: 14px; cursor: pointer; }
+.competitiveEvidence > p { margin: 10px 0 0; color: var(--muted-foreground); font-size: 14px; line-height: 1.6; }
+.detailDisclaimer { display: flex; gap: 10px; margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--border); color: var(--muted-foreground); font-size: 14px; line-height: 1.6; }
+.detailEmpty { min-height: 170px; display: grid; place-content: center; justify-items: center; gap: 10px; color: var(--muted-foreground); }
+.detailEmpty strong { color: var(--foreground); font: 22px Georgia,serif; }
+.detailEmpty span { font-size: 14px; }
+@media(max-width:520px) { .detailCard { padding: 20px; } .competitiveEvidence .detailFacts > div { flex-direction: column; gap: 6px; } .competitiveEvidence .detailFacts dd { text-align: left; } }

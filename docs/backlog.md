@@ -175,8 +175,13 @@ Testar empate /20 por Replay, depois Consistência, depois seed original. Reseed
 
 Validar janela inicial e orçamento. Testar paginação com limite de 200, janela estável, nowplaying, timestamps ausentes, faixas repetidas em horários distintos, retries, deduplicação e retomada sem avançar checkpoint incompleto. Diferentes edições não são fundidas. Medir volume real; não afirmar integração validada só com fixtures.
 
-Backlog continua vindo da aba da fonte e já pode ser consultado por inteiro, com a divergência entre resumo e lista sinalizada. Reescutas dependem de mapeamento confiável na fonte. AOTY depende de exportação comprovada e não sobrescreve avaliação oficial. Mixtapes, análise de gosto e eventual adaptador de consulta para Chat ficam em backlog futuro, sem compromisso de implantação nesta fase.
+Backlog continua sendo importado e armazenado, mas está temporariamente oculto em toda a interface. A próxima solução de escutas será decidida separadamente. Reescutas dependem de mapeamento confiável na fonte. AOTY depende de exportação comprovada e não sobrescreve avaliação oficial. Mixtapes, análise de gosto e eventual adaptador de consulta para Chat ficam em backlog futuro, sem compromisso de implantação nesta fase.
 
 ## Critério de publicação
 
 Verificações correspondentes à entrega passam; banco e Drive reais são acessíveis pelo backend; backup restaurável; limite gratuito e ausência de cobrança automática reconfirmados; credenciais nunca chegam ao cliente. Publicação não é condição para encerrar esta entrega de documentação.
+
+
+## Refatoração de navegação e layout
+
+Implementada a divisão de páginas e o menu mobile descritos em [navigation.md](navigation.md), incluindo detalhes por UUID, preservação de filtros, controles isolados em Sincronização e ocultação do backlog sem remoção de dados. Regras competitivas e contratos de escrita preservados. Validações automatizadas e ensaio Chromium local cobrem as rotas; pendente conferir o novo layout autenticado no Railway.

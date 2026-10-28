@@ -2,12 +2,13 @@
 
 import { useId, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, History } from "lucide-react";
-import { Brand } from "./brand";
+import { History } from "lucide-react";
+import { AppShell } from "./app-shell";
 import { HISTORY_DOMAINS, HISTORY_KINDS, filterHistoryChanges, type HistoryChange, type HistoryChangeKind,
   type HistoryDomain, type HistoryValue, type VersionHistoryData } from "@/lib/catalog/version-history";
 import styles from "./version-history-page.module.css";
 
+const visibleDomains = HISTORY_DOMAINS.filter(d => d.id !== "backlog");
 const href = (version: string, page: number) => `/historico?${new URLSearchParams({ versao: version, pagina: String(page) })}`;
 function date(value: string | null) {
   if (!value || Number.isNaN(Date.parse(value))) return "não registrado";
@@ -24,21 +25,18 @@ export function VersionHistoryPage({ history, loadFailed = false }: { history: V
   const [includeDerived, setIncludeDerived] = useState(true);
   const [shown, setShown] = useState(50);
   const filtersId = useId();
-  const filtered = history ? filterHistoryChanges(history.comparison, { domain, kind, query, includeDerived }) : [];
-  const ready = history && HISTORY_DOMAINS.some(d => history.comparison.blocks[d.id].status === "ready");
-  const totalChanges = history ? HISTORY_DOMAINS.reduce((n, d) => n + history.comparison.blocks[d.id].changes.length, 0) : 0;
-  const hasWarnings = history && HISTORY_DOMAINS.some(d => history.comparison.blocks[d.id].warnings.length > 0);
+  const filtered = history ? filterHistoryChanges(history.comparison, { domain, kind, query, includeDerived }).filter(c => c.domain !== "backlog") : [];
+  const ready = history && visibleDomains.some(d => history.comparison.blocks[d.id].status === "ready");
+  const totalChanges = history ? visibleDomains.reduce((n, d) => n + history.comparison.blocks[d.id].changes.length, 0) : 0;
+  const hasWarnings = history && visibleDomains.some(d => history.comparison.blocks[d.id].warnings.length > 0);
 
-  return <main className={styles.page}>
-    <header className={styles.header}><Link href="/" aria-label="Oráculo Musical, início" className={styles.brand}><Brand /></Link>
-      <Link href="/#acervo" className={styles.back}><ArrowLeft size={16} aria-hidden="true" />Voltar ao acervo</Link></header>
-    <div className={styles.title}><span>ACOMPANHE A FONTE</span><h1>Histórico de versões</h1></div>
-    <p className={styles.note}>Publicações importadas de álbuns, backlog e resultados dos Playoffs. Horários são de importação ou modificação do arquivo, não de escuta ou realização de partidas.</p>
+  return <AppShell title="Histórico de versões" description="Compare as publicações importadas de álbuns e resultados dos Playoffs." version={history?.selected.version}><div className={styles.page}>
+    <p className={styles.note}>Horários são de importação ou modificação do arquivo, não de escuta ou realização de partidas.</p>
 
     {loadFailed ? <section className={styles.panel} role="alert"><h2>Histórico indisponível neste momento</h2><p>Tente recarregar a página. Seus dados permanecem preservados.</p><a href="/historico">Tentar novamente</a></section>
-      : !history ? <section className={styles.panel}><History size={28} aria-hidden="true" /><h2>Nenhuma publicação disponível</h2><p>O histórico aparecerá após uma publicação da fonte. Volte ao acervo para conferir a sincronização.</p></section>
+      : !history ? <section className={styles.panel}><History size={28} aria-hidden="true" /><h2>Nenhuma publicação disponível</h2><p>O histórico aparecerá após uma publicação da fonte. Confira a página de Sincronização para publicar a fonte.</p></section>
       : <>
-        {history.notices.map(notice => <p className={styles.notice} role="status" key={notice}>{notice}</p>)}
+        {history.notices.filter(n => !/backlog/i.test(n)).map(notice => <p className={styles.notice} role="status" key={notice}>{notice}</p>)}
         <section className={styles.panel} aria-label="Comparação selecionada">
           <h2>{history.previous ? `v${history.previous.version} → v${history.selected.version}` : `Ponto inicial · v${history.selected.version}`}</h2>
           <p>{history.selected.fileName}{history.selected.isCurrent ? " · Publicação atual" : ""}</p>
@@ -61,7 +59,7 @@ export function VersionHistoryPage({ history, loadFailed = false }: { history: V
           </nav>
         </details>
 
-        <section className={styles.blocks} aria-label="Resumo da comparação">{HISTORY_DOMAINS.map(d => {
+        <section className={styles.blocks} aria-label="Resumo da comparação">{visibleDomains.map(d => {
           const block = history.comparison.blocks[d.id];
           return <div className={styles.panel} key={d.id}><h2>{d.label}</h2>
             {block.status === "unavailable" ? <p className={styles.notice}>Histórico indisponível para este bloco: uma das publicações não possui extração comparável. Isso não significa uma lista vazia.</p>
@@ -76,7 +74,7 @@ export function VersionHistoryPage({ history, loadFailed = false }: { history: V
           <h2>Explore as mudanças</h2>
           <div className={styles.filters}>
             <div><label htmlFor={`${filtersId}-domain`}>Bloco</label><select id={`${filtersId}-domain`} value={domain} onChange={e => { setDomain(e.target.value as HistoryDomain | "all"); setShown(50); }}>
-              <option value="all">Todos os blocos</option>{HISTORY_DOMAINS.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}</select></div>
+              <option value="all">Todos os blocos</option>{visibleDomains.map(d => <option key={d.id} value={d.id}>{d.label}</option>)}</select></div>
             <div><label htmlFor={`${filtersId}-kind`}>Tipo de mudança</label><select id={`${filtersId}-kind`} value={kind} onChange={e => { setKind(e.target.value as HistoryChangeKind | "all"); setShown(50); }}>
               <option value="all">Todos os tipos</option>{HISTORY_KINDS.map(k => <option key={k.id} value={k.id}>{k.label}</option>)}</select></div>
             <div><label htmlFor={`${filtersId}-query`}>Buscar</label><input id={`${filtersId}-query`} type="search" value={query} placeholder="Artista, álbum ou jogo" onChange={e => { setQuery(e.target.value); setShown(50); }} /></div>
@@ -90,7 +88,7 @@ export function VersionHistoryPage({ history, loadFailed = false }: { history: V
           {filtered.length > shown && <button className={styles.more} type="button" onClick={() => setShown(n => n + 50)}>Mostrar mais mudanças</button>}
         </section>}
       </>}
-  </main>;
+  </div></AppShell>;
 }
 
 function ChangeCard({ change, previousVersion }: { change: HistoryChange; previousVersion: string | null }) {

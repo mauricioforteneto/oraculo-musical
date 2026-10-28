@@ -1,10 +1,4 @@
-.page { max-width: 1200px; margin: auto; padding: 28px 32px 60px; min-height: 100svh; color: #eeeede; }
-.header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; padding-bottom: 24px; border-bottom: 1px solid #354038; }
-.brand { color: inherit; text-decoration: none; }
-.back { display: inline-flex; align-items: center; gap: 8px; color: #d8b590; font-size: 13px; text-decoration: none; }
-.title { margin-top: 32px; }
-.title > span { font-size: 10px; letter-spacing: .16em; color: #a6b39f; }
-.title h1 { font: 44px/1.15 Georgia,serif; letter-spacing: -.04em; margin: 12px 0; }
+.page { min-width: 0; }
 .note { color: #b0bba9; font-size: 13px; line-height: 1.7; overflow-wrap: anywhere; }
 .panel { padding: 22px; margin: 20px 0; background: #182019; border: 1px solid #354038; border-radius: 8px; overflow-wrap: anywhere; min-width: 0; }
 .panel h2 { font: 26px/1.2 Georgia,serif; margin: 0 0 14px; }
@@ -12,7 +6,7 @@
 .panel a { color: #dfb58b; }
 .panel summary { cursor: pointer; color: #dfb58b; font-size: 14px; line-height: 1.5; }
 .notice { color: #e1c297; font-size: 13px; line-height: 1.6; }
-.blocks { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; }
+.blocks { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; }
 .blocks .panel { margin: 0; }
 .counts { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 10px; }
 .counts li { color: #afbea5; font-size: 12px; }
@@ -42,10 +36,12 @@
 .page a:focus-visible, .page summary:focus-visible, .page button:focus-visible, .page input:focus-visible, .page select:focus-visible { outline: 2px solid #e9b68b; outline-offset: 4px; }
 @media(max-width:800px) { .blocks { grid-template-columns: minmax(0,1fr); } }
 @media(max-width:520px) {
-  .page { padding: 20px 14px 40px; }
   .title h1 { font-size: 36px; }
   .panel { padding: 16px; }
   .filters, .versions { grid-template-columns: minmax(0,1fr); }
   .change { padding: 10px; }
   .table th, .table td { padding: 6px; font-size: 11px; }
 }
+.page :is(button,select,summary) { min-height: 44px; }
+.page :is(p,.note,.scope,.explanation,.groupNote) { font-size: 14px; }
+.albumList a { color: var(--primary); display: inline-block; padding: 8px 0; }

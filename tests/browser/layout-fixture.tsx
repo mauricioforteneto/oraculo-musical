@@ -1,0 +1,48 @@
+import { useSyncExternalStore } from "react";
+import { createRoot } from "react-dom/client";
+import "../../src/app/globals.css";
+import { AppShell } from "../../src/components/app-shell";
+import { Dashboard } from "../../src/components/dashboard";
+import { CatalogPage } from "../../src/components/catalog-page";
+import { AlbumDetails } from "../../src/components/album-details";
+import { StatisticsPage } from "../../src/components/statistics-page";
+import { VersionHistoryPage } from "../../src/components/version-history-page";
+import { SynchronizationPage } from "../../src/components/synchronization-page";
+import { CompetitionBracket } from "../../src/components/competition-bracket";
+import { CompetitionHistory } from "../../src/components/competition-history";
+import { Top50Panel } from "../../src/components/top50-panel";
+import { syntheticField, syntheticFirstResults, syntheticAlbum } from "../fixtures/synthetic/top50";
+import { projectTop50 } from "../../src/lib/competition/top50";
+import { rankAnnualAlbums } from "../../src/lib/catalog/ranking";
+import { buildCatalogStatistics } from "../../src/lib/catalog/statistics";
+import { buildCompetitionPhaseHistory } from "../../src/lib/competition/history";
+import { comparePublishedVersions } from "../../src/lib/catalog/version-history";
+import { historySnapshot } from "../fixtures/synthetic/version-history";
+import { catalogFilters, catalogQuery } from "../../src/lib/catalog/catalog-navigation";
+import { usePathname, useSearchParams } from "./navigation";
+import Link from "./navigation";
+const field = syntheticField();
+const albums = [...field.albums,...Array.from({length:20},(_,i) => syntheticAlbum(i+30,{playoffSeed:null,originalScore:85}))].map((a,i) => ({...a, albumId:`00000000-0000-4000-8000-${String(i+1).padStart(12,"0")}`}));
+albums[0].artist = "Artista de nome muito longo para verificar a quebra de linha no celular";
+albums[0].source = "Referência completa de avaliação muito extensa que deve permanecer visível sem truncamento";
+const results = syntheticFirstResults();
+const competition = { cutoff:"2026-10-01", active:{id:"synthetic",fileName:"synthetic-v100.xlsx",fileVersion:"100",sha256:"a".repeat(64),frozenAt:"2026-10-01T03:00:00Z",frozenBy:"synthetic",participants:field.participants,correctionReason:null,bracket:field.bracket}, projection:projectTop50(albums,field.participants,results,field.cutoff)!, history:[] };
+let version = "100";
+window.addEventListener("fixture-refresh", () => { version = "101"; });
+const subscribeVersion = (fn: () => void) => { window.addEventListener("fixture-refresh",fn); return () => window.removeEventListener("fixture-refresh",fn); };
+function Fixture() {
+  const path = usePathname(); const params = useSearchParams();
+  const currentVersion = useSyncExternalStore(subscribeVersion,() => version);
+  const source = {version:currentVersion,referenceDate:"2026-10-01",summary:{},albums,playoffResults:results,backlog:[{order:1,artist:"OCULTO BACKLOG",title:"Oculto",priority:"",source:""}],lastAttempt:{status:"failed" as const,startedAt:"2026-10-01T03:00:00Z",finishedAt:null,errorCode:"SYNTHETIC",counts:{},issues:[{severity:"warning" as const,code:"BACKLOG_WARNING",sourceLocator:"Backlog",message:"OCULTO BACKLOG"},{severity:"error" as const,code:"MISSING_SHEET",sourceLocator:"Backlog",message:"Aba obrigatória ausente"}]}};
+  if (path === "/estatisticas") return <StatisticsPage statistics={buildCatalogStatistics(albums)} version={currentVersion} />;
+  if (path === "/historico") {
+    const before = historySnapshot("99",{albums:[albums[0]],backlog:[]});
+    const after = historySnapshot("100",{albums:albums.slice(0,2),backlog:source.backlog});
+    return <VersionHistoryPage history={{versions:[after.version,before.version],selected:after.version,previous:before.version,comparison:comparePublishedVersions(before,after),page:1,hasMore:false,notices:[]}} />;
+  }
+  const title = path === "/albuns" ? "Álbuns" : path.startsWith("/albuns/") ? "Detalhe do álbum" : path === "/top-50" ? "Top 50" : path === "/playoffs" ? "Playoffs" : path === "/sincronizacao" ? "Sincronização" : "O ano em discos.";
+  return <AppShell title={title} version={currentVersion}>
+    {path === "/albuns" ? <CatalogPage albums={albums} /> : path.startsWith("/albuns/") ? <><Link href={`/albuns${catalogQuery(catalogFilters(params))}`}>Voltar aos álbuns</Link><AlbumDetails album={rankAnnualAlbums(albums).find(a => a.albumId === path.split("/")[2]) ?? null} /></> : path === "/top-50" ? <Top50Panel projection={competition.projection} /> : path === "/playoffs" ? <><Link href="/playoffs?aba=historico">Histórico das fases</Link>{params.get("aba") === "historico" ? <CompetitionHistory history={buildCompetitionPhaseHistory(albums.map(a => ({identityKey:a.albumId!,version:"100",current:true,record:a})),"100")} /> : <CompetitionBracket bracket={field.bracket} results={results} resultsVersion={currentVersion} />}</> : path === "/sincronizacao" ? <SynchronizationPage source={source} competition={competition} ready /> : <Dashboard source={source} competition={competition} />}
+  </AppShell>;
+}
+createRoot(document.getElementById("root")!).render(<Fixture />);

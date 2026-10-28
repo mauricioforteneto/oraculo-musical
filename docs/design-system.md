@@ -19,3 +19,8 @@ Tokens semânticos em globals.css alimentam Tailwind e componentes. Cor nunca é
 Entrada com identidade musical, arte de vinil em CSS e login Google. Acervo com estado vazio honesto, sem notas, capas ou rankings pessoais inventados. Ícones decorativos ocultos para leitores de tela. Layout empilha em telas estreitas; conteúdo e ações não dependem de hover.
 
 Nas próximas telas: capas com origem real validada, notas legíveis, ranking adaptado ao celular, filtros, carregamento e erros usando os mesmos tokens. Preservar distinção entre dados importados, incompletos e cálculos pendentes.
+
+
+## Estrutura das páginas
+
+A navegação compartilhada usa lateral no desktop e barra inferior em telas até 1000 px. Verde escuro, cobre e títulos serifados permanecem; texto principal de 14–16 px, alvos de pelo menos 44 px e nomes com quebra de linha. Cartões e espaçamentos do novo layout usam os tokens globais. Responsabilidades, menu Mais e área segura estão em [navigation.md](navigation.md).

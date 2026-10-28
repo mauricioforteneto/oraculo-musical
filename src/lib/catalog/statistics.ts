@@ -2,7 +2,7 @@ import type { AlbumRecord } from "./types";
 import { recordKey } from "./ranking";
 
 export type StatisticsDimension = "genres" | "countries" | "artists";
-export type StatisticsAlbum = Pick<AlbumRecord, "artist" | "title" | "originalScore" | "genre" | "country"> & { key: string };
+export type StatisticsAlbum = Pick<AlbumRecord, "artist" | "title" | "originalScore" | "genre" | "country" | "albumId"> & { key: string };
 export type StatisticsGroup = {
   key: string; label: string; count: number; percentage: number;
   scoredCount: number; average: number | null; albumKeys: string[];
@@ -18,7 +18,7 @@ const validScore = (score: number | null) => typeof score === "number" && Number
 
 export function buildCatalogStatistics(records: AlbumRecord[]): CatalogStatistics {
   const albums: StatisticsAlbum[] = records.filter(a => a.isPresent !== false).map(a => ({
-    key: recordKey(a), artist: a.artist, title: a.title, originalScore: validScore(a.originalScore), genre: a.genre, country: a.country,
+    key: recordKey(a), albumId: a.albumId, artist: a.artist, title: a.title, originalScore: validScore(a.originalScore), genre: a.genre, country: a.country,
   })).sort((a, b) => (b.originalScore ?? -1) - (a.originalScore ?? -1)
     || a.artist.localeCompare(b.artist, "pt-BR") || a.title.localeCompare(b.title, "pt-BR"));
   const scores = albums.flatMap(a => a.originalScore === null ? [] : [a.originalScore]);

@@ -7,7 +7,7 @@ export function Top50Panel({ projection }: { projection: Top50Projection }) {
   const warnings = [...projection.entries, ...projection.survivors].filter(e => e.warnings.length > 0);
   return <section className={styles.top50Section} aria-labelledby="top50-title">
     <div className={styles.sectionHeading}>
-      <div><span className={styles.sectionKicker}>REGRA {projection.rulesVersion}</span><h3 id="top50-title">Top 50 provisório</h3></div>
+      <div><span className={styles.sectionKicker}>REGRA {projection.rulesVersion}</span><h2 id="top50-title">Top 50 provisório</h2></div>
       <span className={styles.projectionTag}>PROJEÇÃO</span>
     </div>
     <div className={styles.top50Summary}>
