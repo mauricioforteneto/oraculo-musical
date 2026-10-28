@@ -1,16 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { LocalSourcePreview } from "@/lib/catalog/types";
 import type { getCompetitionState } from "@/lib/competition/service";
 import { dateTime, scoreLabel } from "@/lib/catalog/presentation";
 import { parseSummaryNumber } from "@/lib/catalog/summary";
 import { visibleIssue } from "@/lib/catalog/visible-issues";
+import { ArtworkSync, type ArtworkSyncHandle } from "./artwork-sync";
 import { CompetitionOperations } from "./competition-operations";
 import styles from "./workspace.module.css";
 const statusLabel = (s: string) => s === "running" ? "Em andamento" : s === "succeeded" ? "Publicada" : s === "unchanged" ? "Sem alterações" : "Falhou";
 export function SynchronizationPage({ source, ready, competition }: { source: LocalSourcePreview | null; ready: boolean; competition: Awaited<ReturnType<typeof getCompetitionState>> | null }) {
   const router = useRouter();
+  const artwork = useRef<ArtworkSyncHandle>(null);
   const [syncing,setSyncing] = useState(false);
   const [feedback,setFeedback] = useState("");
   async function synchronize() {
@@ -21,6 +23,7 @@ export function SynchronizationPage({ source, ready, competition }: { source: Lo
       const result = await response.json() as { status?: string; version?: string; error?: string };
       setFeedback(!response.ok ? `Falha na sincronização (${result.error ?? "SYNC_FAILED"}).` : result.status === "unchanged" ? `A versão ${result.version} já está publicada.` : `Versão ${result.version} publicada.`);
       router.refresh();
+      if (response.ok) artwork.current?.start();
     } catch { setFeedback("Não foi possível concluir a sincronização."); }
     finally { setSyncing(false); }
   }
@@ -45,6 +48,7 @@ export function SynchronizationPage({ source, ready, competition }: { source: Lo
     </section>}
     {source?.attemptHistory && source.attemptHistory.length > 0 && <section className={styles.card}><h2>Tentativas recentes</h2><ol className={styles.issueList}>{source.attemptHistory.map((a,i) => <li key={i}><strong>{statusLabel(a.status)}{a.version ? ` · v${a.version}` : ""}{a.isCurrentPublication ? " · publicação ativa" : ""}</strong><span>{dateTime(a.startedAt)}{a.finishedAt ? ` · ${dateTime(a.finishedAt)}` : ""}</span>{a.errorCode && <span>Código {a.errorCode}</span>}</li>)}</ol></section>}
     {(differences > 0 || (average !== null && reportedAverage !== null && Math.abs(average-reportedAverage) > .005)) && <section className={styles.card} aria-label="Conferência da fonte"><h2>Conferência das notas</h2>{differences > 0 && <p>{differences} notas informadas diferem da avaliação original.</p>}{average !== null && reportedAverage !== null && Math.abs(average-reportedAverage) > .005 && <p>O resumo informa média {scoreLabel(reportedAverage)}; a média original calculada é {scoreLabel(average)}.</p>}</section>}
+    <ArtworkSync ref={artwork} initial={source?.artworkSummary} />
     <CompetitionOperations key={competition?.active?.id ?? "initial"} state={competition} ready={ready} />
   </div>;
 }

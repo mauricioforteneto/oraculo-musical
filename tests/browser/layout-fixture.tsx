@@ -4,6 +4,7 @@ import "../../src/app/globals.css";
 import { AppShell } from "../../src/components/app-shell";
 import { Dashboard } from "../../src/components/dashboard";
 import { CatalogPage } from "../../src/components/catalog-page";
+import { ArtworkEditor } from "../../src/components/artwork-editor";
 import { AlbumDetails } from "../../src/components/album-details";
 import { StatisticsPage } from "../../src/components/statistics-page";
 import { VersionHistoryPage } from "../../src/components/version-history-page";
@@ -11,6 +12,7 @@ import { SynchronizationPage } from "../../src/components/synchronization-page";
 import { CompetitionBracket } from "../../src/components/competition-bracket";
 import { CompetitionHistory } from "../../src/components/competition-history";
 import { Top50Panel } from "../../src/components/top50-panel";
+import type { AlbumRecord } from "../../src/lib/catalog/types";
 import { syntheticField, syntheticFirstResults, syntheticAlbum } from "../fixtures/synthetic/top50";
 import { projectTop50 } from "../../src/lib/competition/top50";
 import { rankAnnualAlbums } from "../../src/lib/catalog/ranking";
@@ -22,9 +24,11 @@ import { catalogFilters, catalogQuery } from "../../src/lib/catalog/catalog-navi
 import { usePathname, useSearchParams } from "./navigation";
 import Link from "./navigation";
 const field = syntheticField();
-const albums = [...field.albums,...Array.from({length:20},(_,i) => syntheticAlbum(i+30,{playoffSeed:null,originalScore:85}))].map((a,i) => ({...a, albumId:`00000000-0000-4000-8000-${String(i+1).padStart(12,"0")}`}));
+const albums: AlbumRecord[] = [...field.albums,...Array.from({length:20},(_,i) => syntheticAlbum(i+30,{playoffSeed:null,originalScore:85}))].map((a,i) => ({...a, albumId:`00000000-0000-4000-8000-${String(i+1).padStart(12,"0")}`}));
 albums[0].artist = "Artista de nome muito longo para verificar a quebra de linha no celular";
 albums[0].source = "Referência completa de avaliação muito extensa que deve permanecer visível sem truncamento";
+albums[0].artwork = {status:"found",selection:"automatic",releaseGroupId:"11111111-1111-4111-8111-111111111111",thumbnailUrl:"https://archive.org/download/synthetic/250.jpg",imageUrl:"https://archive.org/download/synthetic/500.jpg",checkedAt:"2026-10-01",nextAttemptAt:null};
+albums[1].artwork = {...albums[0].artwork!,thumbnailUrl:"https://archive.org/download/synthetic/broken.jpg"};
 const results = syntheticFirstResults();
 const competition = { cutoff:"2026-10-01", active:{id:"synthetic",fileName:"synthetic-v100.xlsx",fileVersion:"100",sha256:"a".repeat(64),frozenAt:"2026-10-01T03:00:00Z",frozenBy:"synthetic",participants:field.participants,correctionReason:null,bracket:field.bracket}, projection:projectTop50(albums,field.participants,results,field.cutoff)!, history:[] };
 let version = "100";
@@ -33,7 +37,7 @@ const subscribeVersion = (fn: () => void) => { window.addEventListener("fixture-
 function Fixture() {
   const path = usePathname(); const params = useSearchParams();
   const currentVersion = useSyncExternalStore(subscribeVersion,() => version);
-  const source = {version:currentVersion,referenceDate:"2026-10-01",summary:{},albums,playoffResults:results,backlog:[{order:1,artist:"OCULTO BACKLOG",title:"Oculto",priority:"",source:""}],lastAttempt:{status:"failed" as const,startedAt:"2026-10-01T03:00:00Z",finishedAt:null,errorCode:"SYNTHETIC",counts:{},issues:[{severity:"warning" as const,code:"BACKLOG_WARNING",sourceLocator:"Backlog",message:"OCULTO BACKLOG"},{severity:"error" as const,code:"MISSING_SHEET",sourceLocator:"Backlog",message:"Aba obrigatória ausente"}]}};
+  const source = {artworkSummary:{ready:true,total:44,found:2,missing:0,ambiguous:0,error:0,hidden:0,pending:42,due:42},version:currentVersion,referenceDate:"2026-10-01",summary:{},albums,playoffResults:results,backlog:[{order:1,artist:"OCULTO BACKLOG",title:"Oculto",priority:"",source:""}],lastAttempt:{status:"failed" as const,startedAt:"2026-10-01T03:00:00Z",finishedAt:null,errorCode:"SYNTHETIC",counts:{},issues:[{severity:"warning" as const,code:"BACKLOG_WARNING",sourceLocator:"Backlog",message:"OCULTO BACKLOG"},{severity:"error" as const,code:"MISSING_SHEET",sourceLocator:"Backlog",message:"Aba obrigatória ausente"}]}};
   if (path === "/estatisticas") return <StatisticsPage statistics={buildCatalogStatistics(albums)} version={currentVersion} />;
   if (path === "/historico") {
     const before = historySnapshot("99",{albums:[albums[0]],backlog:[]});
@@ -42,7 +46,7 @@ function Fixture() {
   }
   const title = path === "/albuns" ? "Álbuns" : path.startsWith("/albuns/") ? "Detalhe do álbum" : path === "/top-50" ? "Top 50" : path === "/playoffs" ? "Playoffs" : path === "/sincronizacao" ? "Sincronização" : "O ano em discos.";
   return <AppShell title={title} version={currentVersion}>
-    {path === "/albuns" ? <CatalogPage albums={albums} /> : path.startsWith("/albuns/") ? <><Link href={`/albuns${catalogQuery(catalogFilters(params))}`}>Voltar aos álbuns</Link><AlbumDetails album={rankAnnualAlbums(albums).find(a => a.albumId === path.split("/")[2]) ?? null} /></> : path === "/top-50" ? <Top50Panel projection={competition.projection} /> : path === "/playoffs" ? <><Link href="/playoffs?aba=historico">Histórico das fases</Link>{params.get("aba") === "historico" ? <CompetitionHistory history={buildCompetitionPhaseHistory(albums.map(a => ({identityKey:a.albumId!,version:"100",current:true,record:a})),"100")} /> : <CompetitionBracket bracket={field.bracket} results={results} resultsVersion={currentVersion} />}</> : path === "/sincronizacao" ? <SynchronizationPage source={source} competition={competition} ready /> : <Dashboard source={source} competition={competition} />}
+    {path === "/albuns" ? <CatalogPage albums={albums} /> : path.startsWith("/albuns/") ? <><Link href={`/albuns${catalogQuery(catalogFilters(params))}`}>Voltar aos álbuns</Link><ArtworkEditor key={path} album={albums.find(a => a.albumId === path.split("/")[2])!} /><AlbumDetails album={rankAnnualAlbums(albums).find(a => a.albumId === path.split("/")[2]) ?? null} /></> : path === "/top-50" ? <Top50Panel projection={competition.projection} /> : path === "/playoffs" ? <><Link href="/playoffs?aba=historico">Histórico das fases</Link>{params.get("aba") === "historico" ? <CompetitionHistory history={buildCompetitionPhaseHistory(albums.map(a => ({identityKey:a.albumId!,version:"100",current:true,record:a})),"100")} /> : <CompetitionBracket bracket={field.bracket} results={results} resultsVersion={currentVersion} />}</> : path === "/sincronizacao" ? <SynchronizationPage source={source} competition={competition} ready /> : <Dashboard source={source} competition={competition} />}
   </AppShell>;
 }
 createRoot(document.getElementById("root")!).render(<Fixture />);

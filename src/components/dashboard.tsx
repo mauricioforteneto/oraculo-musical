@@ -1,6 +1,7 @@
 "use client";
 import { useEffect } from "react";
 import Link from "next/link";
+import { AlbumCover } from "./album-cover";
 import { useRouter } from "next/navigation";
 import type { LocalSourcePreview } from "@/lib/catalog/types";
 import { rankAnnualAlbums } from "@/lib/catalog/ranking";
@@ -28,7 +29,7 @@ export function Dashboard({ source, competition }: { source: LocalSourcePreview 
     {!source?.version && <section className={styles.card}><h2>Seu acervo começa aqui</h2><p>Publique a planilha pela página de sincronização para acompanhar a temporada.</p><Link className={styles.action} href="/sincronizacao">Abrir sincronização</Link></section>}
     <section className={styles.metrics} aria-label="Resumo do acervo">{metrics.map(([label,value]) => <div className={styles.metric} key={label}><span>{label}</span><strong>{value}</strong></div>)}</section>
     {albums.length > 0 && <section className={styles.card}><span className={styles.eyebrow}>DESTAQUES DA ESCUTA</span><h2>As maiores notas originais</h2>
-      <ol className={styles.highlights}>{albums.slice(0,3).map(a => <li key={a.key}><span>{String(a.annualPosition).padStart(2,"0")}</span><div>{a.albumId ? <Link href={`/albuns/${a.albumId}`}><strong>{a.artist}</strong><small>{a.title}</small></Link> : <><strong>{a.artist}</strong><small>{a.title}</small></>}</div><span>{scoreLabel(a.originalScore)}</span></li>)}</ol>
+      <ol className={styles.highlights}>{albums.slice(0,3).map(a => <li key={a.key}><span>{String(a.annualPosition).padStart(2,"0")}</span><AlbumCover artwork={a.artwork} artist={a.artist} title={a.title} /><div>{a.albumId ? <Link href={`/albuns/${a.albumId}`}><strong>{a.artist}</strong><small>{a.title}</small></Link> : <><strong>{a.artist}</strong><small>{a.title}</small></>}</div><span>{scoreLabel(a.originalScore)}</span></li>)}</ol>
       <Link className={styles.action} href="/albuns">Explorar os álbuns</Link>
     </section>}
     <div className={styles.grid}>

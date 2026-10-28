@@ -30,6 +30,7 @@ Excel versionado em pasta privada do Google Drive → sincronização solicitada
 | [Decisões](docs/decisions.md) | Confirmados, propostas e 14 pendências do regulamento |
 | [Backlog](docs/backlog.md) | Ordem de implementação e testes de aceite |
 | [Setup e operação](docs/setup.md) | Executar localmente, configurar acesso e aplicar migrações |
+| [Capas dos álbuns](docs/artwork.md) | Busca gratuita, revisão manual, retomada e migração de ativação |
 | [Navegação e páginas](docs/navigation.md) | Rotas, menu mobile, detalhes, filtros e backlog oculto |
 | [Identidade visual](docs/design-system.md) | Tema escuro, componentes e padrões visuais |
 
@@ -38,6 +39,8 @@ A página privada `/estatisticas` explora os gêneros, países e artistas da ver
 A página privada `/historico` compara publicações importadas de álbuns e resultados dos Playoffs com a anterior disponível. Inclui busca, antes/depois, proveniência e filtro de posições/índices, preservando os registros originais.
 
 A estrutura e as responsabilidades de cada página estão em [Navegação e páginas](docs/navigation.md). Sincronização e operação do corte ficam em `/sincronizacao`.
+
+As capas de Início, Álbuns e avaliação são buscadas no MusicBrainz e Cover Art Archive após sincronizar, com preenchimento e revisão manual. A ativação requer a migração `0006`; consulte [Capas dos álbuns](docs/artwork.md).
 
 ## Preparação local
 

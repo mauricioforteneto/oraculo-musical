@@ -1,4 +1,6 @@
 import "server-only";
+import { readArtwork } from "@/lib/artwork/database";
+import { summaryFor } from "@/lib/artwork/types";
 import type { BacklogRecord, LocalSourcePreview, PublishedPlayoffResult } from "./types";
 import { databasePool } from "@/lib/db/pool";
 import { WORKBOOK_PARSER_VERSION, PLAYOFF_PARSER_REVISION } from "@/lib/ingestion/workbook-parser";
@@ -96,7 +98,10 @@ export async function getPublishedSource(season: number, folderId: string): Prom
       ),
     ]) : [{ rows: [] }, { rows: [] }, { rows: [] }];
 
+    const covers = await readArtwork((sql, params) => client.query(sql, params), source.source_id);
+    const albums = albumRows.rows.map(({ record, is_present, album_id }) => ({ ...record, isPresent: is_present, albumId: album_id, artwork: covers.records.get(album_id) }));
     return {
+      artworkSummary: summaryFor(albums, covers.records, covers.ready),
       version: source.version,
       referenceDate: source.reference_date ?? "",
       publishedAt: source.published_at,
@@ -118,7 +123,7 @@ export async function getPublishedSource(season: number, folderId: string): Prom
         issueCount: run.issue_count,
       })),
       summary: source.summary ?? {},
-      albums: albumRows.rows.map(({ record, is_present, album_id }) => ({ ...record, isPresent: is_present, albumId: album_id })),
+      albums,
       backlog: backlogRows.rows.map(({ record }) => record),
       playoffResults: playoffResultRows.rows.map(({ record }) => record),
     };

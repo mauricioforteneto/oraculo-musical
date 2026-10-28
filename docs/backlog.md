@@ -185,3 +185,8 @@ Verificações correspondentes à entrega passam; banco e Drive reais são acess
 ## Refatoração de navegação e layout
 
 Implementada a divisão de páginas e o menu mobile descritos em [navigation.md](navigation.md), incluindo detalhes por UUID, preservação de filtros, controles isolados em Sincronização e ocultação do backlog sem remoção de dados. Regras competitivas e contratos de escrita preservados. Validações automatizadas e ensaio Chromium local cobrem as rotas; pendente conferir o novo layout autenticado no Railway.
+
+
+## Capas dos álbuns
+
+Implementada a busca MusicBrainz + Cover Art Archive para Início, catálogo e avaliação, com preenchimento após sincronizar, progresso retomável e revisão manual. Migração `0006` e procedimento em [artwork.md](artwork.md). Pendentes a ativação administrativa em produção e a validação dos provedores reais; expandir capas para Top 50/Playoffs ou outras fontes fica para etapa posterior.

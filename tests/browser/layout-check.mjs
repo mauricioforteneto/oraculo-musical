@@ -14,10 +14,31 @@ try {
   browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || "/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
   const page = await browser.newPage({viewport:{width:390,height:844}});
   const errors = []; const mutations = [];
+  const artworkSummary={ready:true,total:44,found:44,missing:0,ambiguous:0,error:0,hidden:0,pending:0,due:0};
+  const artworkValue={status:"found",selection:"manual",releaseGroupId:"11111111-1111-4111-8111-111111111111",thumbnailUrl:"https://archive.org/download/synthetic/250.jpg",imageUrl:"https://archive.org/download/synthetic/500.jpg",checkedAt:"2026-10-01",nextAttemptAt:null};
+  const artworkCandidate={id:artworkValue.releaseGroupId,artist:"Artista de capa fictícia",title:"Disco fictício",year:"2026",score:100};
+  let slowBatch=false,batchCalls=0;
+  await page.route("https://archive.org/**",async route=>{
+    if(route.request().url().endsWith("broken.jpg")) return route.fulfill({status:404,body:""});
+    await route.fulfill({contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250"><rect width="250" height="250" fill="#7c563b"/><circle cx="125" cy="125" r="76" fill="#182019"/><circle cx="125" cy="125" r="22" fill="#dfa775"/></svg>'});
+  });
   page.on("pageerror",error => errors.push(error.message));
   await page.route("**/api/**",async route => {
     mutations.push({url:new URL(route.request().url()).pathname,body:route.request().postDataJSON()});
     const url = new URL(route.request().url()).pathname;
+    if(url==="/api/artwork/batch") {
+      batchCalls++;
+      if(slowBatch) {
+        await new Promise(resolve=>setTimeout(resolve,300));
+        return route.fulfill({json:{processed:5,remaining:30,paused:false,summary:{...artworkSummary,found:14,pending:30,due:30}}});
+      }
+      return route.fulfill({json:{processed:5,remaining:0,paused:false,summary:artworkSummary}});
+    }
+    if(url.endsWith("/search")) return route.fulfill({json:{candidates:[artworkCandidate]}});
+    if(url.endsWith("/selection")) {
+      const action=route.request().postDataJSON().action;
+      return route.fulfill({json:action==="hide" || action==="automatic" ? {status:action==="hide"?"hidden":"pending"} : {candidate:artworkCandidate,artwork:artworkValue}});
+    }
     await route.fulfill({json: url.endsWith("/preview") ? {
       mode:"correction",draft:false,canConfirm:true,token:{synthetic:"review-token"},participants:[],issues:[],
       file:{version:"101",name:"synthetic-v101.xlsx",modifiedAt:"2026-10-01T03:00:00Z",sha256:"a".repeat(64)},
@@ -83,7 +104,8 @@ try {
   await page.goto(origin+"/sincronizacao");
   await page.getByRole("button",{name:"Sincronizar",exact:true}).click();
   await page.getByRole("status").filter({hasText:"Versão 101 publicada."}).waitFor();
-  assert.equal(mutations.length,1); assert.equal(mutations[0].url,"/api/sync");
+  await page.getByRole("status").filter({hasText:/Busca concluída/}).waitFor();
+  assert.equal(mutations.length,2); assert.equal(mutations[0].url,"/api/sync"); assert.equal(mutations[1].url,"/api/artwork/batch");
   await page.getByText("Operação do corte e auditoria",{exact:true}).click();
   await page.getByRole("button",{name:"Prévia de correção",exact:true}).click();
   await page.getByText("Comparação com snapshot ativo",{exact:true}).waitFor();
@@ -96,14 +118,45 @@ try {
   await page.getByLabel("Confirmo que nenhuma primeira partida foi realizada.").check();
   await confirm.click();
   await page.getByRole("status").filter({hasText:"Snapshot confirmado"}).waitFor();
-  assert.deepEqual(mutations.map(m => m.url),["/api/sync","/api/competition/preview","/api/competition/freeze"]);
-  assert.deepEqual(mutations[2].body,{mode:"correction",token:{synthetic:"review-token"},backupAttested:true,eligibilityAttested:true,noMatchAttested:true,reason:"Correção fictícia revisada no teste"});
+  assert.deepEqual(mutations.map(m => m.url),["/api/sync","/api/artwork/batch","/api/competition/preview","/api/competition/freeze"]);
+  assert.deepEqual(mutations[3].body,{mode:"correction",token:{synthetic:"review-token"},backupAttested:true,eligibilityAttested:true,noMatchAttested:true,reason:"Correção fictícia revisada no teste"});
   await page.getByRole("navigation",{name:"Navegação mobile",exact:true}).getByRole("link",{name:"Início",exact:true}).click();
   await page.getByRole("heading",{name:"O ano em discos."}).waitFor();
   assert(await page.getByText("Fonte v101",{exact:true}).isVisible());
   for (const [hash,path] of [["#acervo","/albuns"],["#top-50","/top-50"],["#chaveamento","/playoffs"],["#historico-competitivo","/playoffs?aba=historico"],["#backlog","/"]]) {
     await page.goto(origin+"/"+hash); await page.waitForURL(origin+path);
   }
+  // Explicit stop finishes the current batch and never starts the next one.
+  await page.goto(origin+"/sincronizacao"); slowBatch=true; const beforeBatches=batchCalls;
+  await page.getByRole("button",{name:/Retomar busca de capas/}).click();
+  await page.getByRole("button",{name:"Parar busca",exact:true}).click();
+  await page.getByRole("status").filter({hasText:/Busca pausada/}).waitFor();
+  assert.equal(batchCalls,beforeBatches+1);
+  slowBatch=false; await page.getByRole("button",{name:/Retomar busca de capas/}).click();
+  await page.getByRole("status").filter({hasText:/Busca concluída/}).waitFor();
+  assert.equal(batchCalls,beforeBatches+2);
+  // Rendering an unavailable image falls back to a disc without an external API call.
+  await page.goto(origin+"/albuns");
+  await page.locator('img[src$="250.jpg"]').first().waitFor();
+  const brokenRow=page.getByRole("region",{name:"Ranking anual"}).locator("li").filter({has:page.getByText("Artista fictício 2",{exact:true})});
+  await brokenRow.scrollIntoViewIfNeeded();
+  await brokenRow.getByRole("img",{name:"Capa indisponível",exact:true}).waitFor();
+  assert.equal(await brokenRow.locator("img").count(),0);
+  await page.goto(origin+"/albuns/00000000-0000-4000-8000-000000000001");
+  const editor=page.getByRole("region",{name:"Capa do álbum",exact:true});
+  await editor.getByText("Buscar ou corrigir capa",{exact:true}).click();
+  await editor.getByLabel("Artista para buscar a capa",{exact:true}).fill("Busca ajustada");
+  await editor.getByRole("button",{name:"Pesquisar capas",exact:true}).click();
+  await editor.getByRole("button",{name:/Visualizar capa/}).click();
+  await editor.getByRole("button",{name:"Confirmar esta capa",exact:true}).click();
+  await editor.getByRole("status").filter({hasText:/Capa confirmada/}).waitFor();
+  assert(await editor.getByText("Capa escolhida por você.",{exact:true}).isVisible());
+  await editor.getByRole("button",{name:"Ocultar capa",exact:true}).click();
+  await editor.getByRole("status").filter({hasText:/Capa ocultada/}).waitFor();
+  assert(await editor.getByRole("img",{name:"Capa indisponível",exact:true}).isVisible());
+  await editor.getByRole("button",{name:"Usar busca automática",exact:true}).click();
+  await editor.getByRole("status").filter({hasText:/Busca automática reativada/}).waitFor();
+  assert.deepEqual(mutations.filter(m=>m.url.endsWith("/selection")).map(m=>m.body.action),["preview","select","hide","automatic"]);
   assert.deepEqual(errors,[]);
-  console.log("Layout Chromium: 9 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização e hashes passaram.");
+  console.log("Layout Chromium: 9 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, capas, revisão manual, parar/retomar e hashes passaram.");
 } finally { await browser?.close(); await server?.close(); await rm(root,{recursive:true,force:true}); }

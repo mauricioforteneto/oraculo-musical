@@ -5,6 +5,7 @@ import { readPageSource } from "@/lib/catalog/page-source";
 import { rankAnnualAlbums } from "@/lib/catalog/ranking";
 import { catalogFilters, catalogQuery } from "@/lib/catalog/catalog-navigation";
 import { AppShell } from "@/components/app-shell";
+import { ArtworkEditor } from "@/components/artwork-editor";
 import { AlbumDetails } from "@/components/album-details";
 import styles from "@/components/workspace.module.css";
 export const dynamic = "force-dynamic";
@@ -24,6 +25,7 @@ export default async function Album({ params, searchParams }: { params: Promise<
     <div className={styles.stack}>
       <div><Link className={styles.action} href={`/albuns${catalogQuery(catalogFilters(query))}`}>← Voltar aos álbuns</Link></div>
       {album.isPresent === false && <p className={styles.muted}>Este álbum não consta na versão atual. A última avaliação conhecida está preservada.</p>}
+      <ArtworkEditor key={album.albumId} album={album} />
       <AlbumDetails album={album} />
       <p className={styles.muted}>Álbuns {process.env.SOURCE_SEASON ?? "2026"} · linha {album.sourceRow}{album.isPresent === false ? " · última ocorrência conhecida" : ` · publicação v${source?.version}`}</p>
     </div>

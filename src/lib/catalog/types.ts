@@ -1,6 +1,8 @@
+import type { AlbumArtwork, ArtworkSummary } from "@/lib/artwork/types";
 export type AlbumRecord = {
   /** Database identity supplied only when reading the published source. */
   albumId?: string;
+  artwork?: AlbumArtwork;
   sourceRow: number;
   sourceRank: number | null;
   artist: string;
@@ -57,6 +59,7 @@ export type PublishedPlayoffResult = {
 };
 
 export type LocalSourcePreview = {
+  artworkSummary?: ArtworkSummary;
   version: number | string | null;
   referenceDate: string;
   publishedAt?: string | null;

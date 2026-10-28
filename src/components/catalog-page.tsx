@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import { AlbumCover } from "./album-cover";
 import { useSearchParams } from "next/navigation";
 import type { AlbumRecord } from "@/lib/catalog/types";
 import { rankAnnualAlbums } from "@/lib/catalog/ranking";
@@ -25,7 +26,7 @@ export function CatalogPage({ albums }: { albums: AlbumRecord[] }) {
     <section className={styles.card} aria-label="Ranking anual">
       <h2>Ranking anual</h2><p className={styles.muted} role="status">{filtered.length} de {ranked.length} álbuns · Empates compartilham posição.</p>
       <ol className={styles.ranking}>{filtered.slice(0,filters.limite).map(a => <li key={a.key}>
-        <Link className={styles.row} href={`/albuns/${a.albumId}${catalogQuery(filters)}`}><span>{a.annualPosition || "—"}</span><span className={styles.identity}><strong>{a.artist}</strong><span>{a.title}</span><small>{a.country || "País não informado"}{a.isPresent === false ? " · ausente na versão atual" : ""}</small></span><span className={styles.score}>{scoreLabel(a.originalScore)}<small>ORIGINAL</small></span></Link>
+        <Link className={styles.row} href={`/albuns/${a.albumId}${catalogQuery(filters)}`}><span>{a.annualPosition || "—"}</span><AlbumCover artwork={a.artwork} artist={a.artist} title={a.title} /><span className={styles.identity}><strong>{a.artist}</strong><span>{a.title}</span><small>{a.country || "País não informado"}{a.isPresent === false ? " · ausente na versão atual" : ""}</small></span><span className={styles.score}>{scoreLabel(a.originalScore)}<small>ORIGINAL</small></span></Link>
       </li>)}</ol>
       {ranked.length === 0 ? <p className={styles.muted}>Nenhum álbum publicado. <Link href="/sincronizacao">Abrir sincronização</Link></p> : filtered.length === 0 && <p className={styles.muted}>Nenhum álbum encontrado. Tente outro artista, título ou país.</p>}
       {filtered.length > filters.limite && <button className={styles.action} type="button" onClick={() => update({limite:filters.limite+15})}>Mostrar mais álbuns ({filtered.length-filters.limite} restantes)</button>}

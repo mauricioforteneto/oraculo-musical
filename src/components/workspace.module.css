@@ -45,3 +45,8 @@
 
 .card a.row { color: var(--foreground); }
 .action[aria-current="page"] { border-color: var(--primary); background: #403322; }
+
+.row { grid-template-columns: 36px 56px minmax(0,1fr) 64px; gap: 14px; }
+.highlights li { grid-template-columns: 32px 56px minmax(0,1fr) 42px; }
+.highlights li > span:nth-child(2) { font: inherit; }
+@media(max-width:520px) { .row { grid-template-columns: 26px 44px minmax(0,1fr) 48px; gap: 8px; } .highlights li { grid-template-columns: 24px 44px minmax(0,1fr) 36px; gap: 8px; } .score { font-size: 23px; } }

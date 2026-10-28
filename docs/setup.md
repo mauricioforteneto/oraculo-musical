@@ -97,3 +97,8 @@ E2E atual faz build e inicia o servidor de produção isolado na porta 3100; usa
 ## Próximo passo
 
 O usuário dispensou por ora os ensaios com segunda conta e pasta privada de teste; não registrar esses cenários como validados. A sincronização com serviços reais publicou a fonte pessoal e confirmou idempotência, e a restauração isolada conferiu. A interface pode mostrar campos competitivos transcritos da planilha, mas resultados oficiais dependem das decisões em [decisions.md](decisions.md). Se uma credencial administrativa for retirada de `.env.local`, reiniciar o servidor web para que deixe o processo.
+
+
+## Ativação das capas
+
+Aplicar a migração `0006_album_artwork.sql` pelo procedimento administrativo acima, com backup verificado, antes de ativar a busca em produção. O aplicativo continua consultável antes dessa migração, com os discos de fallback e busca de capas desabilitada. Nenhuma API key é necessária. Após disponibilizar o código e aplicar a migração, abrir Sincronização e usar Buscar capas para o catálogo já importado. Requisitos de rede, comportamento e validação real pendente estão em [artwork.md](artwork.md).

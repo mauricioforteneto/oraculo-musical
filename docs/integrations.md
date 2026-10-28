@@ -72,3 +72,8 @@ Tratar erro da API mesmo quando HTTP for 200, paginação incompleta, limite de 
 A pesquisa na documentação pública oficial, incluindo a [FAQ](https://www.albumoftheyear.org/faq/), não confirmou API oficial de leitura/escrita nem contrato de exportação acessível nesta sessão. Isso não prova inexistência. Não usar APIs de terceiros como se fossem oficiais, nem presumir scraping autorizado.
 
 Preferir exportação que o usuário consiga obter na própria conta; inspecionar formato e permissões antes de planejar adaptador. Sem exportação verificada, manter somente referências externas. Notas da crítica e AOTY ficam em namespace separado e não alteram notas pessoais, ranking, elegibilidade, seeds ou resultados.
+
+
+## MusicBrainz e Cover Art Archive
+
+Enriquecimento de capas implementado separadamente da fonte de avaliações, sem credencial de API. Consulta grupos de lançamento por artista/título no MusicBrainz e suas capas frontais aprovadas no Cover Art Archive. Correspondência conservadora, revisão manual, cache, limitação global no banco e retomada de lotes estão descritos em [artwork.md](artwork.md). A validação remota e aplicação da migração em produção permanecem pendentes; testes usam respostas sintéticas.

@@ -43,3 +43,12 @@ for (const path of ["/albuns?q=jazz&nota=80&limite=45", "/albuns/00000000-0000-4
     expect(await response.text()).not.toContain('id="conteudo"');
   });
 }
+
+test('capas exigem proprietário e origem válida; GET não inicia operações',async({request})=>{
+  for(const path of ['/api/artwork/batch','/api/artwork/00000000-0000-4000-8000-000000000001/search','/api/artwork/00000000-0000-4000-8000-000000000001/selection']) {
+    expect((await request.get(path)).status()).toBe(405);
+    expect((await request.post(path,{headers:{origin:'https://foreign.example'},data:{}})).status()).toBe(403);
+    const response=await request.post(path,{headers:{origin:'http://localhost:3100'},data:{}});
+    expect(response.status()).toBe(401);expect(response.headers()['cache-control']).toContain('no-store');
+  }
+});
