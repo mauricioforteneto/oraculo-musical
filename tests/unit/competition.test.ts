@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { AlbumRecord, PublishedPlayoffResult } from "../../src/lib/catalog/types";
-import { albumIdentity, buildParticipants, CUTOFF_UTC, firstRound, participantChanges, projectResidualTop50, reseedRoundOf16, resolveRoundOf16 } from "../../src/lib/competition/rules";
+import { albumIdentity, buildParticipants, CUTOFF_UTC, firstRound, participantChanges, projectResidualTop50, reseedRoundOf16, resolveRoundOf16, resolvePublishedMatch } from "../../src/lib/competition/rules";
+import { buildBracketView } from "../../src/lib/competition/bracket";
 import { DriveReader, type DriveFile } from "../../src/lib/ingestion/drive";
 import { freezeTokenMatches } from "../../src/lib/competition/token";
 
@@ -126,6 +127,75 @@ describe("oitavas a partir dos resultados publicados", () => {
     const ambiguous = structuredClone(bracket);
     ambiguous.matches[0].high.artist = ambiguous.matches[0].low.artist;
     expect(resolveRoundOf16(ambiguous, [{ ...results[0], artistA: results[0].artistB }, ...results.slice(1)])).toBeNull();
+  });
+});
+
+describe("caminhos e pendências da chave", () => {
+  function source(n = 24) {
+    const bracket = firstRound(buildParticipants(field(n)).participants)!;
+    const results = bracket.matches.map(({ high, low }, i) => ({
+      seedA: high.seed, artistA: high.artist, seedB: low.seed, artistB: low.artist,
+      winner: `${low.artist} (#${low.seed})`, result: "13 × 13", criterion: "Replay", sourceRow: i + 2,
+    }));
+    return { bracket, results };
+  }
+
+  it("preserva os caminhos A–H até a final sem promover participantes por presunção", () => {
+    const { bracket, results } = source();
+    const before = structuredClone({ bracket, results });
+    const view = buildBracketView(bracket, results);
+    expect(view.initialPhase).toBe("roundOf16");
+    expect(view.pending).toEqual([]);
+    expect(view.phases.map(p => p.games.length)).toEqual([8, 8, 4, 2, 1]);
+    expect(view.phases[2].games.map(g => [g.high.origin, g.low.origin])).toEqual([
+      ["Vencedor da oitava A", "Vencedor da oitava B"], ["Vencedor da oitava C", "Vencedor da oitava D"],
+      ["Vencedor da oitava E", "Vencedor da oitava F"], ["Vencedor da oitava G", "Vencedor da oitava H"],
+    ]);
+    expect(view.phases[3].games.map(g => [g.high.origin, g.low.origin])).toEqual([
+      ["Vencedor da quarta 1", "Vencedor da quarta 2"], ["Vencedor da quarta 3", "Vencedor da quarta 4"],
+    ]);
+    expect(view.phases[4].games.map(g => [g.high.origin, g.low.origin])).toEqual([
+      ["Vencedor da semifinal 1", "Vencedor da semifinal 2"],
+    ]);
+    for (const phase of view.phases.slice(2)) {
+      expect(phase.defined).toBe(false);
+      expect(phase.games.flatMap(g => [g.high.participant, g.low.participant]).filter(Boolean)).toEqual([]);
+    }
+    expect({ bracket, results }).toEqual(before);
+  });
+
+  for (let n = 24; n <= 32; n++) {
+    it(`monta 16 sobreviventes únicos e preserva seeds no campo de ${n}`, () => {
+      const { bracket, results } = source(n);
+      const view = buildBracketView(bracket, results);
+      const survivors = view.phases[1].games.flatMap(g => [g.high.participant!, g.low.participant!]);
+      expect(new Set(survivors.map(p => p.identityKey)).size).toBe(16);
+      expect(survivors).toEqual(expect.arrayContaining([...bracket.byes, ...bracket.matches.map(m => m.low)]));
+      expect(view.phases[1].games[0].low.participant!.seed).toBe(n);
+    });
+  }
+
+  it("explica todos os bloqueios por jogo e inicia na primeira rodada incompleta", () => {
+    const { bracket, results } = source();
+    const partial = results.slice(1).map((r, i) => i === 0 ? { ...r, winner: "" } : i === 1 ? { ...r, winner: "Outro artista (#99)" } : r);
+    partial.push(results[3]);
+    const view = buildBracketView(bracket, partial);
+    expect(view.initialPhase).toBe("first");
+    expect(view.pending).toEqual([
+      { game: "Jogo 1", reason: "missing-result" }, { game: "Jogo 2", reason: "missing-winner" },
+      { game: "Jogo 3", reason: "invalid-winner" }, { game: "Jogo 4", reason: "duplicate-results" },
+    ]);
+    expect(view.phases[1].defined).toBe(false);
+    expect(view.phases[1].games[0].low).toEqual({ origin: "#16 entre os 16 sobreviventes" });
+    expect(resolveRoundOf16(bracket, partial)).toBeNull();
+  });
+
+  it("não usa empate no placar para adivinhar vencedor e preserva evidência inválida", () => {
+    const { bracket, results } = source();
+    const { high, low } = bracket.matches[0];
+    const result = { ...results[0], winner: "Não identificado" };
+    expect(resolvePublishedMatch(high, low, [result])).toEqual({ result, winner: null, pending: "invalid-winner" });
+    expect(resolvePublishedMatch(high, low, [{ ...result, winner: "" }]).pending).toBe("missing-winner");
   });
 });
 

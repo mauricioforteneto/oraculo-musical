@@ -77,25 +77,50 @@ export function reseedRoundOf16(survivors: Participant[]) {
   return [[0, 15], [7, 8], [3, 12], [4, 11], [1, 14], [6, 9], [2, 13], [5, 10]].map(([a, b], i) => ({ slot: "ABCDEFGH"[i], high: ordered[a], low: ordered[b] }));
 }
 
-export function resultForMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]) {
-  const matches = results.filter(result => (
+function resultsForMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]) {
+  return results.filter(result => (
     result.seedA === high.seed && result.seedB === low.seed && folded(result.artistA) === folded(high.artist) && folded(result.artistB) === folded(low.artist)
   ) || (
     result.seedA === low.seed && result.seedB === high.seed && folded(result.artistA) === folded(low.artist) && folded(result.artistB) === folded(high.artist)
   ));
+}
+
+export function resultForMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]) {
+  const matches = resultsForMatch(high, low, results);
   return matches.length === 1 ? matches[0] : null;
+}
+
+export type MatchResolution = {
+  result: PublishedPlayoffResult | null;
+  winner: Participant | null;
+  pending: "missing-result" | "duplicate-results" | "missing-winner" | "invalid-winner" | null;
+};
+
+export const MATCH_PENDING_LABELS = {
+  "missing-result": "Nenhum resultado publicado pôde ser associado a este confronto.",
+  "duplicate-results": "Há resultados duplicados para este confronto; confira a fonte.",
+  "missing-winner": "O resultado não informa o vencedor.",
+  "invalid-winner": "O vencedor informado não identifica um único participante deste confronto.",
+};
+
+export function resolvePublishedMatch(high: Participant, low: Participant, results: PublishedPlayoffResult[]): MatchResolution {
+  const matches = resultsForMatch(high, low, results);
+  if (matches.length !== 1) return { result: null, winner: null, pending: matches.length ? "duplicate-results" : "missing-result" };
+  const result = matches[0];
+  if (!result.winner.trim()) return { result, winner: null, pending: "missing-winner" };
+  const winner = folded(result.winner);
+  const candidates = [high, low].filter(p => winner === folded(p.artist) || winner === folded(`${p.artist} (#${p.seed})`));
+  return candidates.length === 1
+    ? { result, winner: candidates[0], pending: null }
+    : { result, winner: null, pending: "invalid-winner" };
 }
 
 export function resolveRoundOf16(bracket: Bracket, results: PublishedPlayoffResult[]) {
   const winners: Participant[] = [];
   for (const match of bracket.matches) {
-    const result = resultForMatch(match.high, match.low, results);
-    if (!result?.winner.trim()) return null;
-    const winner = folded(result.winner);
-    const candidates = [match.high, match.low].filter(p =>
-      winner === folded(p.artist) || winner === folded(`${p.artist} (#${p.seed})`));
-    if (candidates.length !== 1) return null;
-    winners.push(candidates[0]);
+    const { winner } = resolvePublishedMatch(match.high, match.low, results);
+    if (!winner) return null;
+    winners.push(winner);
   }
   return reseedRoundOf16([...bracket.byes, ...winners]);
 }

@@ -2,12 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDown, ArrowUpRight, Disc3, LockKeyhole, Radio, Sparkles, Trophy } from "lucide-react";
+import { ArrowDown, Disc3, LockKeyhole, Radio, Sparkles, Trophy } from "lucide-react";
 import type { getCompetitionState, previewFreeze, FreezeMode } from "@/lib/competition/service";
 import type { PublishedPlayoffResult } from "@/lib/catalog/types";
-import { resolveRoundOf16, resultForMatch, type Bracket, type Participant } from "@/lib/competition/rules";
+import { resultForMatch, type Bracket, type Participant } from "@/lib/competition/rules";
 import type { CompetitionPhaseHistory, HistoricalPhase, PhaseHistoryEntry } from "@/lib/competition/history";
 import styles from "./competition-panel.module.css";
+import { CompetitionBracket } from "./competition-bracket";
 
 type State = Awaited<ReturnType<typeof getCompetitionState>>;
 type Preview = Awaited<ReturnType<typeof previewFreeze>>;
@@ -81,7 +82,6 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
 
   const participants = preview?.participants ?? state?.active?.participants ?? [];
   const bracket: Bracket | null = preview?.bracket ?? state?.active?.bracket ?? null;
-  const roundOf16 = bracket ? resolveRoundOf16(bracket, playoffResults) : null;
   const projection = preview?.projection ?? state?.projection;
   const active = Boolean(state?.active);
   const draft = Boolean(preview?.draft);
@@ -102,7 +102,7 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
       <div className={styles.heroCopy}>
         <div className={styles.eyebrow}><span className={styles.liveDot} />TEMPORADA 2026 <span className={styles.eyebrowDivider}>/</span> DISPUTA PELO TOP 50</div>
         <h2 id="competition-title">Playoffs <em>em andamento.</em></h2>
-        <p>Acompanhe a primeira rodada, os seeds que avançam direto e a projeção das vagas restantes do Top 50.</p>
+        <p>Acompanhe os confrontos, os caminhos até a final e a projeção das vagas restantes do Top 50.</p>
         <div className={styles.heroMeta}>
           <span className={active ? styles.liveBadge : styles.neutralBadge}><Radio size={12} aria-hidden="true" />{firstRoundStatus}</span>
           {active && state?.active && <span className={styles.snapshotBadge}><LockKeyhole size={11} aria-hidden="true" />CHAVE CONGELADA · V{state.active.fileVersion}</span>}
@@ -129,38 +129,7 @@ export function CompetitionPanel({ state, ready, sourceTop50Positions, playoffRe
       </div>
     </div>}
 
-    {bracket && <section id="chaveamento" className={styles.roundSection} aria-labelledby="round-title">
-      <div className={styles.sectionHeading}>
-        <div><span className={styles.sectionKicker}>FASE 01 <span>·</span> CHAVE PRINCIPAL</span><h3 id="round-title">Primeira rodada</h3></div>
-        <span className={styles.sectionCount}>{bracket.matches.length} jogos <span>·</span> {bracket.byes.length} folgas</span>
-      </div>
-
-      {bracket.byes.length > 0 && <div className={styles.byeBlock}>
-        <div className={styles.blockHeading}><span className={styles.byeIcon}><ArrowUpRight size={14} aria-hidden="true" /></span><div><strong>Direto para as oitavas</strong><span>Seeds mais altos começam na próxima fase</span></div></div>
-        <div className={styles.byeGrid}>{bracket.byes.map(p => <div className={styles.byeCard} key={p.identityKey}>
-          <span className={styles.byeSeed}>#{p.seed}</span><span className={styles.byeIdentity}><strong>{p.artist}</strong><small>{p.title}</small></span><span className={styles.byeScore}>{p.originalScore}<small>NOTA</small></span>
-        </div>)}</div>
-      </div>}
-
-      {bracket.matches.length > 0 && <div className={styles.matchesHeading}><strong>Confrontos</strong><span>Seeds e notas originais de cada lado</span></div>}
-      <div className={styles.matchGrid}>
-        {bracket.matches.map((match, index) => <MatchCard key={match.high.identityKey} high={match.high} low={match.low} index={index}
-          result={resultForMatch(match.high, match.low, playoffResults)} resultsVersion={resultsVersion} />)}
-      </div>
-
-      <div className={styles.nextRound}>
-        <div className={styles.nextRoundHeading}><div><span className={styles.sectionKicker}>PRÓXIMA FASE</span><h4>Oitavas de final</h4></div><span className={styles.reseedTag}>RESEEDING ÚNICO</span></div>
-        <p>{roundOf16 ? "Os 16 classificados foram reordenados pelos seeds congelados: vencedores da primeira rodada e participantes com bye." : "Os 16 classificados serão reordenados pelos seeds congelados. Os cruzamentos abaixo mostram os caminhos previstos."}</p>
-        <div className={styles.slotGrid}>{roundOf16 ? roundOf16.map(slot => <div className={styles.resolvedSlotCard} key={slot.slot}>
-          <span className={styles.slotLetter}>{slot.slot}</span>
-          <MatchSide participant={slot.high} />
-          <span className={styles.resolvedVersus}>×</span>
-          <MatchSide participant={slot.low} />
-        </div>) : bracket.roundOf16.map(slot => <div className={styles.slotCard} key={slot.slot}>
-          <span className={styles.slotLetter}>{slot.slot}</span><div><strong>#{slot.highRank}</strong><span>×</span><strong>#{slot.lowRank}</strong></div><small>entre os 16 sobreviventes</small>
-        </div>)}</div>
-      </div>
-    </section>}
+    {bracket && <CompetitionBracket bracket={bracket} results={playoffResults} resultsVersion={resultsVersion} />}
 
     {!bracket && <div className={styles.emptyBracket} id="chaveamento">
       <div className={styles.emptyBracketIcon}><Trophy size={22} aria-hidden="true" /></div>
@@ -274,37 +243,4 @@ function HistoricalPhaseCard({ entry, currentVersion }: { entry: PhaseHistoryEnt
       </li>)}</ol>
     </details>}
   </article>;
-}
-
-function MatchCard({ high, low, index, result, resultsVersion }: {
-  high: Participant;
-  low: Participant;
-  index: number;
-  result: PublishedPlayoffResult | null;
-  resultsVersion: string | null;
-}) {
-  return <article className={styles.matchCard} aria-label={`Jogo ${index + 1}: ${label(high)} contra ${label(low)}`}>
-    <div className={styles.matchTop}><span>JOGO {String(index + 1).padStart(2, "0")}</span>
-      <span className={result ? styles.resultPublished : styles.pendingResult}>{result ? `RESULTADO · V${resultsVersion ?? "?"}` : "AGUARDA RESULTADO"}</span>
-    </div>
-    <MatchSide participant={high} />
-    <div className={styles.versus}><span>VS</span><i /></div>
-    <MatchSide participant={low} />
-    {result && <div className={styles.matchOutcome}>
-      <span className={styles.outcomeIcon}><Trophy size={14} aria-hidden="true" /></span>
-      <div><small>RESULTADO PUBLICADO · LINHA {result.sourceRow}</small><strong>{result.result || "Resultado informado na fonte"}</strong>
-        {result.winner && <span><b>Vencedor:</b> {result.winner}</span>}
-        {result.criterion && <small className={styles.outcomeCriterion}>{result.criterion}</small>}
-      </div>
-    </div>}
-    <div className={styles.matchFooter}><span>{routeLabel(high.route)} × {routeLabel(low.route)}</span><span>SEED E NOTA ORIGINAL</span></div>
-  </article>;
-}
-
-function MatchSide({ participant }: { participant: Participant }) {
-  return <div className={styles.matchSide}>
-    <span className={styles.matchSeed}>#{participant.seed}</span>
-    <span className={styles.matchIdentity}><strong>{participant.artist}</strong><small>{participant.title}</small></span>
-    <span className={styles.matchScore}>{participant.originalScore}</span>
-  </div>;
 }

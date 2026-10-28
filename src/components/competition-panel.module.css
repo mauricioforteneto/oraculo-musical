@@ -174,17 +174,7 @@
 .matchOutcome .outcomeCriterion { margin-top: 2px; color: #abb7a1; font-size: 7px; line-height: 1.4; }
 .matchFooter { margin-top: 4px; padding-top: 7px; border-top: 1px solid #2c372f; color: #79867b; font-size: 6px; letter-spacing: .08em; }
 
-.nextRound { margin-top: 13px; padding: 12px; border: 1px solid #353d35; border-radius: 6px; background: #181e19; }
-.nextRoundHeading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.nextRoundHeading h4 { margin: 5px 0 0; color: #e8e7dd; font: 400 16px Georgia, serif; }
 .reseedTag { padding: 5px 7px; color: #a0a99d; border: 1px solid #3c463b; border-radius: 4px; font-size: 6px; letter-spacing: .12em; }
-.nextRound > p { margin: 7px 0 10px; color: #89958a; font-size: 8px; line-height: 1.5; }
-.slotGrid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
-.slotCard { min-width: 0; display: grid; grid-template-columns: 21px minmax(0, 1fr); align-items: center; column-gap: 7px; padding: 7px 8px; border: 1px solid #333d34; border-radius: 5px; background: #141b16; }
-.slotLetter { width: 19px; height: 19px; display: grid; place-items: center; grid-row: span 2; color: #d8ab7d; border: 1px solid #554532; border-radius: 50%; font: 400 9px Georgia, serif; }
-.slotCard div { min-width: 0; display: flex; align-items: center; justify-content: space-between; gap: 4px; color: #798579; }
-.slotCard div strong { color: #d7ddd2; font: 400 10px Georgia, serif; }
-.slotCard small { min-width: 0; grid-column: 2; overflow: hidden; color: #778378; font-size: 6px; text-overflow: ellipsis; white-space: nowrap; }
 
 .top50Section { background: linear-gradient(145deg, #171e18, #151b16); }
 .projectionTag { color: #d1ae85; border-color: #594a37; background: #24221b; font-size: 6px; letter-spacing: .11em; }
@@ -320,7 +310,6 @@
   .byeCard { grid-template-columns: 25px minmax(0, 1fr) 28px; gap: 5px; padding: 5px; }
   .matchGrid { grid-template-columns: minmax(0, 1fr); }
   .matchCard { padding: 9px; }
-  .slotGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .projectionIntro { grid-template-columns: minmax(0, 1fr) 20px minmax(0, 1fr); gap: 7px; padding: 8px; }
   .projectionIntro > p { grid-column: 1 / -1; padding: 6px 0 0; border-top: 1px solid #384137; border-left: 0; }
   .projectionIntro > div > strong { font-size: 15px; }
@@ -349,5 +338,29 @@
   .sectionCount { font-size: 6px; }
 }
 
-.resolvedSlotCard { min-width: 0; padding: 10px; border: 1px solid #333d34; border-radius: 5px; background: #141b16; }
-.resolvedVersus { display: block; text-align: center; color: #798579; }
+
+.bracketNavigation { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 18px; }
+.bracketNavigation > button { flex: 1 1 125px; min-height: 70px; }
+.bracketNavigation > button:focus-visible { outline: 2px solid #e3ad75; outline-offset: 3px; }
+.bracketIntro { color: #a6b2a5; font-size: 12px; line-height: 1.6; margin: 10px 0 16px; }
+.bracketPending { margin: 0 0 18px; padding: 12px; color: #dfc093; background: #26251b; border: 1px solid #655239; border-radius: 6px; font-size: 12px; line-height: 1.6; }
+.bracketPending summary { cursor: pointer; }
+.bracketPending ul { padding-left: 18px; }
+.bracketIssue { color: #dfc093; font-size: 12px; line-height: 1.5; }
+.bracketPlaceholder { min-height: 48px; display: flex; align-items: center; color: #b7c3b4; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.bracketView .matchSide { min-height: 72px; grid-template-columns: 36px minmax(0, 1fr) 34px; padding: 8px 0; }
+.bracketView .matchIdentity strong, .bracketView .matchIdentity small,
+.bracketView .byeIdentity strong, .bracketView .byeIdentity small { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.bracketView .matchIdentity strong { font-size: 14px; line-height: 1.4; }
+.bracketView .matchIdentity small { font-size: 12px; line-height: 1.5; }
+.bracketView .matchSeed, .bracketView .matchScore { font-size: 16px; }
+.bracketView .matchTop, .bracketView .matchFooter { flex-wrap: wrap; font-size: 10px; }
+.bracketView .pendingResult, .bracketView .resultPublished { font-size: 9px; }
+.bracketView .matchOutcome > div > small:first-child, .bracketView .matchOutcome .outcomeCriterion { font-size: 10px; line-height: 1.5; }
+.bracketView .matchOutcome > div > span { font-size: 12px; }
+.bracketView .matchOutcome > div { overflow-wrap: anywhere; }
+@media (max-width: 650px) {
+  .bracketView .matchGrid { grid-template-columns: minmax(0, 1fr); }
+  .bracketNavigation > button { flex-basis: 90px; padding: 10px; min-height: 64px; }
+  .bracketNavigation > button strong { font-size: 14px; }
+}
