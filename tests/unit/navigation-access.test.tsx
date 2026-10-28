@@ -53,6 +53,12 @@ describe("novas rotas privadas", () => {
     expect(html).toContain("não consta na versão atual"); expect(html).toContain('href="/albuns?q=jazz+%26+rock&amp;nota=80&amp;limite=45"');
     expect(html).not.toContain("foreign.example"); expect(html).toContain("última ocorrência conhecida");
   });
+  it("preserva o filtro de capas no retorno e abre a correção", async () => {
+    const html = renderToStaticMarkup(await Album({params:Promise.resolve({id}),searchParams:Promise.resolve({capas:"revisar",q:"jazz",nota:"80",limite:"30"})}));
+    expect(html).toContain('href="/albuns?q=jazz&amp;nota=80&amp;limite=30&amp;capas=revisar"');
+    expect(html).toContain('Voltar à lista de capas');
+    expect(html).toMatch(/<details[^>]*open=""/);
+  });
   it("carrega histórico competitivo apenas na aba correspondente", async () => {
     await Playoffs({searchParams:Promise.resolve({aba:"historico"})});
     expect(deps.history).toHaveBeenCalledWith(2026,"configured-folder","100");

@@ -48,7 +48,7 @@ try {
   const origin = "http://127.0.0.1:3216";
   for (const width of [360,390,768,1280]) {
     await page.setViewportSize({width,height:844});
-    for (const path of ["/","/albuns","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao"]) {
+    for (const path of ["/","/albuns","/albuns?capas=revisar","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao"]) {
       await page.goto(origin+path);
       await page.locator("main h1").waitFor();
       assert.equal(await page.locator("main").count(),1);
@@ -76,6 +76,21 @@ try {
   assert(await page.getByText(/MusicBrainz respondeu com erro HTTP 503/).isVisible());
   assert(await page.getByText(/A tentativa anterior não registrou o motivo detalhado/).isVisible());
   assert.equal(mutations.length,0,"Visiting pages must never issue mutations or previews");
+  await page.setViewportSize({width:390,height:844});
+  await page.getByRole("link",{name:"Revisar capas (1)",exact:true}).click();
+  await page.getByRole("heading",{name:"Capas para revisar",exact:true}).waitFor();
+  const review=page.getByRole("region",{name:"Capas para revisar",exact:true});
+  assert.equal(await review.locator('ol li').count(),1);
+  await review.getByRole("link").first().click();
+  const reviewEditor=page.getByRole("region",{name:"Capa do álbum",exact:true});
+  assert(await reviewEditor.getByRole("button",{name:"Pesquisar capas",exact:true}).isVisible());
+  assert.equal(new URL(page.url()).search,'?capas=revisar');
+  await page.getByRole("link",{name:"Voltar aos álbuns",exact:true}).click();
+  assert.equal(new URL(page.url()).search,'?capas=revisar');
+  await page.getByRole("button",{name:"Sem capa encontrada (1)",exact:true}).click();
+  assert.equal(await page.getByRole("region",{name:"Álbuns sem capa encontrada",exact:true}).locator('ol li').count(),1);
+  await page.getByRole("button",{name:"Com falha (2)",exact:true}).click();
+  assert.equal(await page.getByRole("region",{name:"Capas com falha na busca",exact:true}).locator('ol li').count(),2);
   await page.setViewportSize({width:390,height:844});
   await page.goto(origin+"/albuns");
   const more = page.getByRole("navigation",{name:"Navegação mobile",exact:true}).getByRole("button",{name:"Mais",exact:true});
@@ -161,6 +176,16 @@ try {
   await editor.getByRole("button",{name:"Usar busca automática",exact:true}).click();
   await editor.getByRole("status").filter({hasText:/Busca automática reativada/}).waitFor();
   assert.deepEqual(mutations.filter(m=>m.url.endsWith("/selection")).map(m=>m.body.action),["preview","select","hide","automatic"]);
+  // Confirming a pending cover removes it from the refreshed review list.
+  await page.goto(origin+"/albuns?capas=revisar");
+  await page.getByRole("region",{name:"Capas para revisar",exact:true}).getByRole("link").first().click();
+  await page.getByRole("button",{name:"Pesquisar capas",exact:true}).click();
+  await page.getByRole("button",{name:/Visualizar capa/}).click();
+  await page.getByRole("button",{name:"Confirmar esta capa",exact:true}).click();
+  await page.getByRole("status").filter({hasText:/Capa confirmada/}).waitFor();
+  await page.getByRole("link",{name:"Voltar aos álbuns",exact:true}).click();
+  assert.equal(await page.getByRole("region",{name:"Capas para revisar",exact:true}).locator('ol li').count(),0);
+  assert(await page.getByText('Nenhum álbum nesta situação corresponde aos filtros atuais.',{exact:true}).isVisible());
   assert.deepEqual(errors,[]);
-  console.log("Layout Chromium: 9 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, capas, revisão manual, parar/retomar e hashes passaram.");
+  console.log("Layout Chromium: 10 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, capas, revisão manual, parar/retomar e hashes passaram.");
 } finally { await browser?.close(); await server?.close(); await rm(root,{recursive:true,force:true}); }

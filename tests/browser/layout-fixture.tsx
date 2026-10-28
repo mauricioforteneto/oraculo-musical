@@ -31,6 +31,23 @@ albums[0].artwork = {status:"found",selection:"automatic",releaseGroupId:"111111
 albums[1].artwork = {...albums[0].artwork!,thumbnailUrl:"https://archive.org/download/synthetic/broken.jpg"};
 albums[2].artwork = {status:"error",selection:"automatic",releaseGroupId:null,thumbnailUrl:null,imageUrl:null,checkedAt:"2026-10-01",nextAttemptAt:"2026-10-01",errorCode:"ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_503"};
 albums[3].artwork = {...albums[2].artwork!,errorCode:"ARTWORK_PROVIDER_UNAVAILABLE"};
+albums[4].artwork = {...albums[2].artwork!,status:"ambiguous",errorCode:null};
+albums[5].artwork = {...albums[2].artwork!,status:"missing",errorCode:null};
+// A small in-memory API store makes refreshed routes see confirmed choices.
+const fixtureFetch=window.fetch.bind(window);
+window.fetch=async (input,init)=>{
+  const response=await fixtureFetch(input,init);
+  const match=String(input).match(/\/api\/artwork\/([^/]+)\/selection$/);
+  if(match && response.ok && typeof init?.body==='string') {
+    const action=JSON.parse(init.body).action;
+    const album=albums.find(a=>a.albumId===match[1]);
+    if(album && ['select','hide','automatic'].includes(action)) {
+      const result=await response.clone().json();
+      album.artwork=result.artwork ?? {...albums[2].artwork!,status:action==='hide'?'hidden':'pending',selection:action==='hide'?'manual':'automatic',errorCode:null};
+    }
+  }
+  return response;
+};
 const results = syntheticFirstResults();
 const competition = { cutoff:"2026-10-01", active:{id:"synthetic",fileName:"synthetic-v100.xlsx",fileVersion:"100",sha256:"a".repeat(64),frozenAt:"2026-10-01T03:00:00Z",frozenBy:"synthetic",participants:field.participants,correctionReason:null,bracket:field.bracket}, projection:projectTop50(albums,field.participants,results,field.cutoff)!, history:[] };
 let version = "100";
@@ -39,7 +56,7 @@ const subscribeVersion = (fn: () => void) => { window.addEventListener("fixture-
 function Fixture() {
   const path = usePathname(); const params = useSearchParams();
   const currentVersion = useSyncExternalStore(subscribeVersion,() => version);
-  const source = {artworkSummary:{ready:true,total:44,found:2,missing:0,ambiguous:0,error:2,hidden:0,pending:40,due:40},version:currentVersion,referenceDate:"2026-10-01",summary:{},albums,playoffResults:results,backlog:[{order:1,artist:"OCULTO BACKLOG",title:"Oculto",priority:"",source:""}],lastAttempt:{status:"failed" as const,startedAt:"2026-10-01T03:00:00Z",finishedAt:null,errorCode:"SYNTHETIC",counts:{},issues:[{severity:"warning" as const,code:"BACKLOG_WARNING",sourceLocator:"Backlog",message:"OCULTO BACKLOG"},{severity:"error" as const,code:"MISSING_SHEET",sourceLocator:"Backlog",message:"Aba obrigatória ausente"}]}};
+  const source = {artworkSummary:{ready:true,total:44,found:2,missing:1,ambiguous:1,error:2,hidden:0,pending:38,due:38},version:currentVersion,referenceDate:"2026-10-01",summary:{},albums,playoffResults:results,backlog:[{order:1,artist:"OCULTO BACKLOG",title:"Oculto",priority:"",source:""}],lastAttempt:{status:"failed" as const,startedAt:"2026-10-01T03:00:00Z",finishedAt:null,errorCode:"SYNTHETIC",counts:{},issues:[{severity:"warning" as const,code:"BACKLOG_WARNING",sourceLocator:"Backlog",message:"OCULTO BACKLOG"},{severity:"error" as const,code:"MISSING_SHEET",sourceLocator:"Backlog",message:"Aba obrigatória ausente"}]}};
   if (path === "/estatisticas") return <StatisticsPage statistics={buildCatalogStatistics(albums)} version={currentVersion} />;
   if (path === "/historico") {
     const before = historySnapshot("99",{albums:[albums[0]],backlog:[]});
@@ -48,7 +65,7 @@ function Fixture() {
   }
   const title = path === "/albuns" ? "Álbuns" : path.startsWith("/albuns/") ? "Detalhe do álbum" : path === "/top-50" ? "Top 50" : path === "/playoffs" ? "Playoffs" : path === "/sincronizacao" ? "Sincronização" : "O ano em discos.";
   return <AppShell title={title} version={currentVersion}>
-    {path === "/albuns" ? <CatalogPage albums={albums} /> : path.startsWith("/albuns/") ? <><Link href={`/albuns${catalogQuery(catalogFilters(params))}`}>Voltar aos álbuns</Link><ArtworkEditor key={path} album={albums.find(a => a.albumId === path.split("/")[2])!} /><AlbumDetails album={rankAnnualAlbums(albums).find(a => a.albumId === path.split("/")[2]) ?? null} /></> : path === "/top-50" ? <Top50Panel projection={competition.projection} /> : path === "/playoffs" ? <><Link href="/playoffs?aba=historico">Histórico das fases</Link>{params.get("aba") === "historico" ? <CompetitionHistory history={buildCompetitionPhaseHistory(albums.map(a => ({identityKey:a.albumId!,version:"100",current:true,record:a})),"100")} /> : <CompetitionBracket bracket={field.bracket} results={results} resultsVersion={currentVersion} />}</> : path === "/sincronizacao" ? <SynchronizationPage source={source} competition={competition} ready /> : <Dashboard source={source} competition={competition} />}
+    {path === "/albuns" ? <CatalogPage albums={albums} /> : path.startsWith("/albuns/") ? <><Link href={`/albuns${catalogQuery(catalogFilters(params))}`}>Voltar aos álbuns</Link><ArtworkEditor key={path} initialOpen={Boolean(catalogFilters(params).capas)} album={albums.find(a => a.albumId === path.split("/")[2])!} /><AlbumDetails album={rankAnnualAlbums(albums).find(a => a.albumId === path.split("/")[2]) ?? null} /></> : path === "/top-50" ? <Top50Panel projection={competition.projection} /> : path === "/playoffs" ? <><Link href="/playoffs?aba=historico">Histórico das fases</Link>{params.get("aba") === "historico" ? <CompetitionHistory history={buildCompetitionPhaseHistory(albums.map(a => ({identityKey:a.albumId!,version:"100",current:true,record:a})),"100")} /> : <CompetitionBracket bracket={field.bracket} results={results} resultsVersion={currentVersion} />}</> : path === "/sincronizacao" ? <SynchronizationPage source={source} competition={competition} ready /> : <Dashboard source={source} competition={competition} />}
   </AppShell>;
 }
 createRoot(document.getElementById("root")!).render(<Fixture />);

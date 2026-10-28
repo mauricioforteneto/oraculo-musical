@@ -8,8 +8,9 @@ import { AlbumCover } from './album-cover';
 import styles from './workspace.module.css';
 import art from './artwork.module.css';
 type Preview={candidate:ArtworkCandidate;artwork:AlbumArtwork};
-export function ArtworkEditor({album}: {album:AlbumRecord}) {
+export function ArtworkEditor({album,initialOpen=false}: {album:AlbumRecord;initialOpen?:boolean}) {
   const router=useRouter();
+  const [open,setOpen]=useState(initialOpen || album.artwork?.status==='ambiguous');
   const [artist,setArtist]=useState(album.artist),[title,setTitle]=useState(album.title);
   const [candidates,setCandidates]=useState<ArtworkCandidate[]>([]);
   const [preview,setPreview]=useState<Preview|null>(null);
@@ -41,7 +42,7 @@ export function ArtworkEditor({album}: {album:AlbumRecord}) {
       <p>{current?.status==='found' ? current.selection==='manual' ? 'Capa escolhida por você.':'Correspondência automática por artista e título.' : current?.status==='ambiguous' ? 'Encontramos mais de uma possibilidade. Escolha o lançamento correto abaixo.' : current?.status==='hidden' ? 'Você optou por ocultar a capa deste álbum.' : 'Ainda não há uma capa disponível para este álbum.'}</p>
       {current?.status==='found' && current.releaseGroupId && <p>Fonte: MusicBrainz / Cover Art Archive · <a href={`https://musicbrainz.org/release-group/${current.releaseGroupId}`} target="_blank" rel="noreferrer">Ver lançamento</a></p>}
     </div></div>
-    <details className={art.controls}><summary>Buscar ou corrigir capa</summary><p>Os campos abaixo servem apenas para identificar a capa. A avaliação e os dados da planilha permanecem preservados.</p>
+    <details className={art.controls} open={open} onToggle={e=>setOpen(e.currentTarget.open)}><summary>Buscar ou corrigir capa</summary><p>Os campos abaixo servem apenas para identificar a capa. A avaliação e os dados da planilha permanecem preservados.</p>
       <form onSubmit={e=>{e.preventDefault();void perform(search);}}><div className={art.fields}>
         <label>Artista para buscar a capa<input value={artist} maxLength={200} required onChange={e=>setArtist(e.target.value)} /></label>
         <label>Álbum para buscar a capa<input value={title} maxLength={200} required onChange={e=>setTitle(e.target.value)} /></label>

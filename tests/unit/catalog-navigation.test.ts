@@ -10,6 +10,10 @@ describe("navegação e filtros", () => {
     expect(catalogFilters(new URLSearchParams("limite=9999999")).limite).toBe(10000);
     expect(catalogQuery({q:"",nota:"all",limite:15})).toBe("");
   });
+  it("preserva o filtro de capas e ignora valores inválidos", () => {
+    expect(catalogQuery(catalogFilters(new URLSearchParams("q=jazz&nota=80&limite=45&capas=revisar")))).toBe("?q=jazz&nota=80&limite=45&capas=revisar");
+    expect(catalogFilters(new URLSearchParams("capas=invalid")).capas).toBeUndefined();
+  });
   it("marca avaliações como parte dos álbuns e mantém rotas secundárias", () => {
     expect(activeDestination("/albuns/uuid")).toBe("/albuns");
     expect(activeDestination("/historico")).toBe("/historico");

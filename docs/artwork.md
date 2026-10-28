@@ -47,3 +47,10 @@ Verificações: lint, typecheck, testes unitários (matching, provedores e endpo
 Novas falhas registram o provedor e um motivo controlado no campo de texto `error_code` já existente, por exemplo `ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_503` ou `ARTWORK_PROVIDER_UNAVAILABLE:COVER_ART_ARCHIVE:TIMEOUT`. Também distinguem DNS, TLS, conexão e resposta inválida, inclusive no download do corpo JSON. Não são persistidos URLs de consulta, corpo da resposta ou mensagens brutas de exceção. Não requer nova migração.
 
 Sincronização mostra a mensagem específica ao pausar e permite abrir **Ver falhas das capas** para consultar os motivos salvos. Códigos antigos sem detalhe permanecem compatíveis; o aplicativo informa que não foi possível registrar a causa da tentativa antiga. A próxima tentativa elegível registra os detalhes novos, mantendo o intervalo de trinta minutos para falhas. Os limites de chamadas, timeouts, pausas e escolhas manuais permanecem iguais.
+
+
+## Lista de capas para revisar
+
+Em **Álbuns → Capas dos álbuns**, os filtros **Para revisar**, **Sem capa encontrada** e **Com falha** exibem listas separadas, com contagens dos álbuns presentes na publicação atual. **Para revisar** corresponde aos resultados ambíguos, sem incluir a fila automática ainda não consultada. Sincronização também oferece o atalho **Revisar capas** e acesso aos álbuns sem capa.
+
+A URL `/albuns?capas=revisar` pode ser aberta diretamente ou guardada como favorito; os outros valores são `sem-capa` e `falhas`. Busca, nota mínima e quantidade exibida podem ser combinadas e acompanham a navegação para o detalhe e o retorno. A edição de capa abre expandida ao entrar pela lista. Confirmar uma capa, ocultá-la ou devolver à busca automática remove o álbum da lista de ambíguos após atualizar os dados. A lista não inicia consultas aos provedores e não requer migração.

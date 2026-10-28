@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import type { AlbumRecord } from '@/lib/catalog/types';
 import type { ArtworkSummary, ArtworkBatch } from '@/lib/artwork/types';
@@ -45,6 +46,7 @@ export function ArtworkSync({initial,failures=[],ref}: {initial?:ArtworkSummary;
     </>}
     <div className={styles.actions}><button className={styles.action} type="button" disabled={busy || !current?.ready} onClick={()=>void start()}>{current && current.found+current.ambiguous+current.missing+current.error+current.hidden>0 ? 'Retomar busca de capas':'Buscar capas'}</button>
       {busy && <button className={styles.action} type="button" onClick={stop}>Parar busca</button>}</div>
+    <div className={styles.actions} aria-label="Revisar capas"><Link className={styles.action} href="/albuns?capas=revisar">Revisar capas{current ? ` (${current.ambiguous})`:''}</Link><Link className={styles.action} href="/albuns?capas=sem-capa">Ver álbuns sem capa</Link></div>
     {failures.length>0 && <details className={art.failures}><summary>Ver falhas das capas ({failures.length})</summary><ul className={styles.issueList}>{failures.map(album=><li key={album.albumId}><strong>{album.artist} — {album.title}</strong><span>{album.artwork?.errorCode?.includes(':') ? artworkMessage(album.artwork.errorCode) : 'A tentativa anterior não registrou o motivo detalhado. Ele será registrado após uma nova tentativa.'}</span></li>)}</ul></details>}
     {feedback && <p role="status">{feedback}</p>}
   </section>;

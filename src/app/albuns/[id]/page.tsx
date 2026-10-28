@@ -20,12 +20,13 @@ export default async function Album({ params, searchParams }: { params: Promise<
   if (!album) notFound();
   const values = await searchParams;
   const query = new URLSearchParams();
-  for (const key of ["q","nota","limite"]) if (typeof values[key] === "string") query.set(key,values[key]);
+  for (const key of ["q","nota","limite","capas"]) if (typeof values[key] === "string") query.set(key,values[key]);
+  const filters = catalogFilters(query);
   return <AppShell title="Detalhe do álbum" description="A avaliação original e os registros informados pela fonte." version={source?.version}>
     <div className={styles.stack}>
-      <div><Link className={styles.action} href={`/albuns${catalogQuery(catalogFilters(query))}`}>← Voltar aos álbuns</Link></div>
+      <div><Link className={styles.action} href={`/albuns${catalogQuery(filters)}`}>{filters.capas ? "← Voltar à lista de capas" : "← Voltar aos álbuns"}</Link></div>
       {album.isPresent === false && <p className={styles.muted}>Este álbum não consta na versão atual. A última avaliação conhecida está preservada.</p>}
-      <ArtworkEditor key={album.albumId} album={album} />
+      <ArtworkEditor key={album.albumId} album={album} initialOpen={Boolean(filters.capas)} />
       <AlbumDetails album={album} />
       <p className={styles.muted}>Álbuns {process.env.SOURCE_SEASON ?? "2026"} · linha {album.sourceRow}{album.isPresent === false ? " · última ocorrência conhecida" : ` · publicação v${source?.version}`}</p>
     </div>
