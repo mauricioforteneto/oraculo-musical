@@ -37,6 +37,13 @@ Os endpoints POST privados `/api/artwork/batch`, `/api/artwork/[id]/search` e `/
 3. Disponibilizar o commit e abrir Sincronização autenticado. Antes da migração, o catálogo continua funcionando com discos e aviso de configuração pendente.
 4. Usar Buscar capas e verificar progresso, uma capa encontrada, revisão manual, ausência de imagem e retomada. As chamadas requerem saída HTTPS para `musicbrainz.org`, `coverartarchive.org`, `archive.org` e os subdomínios do Internet Archive utilizados pelas respostas.
 
-A migração foi testada em banco isolado, e os provedores e imagens usam respostas sintéticas nos testes. A política de rede deste ambiente não libera os provedores, e não há credencial administrativa configurada aqui: aplicação da migração em produção e validação real das APIs permanecem pendentes. Não confundir testes locais com integração remota validada.
+A migração foi testada em banco isolado. O usuário aplicou a `0006` pelo SQL Editor do Supabase e confirmou os três indicadores de registro/tabelas em `true`. A busca em produção obteve associações de capas e também falhas externas. Os testes locais continuam usando respostas sintéticas; este ambiente não tem conexão administrativa nem saída liberada para consultar os provedores. A validação dos novos diagnósticos em produção permanece pendente.
 
 Verificações: lint, typecheck, testes unitários (matching, provedores e endpoints), integração com PostgreSQL WASM (persistência, permissões, concorrência, isolamento e retomada), layout Chromium em quatro larguras e build/E2E HTTP. Nenhuma imagem ou planilha pessoal é incluída no Git.
+
+
+## Diagnóstico das falhas
+
+Novas falhas registram o provedor e um motivo controlado no campo de texto `error_code` já existente, por exemplo `ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_503` ou `ARTWORK_PROVIDER_UNAVAILABLE:COVER_ART_ARCHIVE:TIMEOUT`. Também distinguem DNS, TLS, conexão e resposta inválida, inclusive no download do corpo JSON. Não são persistidos URLs de consulta, corpo da resposta ou mensagens brutas de exceção. Não requer nova migração.
+
+Sincronização mostra a mensagem específica ao pausar e permite abrir **Ver falhas das capas** para consultar os motivos salvos. Códigos antigos sem detalhe permanecem compatíveis; o aplicativo informa que não foi possível registrar a causa da tentativa antiga. A próxima tentativa elegível registra os detalhes novos, mantendo o intervalo de trinta minutos para falhas. Os limites de chamadas, timeouts, pausas e escolhas manuais permanecem iguais.

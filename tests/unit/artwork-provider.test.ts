@@ -1,7 +1,7 @@
 import { describe,expect,it,vi } from 'vitest';
 vi.mock('server-only',()=>({}));
 import { ArtworkProvider,exactCandidate } from '../../src/lib/artwork/provider';
-import { artworkUrl,summaryFor,type AlbumArtwork } from '../../src/lib/artwork/types';
+import { artworkUrl,summaryFor,artworkErrorCode,type ArtworkError,type AlbumArtwork } from '../../src/lib/artwork/types';
 const id='00000000-0000-4000-8000-000000000001';
 const row={id,title:'Disco',score:100,'artist-credit':[{name:'Banda',joinphrase:''}]};
 const candidate={id,title:'Disco',artist:'Banda',year:'',score:100};
@@ -85,5 +85,42 @@ describe('cache e URLs de capas',()=>{
     ]);
     const albums=[...records.keys(),'new'].map(albumId=>({albumId,isPresent:albumId!=='absent'}));
     expect(summaryFor(albums,records,true,now)).toEqual({ready:true,total:6,found:1,hidden:1,ambiguous:1,missing:1,error:1,pending:1,due:2});
+  });
+});
+
+
+describe('diagnóstico das falhas externas',()=>{
+  it('preserva o serviço e o status HTTP sem alterar a classificação do erro',async()=>{
+    const f=fixture([new Response(null,{status:429,headers:{'retry-after':'3600'}})]);
+    try {await f.provider.search('Banda','Disco');expect.unreachable();}
+    catch(error) {
+      expect(error).toMatchObject({code:'ARTWORK_PROVIDER_UNAVAILABLE',diagnostic:{provider:'MUSICBRAINZ',reason:'HTTP',httpStatus:429}});
+      expect(artworkErrorCode(error as ArtworkError)).toBe('ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_429');
+    }
+  });
+  for(const [reason,cause] of [
+    ['TIMEOUT',new DOMException('sensitive timeout detail','TimeoutError')],
+    ['DNS',new TypeError('sensitive network detail',{cause:{code:'ENOTFOUND'}})],
+    ['TLS',new TypeError('sensitive certificate detail',{cause:{code:'CERT_HAS_EXPIRED'}})],
+    ['NETWORK',new TypeError('sensitive url detail')],
+  ] as const) {
+    it(`distingue ${reason} sem expor a exceção original`,async()=>{
+      const f=fixture([]);f.fetcher.mockRejectedValue(cause);
+      try {await f.provider.cover(id);expect.unreachable();}
+      catch(error) {
+        expect(error).toMatchObject({code:'ARTWORK_PROVIDER_UNAVAILABLE',diagnostic:{provider:'COVER_ART_ARCHIVE',reason}});
+        expect(artworkErrorCode(error as ArtworkError)).not.toContain('sensitive');
+      }
+    });
+  }
+  it('identifica Internet Archive após redirecionamento',async()=>{
+    const f=fixture([new Response(null,{status:307,headers:{location:'https://archive.org/download/synthetic/index.json'}}),new Response(null,{status:503,headers:{'retry-after':'3600'}})]);
+    await expect(f.provider.cover(id)).rejects.toMatchObject({diagnostic:{provider:'INTERNET_ARCHIVE',reason:'HTTP',httpStatus:503}});
+  });
+  it('preserva timeout durante o download do JSON e distingue JSON inválido',async()=>{
+    const body=new ReadableStream({start(controller){controller.error(new DOMException('private body failure','AbortError'));}});
+    const f=fixture([new Response(body),new Response('invalid json')]);
+    await expect(f.provider.cover(id)).rejects.toMatchObject({code:'ARTWORK_PROVIDER_UNAVAILABLE',diagnostic:{reason:'TIMEOUT'}});
+    await expect(f.provider.cover(id)).rejects.toMatchObject({code:'ARTWORK_PROVIDER_INVALID',diagnostic:{reason:'INVALID_RESPONSE'}});
   });
 });

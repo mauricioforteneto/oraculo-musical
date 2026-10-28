@@ -48,7 +48,7 @@ export function SynchronizationPage({ source, ready, competition }: { source: Lo
     </section>}
     {source?.attemptHistory && source.attemptHistory.length > 0 && <section className={styles.card}><h2>Tentativas recentes</h2><ol className={styles.issueList}>{source.attemptHistory.map((a,i) => <li key={i}><strong>{statusLabel(a.status)}{a.version ? ` · v${a.version}` : ""}{a.isCurrentPublication ? " · publicação ativa" : ""}</strong><span>{dateTime(a.startedAt)}{a.finishedAt ? ` · ${dateTime(a.finishedAt)}` : ""}</span>{a.errorCode && <span>Código {a.errorCode}</span>}</li>)}</ol></section>}
     {(differences > 0 || (average !== null && reportedAverage !== null && Math.abs(average-reportedAverage) > .005)) && <section className={styles.card} aria-label="Conferência da fonte"><h2>Conferência das notas</h2>{differences > 0 && <p>{differences} notas informadas diferem da avaliação original.</p>}{average !== null && reportedAverage !== null && Math.abs(average-reportedAverage) > .005 && <p>O resumo informa média {scoreLabel(reportedAverage)}; a média original calculada é {scoreLabel(average)}.</p>}</section>}
-    <ArtworkSync ref={artwork} initial={source?.artworkSummary} />
+    <ArtworkSync ref={artwork} initial={source?.artworkSummary} failures={source?.albums.filter(a=>a.isPresent!==false && a.artwork?.status==='error')} />
     <CompetitionOperations key={competition?.active?.id ?? "initial"} state={competition} ready={ready} />
   </div>;
 }

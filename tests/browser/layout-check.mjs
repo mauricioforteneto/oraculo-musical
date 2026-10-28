@@ -71,6 +71,10 @@ try {
     await page.goto(origin+"/albuns");
     await page.screenshot({path:`/tmp/oraculo-albuns-${width}.png`,fullPage:true});
   }
+  await page.goto(origin+"/sincronizacao");
+  await page.getByText("Ver falhas das capas (2)",{exact:true}).click();
+  assert(await page.getByText(/MusicBrainz respondeu com erro HTTP 503/).isVisible());
+  assert(await page.getByText(/A tentativa anterior não registrou o motivo detalhado/).isVisible());
   assert.equal(mutations.length,0,"Visiting pages must never issue mutations or previews");
   await page.setViewportSize({width:390,height:844});
   await page.goto(origin+"/albuns");

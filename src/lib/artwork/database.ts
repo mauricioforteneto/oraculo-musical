@@ -5,7 +5,7 @@ import { ArtworkError } from './types';
 export type ArtworkQuery = (sql: string, params?: unknown[]) => Promise<{ rows: Record<string, unknown>[] }>;
 const provider = 'musicbrainz-coverartarchive';
 export const ARTWORK_JSON = `jsonb_build_object('status',a.status,'selection',a.selection,'releaseGroupId',a.release_group_id,
-  'thumbnailUrl',a.thumbnail_url,'imageUrl',a.image_url,'checkedAt',a.checked_at::text,'nextAttemptAt',a.next_attempt_at::text)`;
+  'thumbnailUrl',a.thumbnail_url,'imageUrl',a.image_url,'checkedAt',a.checked_at::text,'nextAttemptAt',a.next_attempt_at::text,'errorCode',a.error_code)`;
 export async function readArtwork(query: ArtworkQuery, sourceId: string) {
   try {
     const result = await query(`SELECT a.album_id, ${ARTWORK_JSON} AS artwork FROM oraculo.album_artwork a WHERE a.source_id=$1`, [sourceId]);

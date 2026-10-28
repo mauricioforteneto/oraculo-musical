@@ -7,6 +7,7 @@ export type AlbumArtwork = {
   imageUrl: string | null;
   checkedAt: string;
   nextAttemptAt: string | null;
+  errorCode?: string | null;
 };
 export type ArtworkSummary = {
   ready: boolean; total: number; found: number; missing: number; ambiguous: number;
@@ -14,8 +15,17 @@ export type ArtworkSummary = {
 };
 export type ArtworkCandidate = { id: string; artist: string; title: string; year: string; score: number };
 export type ArtworkBatch = { processed: number; remaining: number; summary: ArtworkSummary; paused: boolean; error?: string };
+export type ArtworkDiagnostic = {
+  provider: 'MUSICBRAINZ' | 'COVER_ART_ARCHIVE' | 'INTERNET_ARCHIVE';
+  reason: 'HTTP' | 'TIMEOUT' | 'NETWORK' | 'DNS' | 'TLS' | 'INVALID_RESPONSE' | 'BODY_TOO_LARGE' | 'REDIRECT_REJECTED';
+  httpStatus?: number;
+};
 export class ArtworkError extends Error {
-  constructor(public readonly code: string, public readonly retryAfterMs = 0) { super(code); }
+  constructor(public readonly code: string, public readonly retryAfterMs = 0, public readonly diagnostic?: ArtworkDiagnostic) { super(code); }
+}
+export function artworkErrorCode(error: ArtworkError) {
+  const detail=error.diagnostic;
+  return detail ? `${error.code}:${detail.provider}:${detail.reason}${detail.reason==='HTTP' ? `_${detail.httpStatus}` : ''}` : error.code;
 }
 export const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
 export function artworkUrl(value: unknown): string | null {

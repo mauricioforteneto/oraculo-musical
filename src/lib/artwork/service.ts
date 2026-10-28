@@ -2,7 +2,7 @@ import 'server-only';
 import { databasePool } from '@/lib/db/pool';
 import { ArtworkStore, readArtwork, type ArtworkAlbum } from './database';
 import { ArtworkProvider, exactCandidate } from './provider';
-import { ArtworkError, summaryFor, type ArtworkBatch } from './types';
+import { ArtworkError, artworkErrorCode, summaryFor, type ArtworkBatch } from './types';
 
 export class ArtworkService {
   constructor(private readonly store: ArtworkStore, private readonly fetcher: typeof fetch = fetch) {}
@@ -52,8 +52,8 @@ export class ArtworkService {
             break;
           }
           if(!(error instanceof ArtworkError) || !error.code.startsWith('ARTWORK_PROVIDER_')) throw error;
-          await this.store.write(source,album.id,token,{status:'error',errorCode:error.code,nextAttemptAt:new Date(Date.now()+30*60_000).toISOString()});
-          processed++; paused=true; errorCode=error.code; break;
+          await this.store.write(source,album.id,token,{status:'error',errorCode:artworkErrorCode(error),nextAttemptAt:new Date(Date.now()+30*60_000).toISOString()});
+          processed++; paused=true; errorCode=artworkErrorCode(error); break;
         }
       }
       const updated=await this.records(source);

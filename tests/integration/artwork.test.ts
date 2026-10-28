@@ -52,10 +52,12 @@ describe('capas persistidas',()=>{
     const service=new ArtworkService(store,fetcher);
     const result=await service.batch();
     expect(result.processed).toBe(5);expect(result.paused).toBe(true);
+    expect(result.error).toBe('ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_503');
     expect(result.summary).toMatchObject({total:5,found:1,ambiguous:1,missing:2,error:1,due:0});
     const saved=await readArtwork(query,source);
     expect(saved.records.has(ids[5])).toBe(false);expect(saved.records.size).toBe(5);
     const error=[...saved.records.values()].find(v=>v.status==='error')!;
+    expect(error.errorCode).toBe(result.error);
     expect(Date.parse(error.nextAttemptAt!)-Date.now()).toBeGreaterThan(29*60_000);
     const missing=[...saved.records.values()].find(v=>v.status==='missing')!;
     expect(Date.parse(missing.nextAttemptAt!)-Date.now()).toBeGreaterThan(6*86400_000);

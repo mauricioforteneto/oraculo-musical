@@ -189,4 +189,4 @@ Implementada a divisão de páginas e o menu mobile descritos em [navigation.md]
 
 ## Capas dos álbuns
 
-Implementada a busca MusicBrainz + Cover Art Archive para Início, catálogo e avaliação, com preenchimento após sincronizar, progresso retomável e revisão manual. Migração `0006` e procedimento em [artwork.md](artwork.md). Pendentes a ativação administrativa em produção e a validação dos provedores reais; expandir capas para Top 50/Playoffs ou outras fontes fica para etapa posterior.
+Implementada a busca MusicBrainz + Cover Art Archive para Início, catálogo e avaliação, com preenchimento após sincronizar, progresso retomável e revisão manual. Migração `0006` e procedimento em [artwork.md](artwork.md). A migração foi aplicada pelo usuário no Supabase e a busca em produção obteve associações; falhas externas motivaram diagnóstico por provedor/status HTTP/timeout, cuja conferência em produção permanece pendente; expandir capas para Top 50/Playoffs ou outras fontes fica para etapa posterior.

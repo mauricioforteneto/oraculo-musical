@@ -44,6 +44,9 @@ describe('endpoints privados de capas',()=>{
   it('retorna erro acionável sem expor exceção interna',async()=>{
     deps.batch.mockRejectedValue(new Error('secret database url'));
     const response=await batch(request());expect(response.status).toBe(503);expect(await response.text()).not.toContain('secret');
+    deps.batch.mockRejectedValue(new ArtworkError('ARTWORK_PROVIDER_UNAVAILABLE',0,{provider:'COVER_ART_ARCHIVE',reason:'HTTP',httpStatus:403}));
+    const detailed=await batch(request());expect(detailed.status).toBe(502);
+    expect(await detailed.json()).toEqual({error:'ARTWORK_PROVIDER_UNAVAILABLE:COVER_ART_ARCHIVE:HTTP_403'});
     deps.batch.mockRejectedValue(new ArtworkError('ARTWORK_BUSY'));expect((await batch(request())).status).toBe(409);
     deps.search.mockRejectedValue(new ArtworkError('ARTWORK_ALBUM_NOT_FOUND'));expect((await search(request(),{params:Promise.resolve({id})})).status).toBe(404);
   });

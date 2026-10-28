@@ -1,4 +1,16 @@
 export function artworkMessage(code: string) {
+  const [category,provider,reason]=code.split(':');
+  const label=provider==='MUSICBRAINZ' ? 'MusicBrainz' : provider==='COVER_ART_ARCHIVE' ? 'Cover Art Archive' : provider==='INTERNET_ARCHIVE' ? 'Internet Archive' : null;
+  if(label && ['ARTWORK_PROVIDER_UNAVAILABLE','ARTWORK_PROVIDER_INVALID'].includes(category)) {
+    const suffix=' O progresso salvo permanece preservado.';
+    if(reason==='TIMEOUT') return `${label} não respondeu a tempo. A busca foi pausada.${suffix}`;
+    if(reason==='DNS') return `Não foi possível localizar ${label} na rede.${suffix}`;
+    if(reason==='TLS') return `Não foi possível verificar a conexão segura com ${label}.${suffix}`;
+    if(reason==='NETWORK') return `A conexão com ${label} falhou.${suffix}`;
+    if(reason==='HTTP_429') return `${label} limitou as consultas (HTTP 429). Aguarde antes de retomar.${suffix}`;
+    if(/^HTTP_[45][0-9]{2}$/.test(reason ?? '')) return `${label} respondeu com erro HTTP ${reason.slice(5)}. A busca foi pausada.${suffix}`;
+    if(['INVALID_RESPONSE','BODY_TOO_LARGE','REDIRECT_REJECTED'].includes(reason)) return `${label} retornou uma resposta que o aplicativo não pôde utilizar. A busca foi pausada.${suffix}`;
+  }
   if(code==='ARTWORK_BUSY' || code==='ARTWORK_LEASE_LOST') return 'Outra busca de capas está em andamento. Tente novamente em instantes.';
   if(code==='ARTWORK_NOT_FOUND') return 'Este lançamento não tem uma capa frontal disponível. Tente outro candidato.';
   if(code==='ARTWORK_RATE_LIMIT' || code==='ARTWORK_BUDGET') return 'A busca foi pausada para respeitar o limite do serviço. Retome em alguns instantes.';

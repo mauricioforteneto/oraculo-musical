@@ -29,6 +29,8 @@ albums[0].artist = "Artista de nome muito longo para verificar a quebra de linha
 albums[0].source = "Referência completa de avaliação muito extensa que deve permanecer visível sem truncamento";
 albums[0].artwork = {status:"found",selection:"automatic",releaseGroupId:"11111111-1111-4111-8111-111111111111",thumbnailUrl:"https://archive.org/download/synthetic/250.jpg",imageUrl:"https://archive.org/download/synthetic/500.jpg",checkedAt:"2026-10-01",nextAttemptAt:null};
 albums[1].artwork = {...albums[0].artwork!,thumbnailUrl:"https://archive.org/download/synthetic/broken.jpg"};
+albums[2].artwork = {status:"error",selection:"automatic",releaseGroupId:null,thumbnailUrl:null,imageUrl:null,checkedAt:"2026-10-01",nextAttemptAt:"2026-10-01",errorCode:"ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_503"};
+albums[3].artwork = {...albums[2].artwork!,errorCode:"ARTWORK_PROVIDER_UNAVAILABLE"};
 const results = syntheticFirstResults();
 const competition = { cutoff:"2026-10-01", active:{id:"synthetic",fileName:"synthetic-v100.xlsx",fileVersion:"100",sha256:"a".repeat(64),frozenAt:"2026-10-01T03:00:00Z",frozenBy:"synthetic",participants:field.participants,correctionReason:null,bracket:field.bracket}, projection:projectTop50(albums,field.participants,results,field.cutoff)!, history:[] };
 let version = "100";
@@ -37,7 +39,7 @@ const subscribeVersion = (fn: () => void) => { window.addEventListener("fixture-
 function Fixture() {
   const path = usePathname(); const params = useSearchParams();
   const currentVersion = useSyncExternalStore(subscribeVersion,() => version);
-  const source = {artworkSummary:{ready:true,total:44,found:2,missing:0,ambiguous:0,error:0,hidden:0,pending:42,due:42},version:currentVersion,referenceDate:"2026-10-01",summary:{},albums,playoffResults:results,backlog:[{order:1,artist:"OCULTO BACKLOG",title:"Oculto",priority:"",source:""}],lastAttempt:{status:"failed" as const,startedAt:"2026-10-01T03:00:00Z",finishedAt:null,errorCode:"SYNTHETIC",counts:{},issues:[{severity:"warning" as const,code:"BACKLOG_WARNING",sourceLocator:"Backlog",message:"OCULTO BACKLOG"},{severity:"error" as const,code:"MISSING_SHEET",sourceLocator:"Backlog",message:"Aba obrigatória ausente"}]}};
+  const source = {artworkSummary:{ready:true,total:44,found:2,missing:0,ambiguous:0,error:2,hidden:0,pending:40,due:40},version:currentVersion,referenceDate:"2026-10-01",summary:{},albums,playoffResults:results,backlog:[{order:1,artist:"OCULTO BACKLOG",title:"Oculto",priority:"",source:""}],lastAttempt:{status:"failed" as const,startedAt:"2026-10-01T03:00:00Z",finishedAt:null,errorCode:"SYNTHETIC",counts:{},issues:[{severity:"warning" as const,code:"BACKLOG_WARNING",sourceLocator:"Backlog",message:"OCULTO BACKLOG"},{severity:"error" as const,code:"MISSING_SHEET",sourceLocator:"Backlog",message:"Aba obrigatória ausente"}]}};
   if (path === "/estatisticas") return <StatisticsPage statistics={buildCatalogStatistics(albums)} version={currentVersion} />;
   if (path === "/historico") {
     const before = historySnapshot("99",{albums:[albums[0]],backlog:[]});

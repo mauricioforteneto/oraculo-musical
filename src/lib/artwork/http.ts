@@ -1,7 +1,7 @@
 import 'server-only';
 import { authClient, authConfigured } from '@/lib/auth';
 import { sameOrigin, ownerAccess } from '@/lib/access';
-import { ArtworkError } from './types';
+import { ArtworkError, artworkErrorCode } from './types';
 const headers={'Cache-Control':'private, no-store, max-age=0'};
 export async function artworkRequest(request: Request,handler: (userId: string)=>Promise<unknown>) {
   if(!sameOrigin(request.headers.get('origin'),process.env.APP_ORIGIN)) return Response.json({error:'ORIGIN_REJECTED'},{status:403,headers});
@@ -15,7 +15,7 @@ export async function artworkRequest(request: Request,handler: (userId: string)=
     const code=cause instanceof ArtworkError ? cause.code : 'ARTWORK_STORAGE_UNAVAILABLE';
     const status=code==='ARTWORK_ALBUM_NOT_FOUND' ? 404 : code==='ARTWORK_BUSY' || code==='ARTWORK_LEASE_LOST' ? 409
       : code==='ARTWORK_INVALID_REQUEST' ? 400 : code==='ARTWORK_NOT_FOUND' ? 422 : code.startsWith('ARTWORK_PROVIDER_') ? 502 : 503;
-    return Response.json({error:code},{status,headers});
+    return Response.json({error:cause instanceof ArtworkError ? artworkErrorCode(cause) : code},{status,headers});
   }
 }
 export async function artworkBody(request: Request): Promise<Record<string,unknown>> {
