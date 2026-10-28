@@ -83,6 +83,19 @@ describe("oitavas a partir dos resultados publicados", () => {
     expect(round[0].low).toMatchObject({ seed: 24, artist: "Fictional Artist 24", title: "Fictional Album 24" });
   });
 
+  it("resolve o formato publicado Artista (#seed), inclusive vitória por desempate", () => {
+    const published = results.map(r => ({ ...r, winner: `${r.winner} (#${r.seedB})`,
+      result: `${r.artistA} 13 × 13 ${r.artistB}`, criterion: "Desempate 1: Replay (3–2)" }));
+    expect(resolveRoundOf16(bracket, published)).toEqual(resolveRoundOf16(bracket, results));
+    expect(resolveRoundOf16(bracket, published)).not.toBeNull();
+  });
+
+  it("recusa vencedor com nome e seed incompatíveis", () => {
+    const published = results.map(r => ({ ...r, winner: `${r.winner} (#${r.seedB})` }));
+    published[0] = { ...published[0], winner: `${results[0].winner} (#${results[0].seedA})` };
+    expect(resolveRoundOf16(bracket, published)).toBeNull();
+  });
+
   it("mantém placeholders enquanto faltar qualquer resultado ou vencedor", () => {
     const placeholders = structuredClone(bracket.roundOf16);
     expect(resolveRoundOf16(bracket, [])).toBeNull();

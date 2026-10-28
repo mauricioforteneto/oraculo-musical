@@ -91,7 +91,9 @@ export function resolveRoundOf16(bracket: Bracket, results: PublishedPlayoffResu
   for (const match of bracket.matches) {
     const result = resultForMatch(match.high, match.low, results);
     if (!result?.winner.trim()) return null;
-    const candidates = [match.high, match.low].filter(p => folded(p.artist) === folded(result.winner));
+    const winner = folded(result.winner);
+    const candidates = [match.high, match.low].filter(p =>
+      winner === folded(p.artist) || winner === folded(`${p.artist} (#${p.seed})`));
     if (candidates.length !== 1) return null;
     winners.push(candidates[0]);
   }
