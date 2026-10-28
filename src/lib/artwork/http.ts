@@ -15,7 +15,9 @@ export async function artworkRequest(request: Request,handler: (userId: string)=
     const code=cause instanceof ArtworkError ? cause.code : 'ARTWORK_STORAGE_UNAVAILABLE';
     const status=code==='ARTWORK_ALBUM_NOT_FOUND' ? 404 : code==='ARTWORK_BUSY' || code==='ARTWORK_LEASE_LOST' ? 409
       : code==='ARTWORK_INVALID_REQUEST' ? 400 : code==='ARTWORK_NOT_FOUND' ? 422 : code.startsWith('ARTWORK_PROVIDER_') ? 502 : 503;
-    return Response.json({error:cause instanceof ArtworkError ? artworkErrorCode(cause) : code},{status,headers});
+    const retryAfterMs=cause instanceof ArtworkError && cause.retryAfterMs>0 ? cause.retryAfterMs : code==='ARTWORK_BUSY' || code==='ARTWORK_LEASE_LOST' ? 25_000 : 0;
+    return Response.json({error:cause instanceof ArtworkError ? artworkErrorCode(cause) : code,...(retryAfterMs ? {retryAfterMs}:{})},
+      {status,headers:{...headers,...(retryAfterMs ? {'Retry-After':String(Math.ceil(retryAfterMs/1000))}:{})}});
   }
 }
 export async function artworkBody(request: Request): Promise<Record<string,unknown>> {

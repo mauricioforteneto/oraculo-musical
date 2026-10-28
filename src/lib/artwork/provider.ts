@@ -1,7 +1,9 @@
 import 'server-only';
-import { ArtworkError, artworkUrl, isUuid, type ArtworkCandidate, type ArtworkDiagnostic } from './types';
+import { ArtworkError, artworkUrl, appleAlbumUrl, isUuid, isArtworkId, type ArtworkCandidate, type ArtworkDiagnostic, type ArtworkEndpoint } from './types';
 export type ProviderDependencies = {
-  fetch: typeof fetch; reserve: () => Promise<number>; defer: (milliseconds: number) => Promise<void>;
+  fetch: typeof fetch; reserve: (endpoint: ArtworkEndpoint,maxWaitMs:number) => Promise<number>;
+  defer: (milliseconds: number,endpoint: ArtworkEndpoint,failed?:boolean) => Promise<void>;
+  succeeded?: (endpoint: ArtworkEndpoint)=>Promise<void>;
   now: () => number; sleep: (milliseconds: number) => Promise<void>; deadline: number;
 };
 const normalize = (value: string) => value.normalize('NFC').trim().replace(/\s+/gu,' ').toLocaleLowerCase('en');
@@ -25,7 +27,7 @@ function retryDelay(response: Response, now: number) {
 }
 function providerFor(url: string): ArtworkDiagnostic['provider'] {
   const host=new URL(url).hostname;
-  return host==='musicbrainz.org' ? 'MUSICBRAINZ' : host==='coverartarchive.org' ? 'COVER_ART_ARCHIVE' : 'INTERNET_ARCHIVE';
+  return host==='itunes.apple.com' ? 'ITUNES' : host==='musicbrainz.org' ? 'MUSICBRAINZ' : host==='coverartarchive.org' ? 'COVER_ART_ARCHIVE' : 'INTERNET_ARCHIVE';
 }
 function transportReason(error: unknown, signal: AbortSignal): ArtworkDiagnostic['reason'] {
   const row=object(error);
@@ -50,9 +52,10 @@ export class ArtworkProvider {
   constructor(private readonly deps: ProviderDependencies) {}
   private async json(initial: string): Promise<Json | null> {
     let url=initial, redirects=0,retries=0;
+    const endpoint=providerFor(initial) as ArtworkEndpoint;
     for (;;) {
-      const delay=await this.deps.reserve();
-      if (this.deps.now()+delay+100>=this.deps.deadline) throw new ArtworkError('ARTWORK_BUDGET');
+      const delay=await this.deps.reserve(endpoint,Math.max(0,this.deps.deadline-this.deps.now()-100));
+      if (this.deps.now()+delay+100>=this.deps.deadline) throw new ArtworkError('ARTWORK_COOLDOWN',delay,{provider:endpoint,reason:'COOLDOWN'});
       if(delay>0) await this.deps.sleep(delay);
       const remaining=this.deps.deadline-this.deps.now();
       const provider=providerFor(url);
@@ -64,23 +67,31 @@ export class ArtworkProvider {
           if(!location || ++redirects>3) throw new ArtworkError('ARTWORK_PROVIDER_INVALID',0,{provider,reason:'REDIRECT_REJECTED'});
           let next: URL;
           try {next=new URL(location,url);} catch {throw new ArtworkError('ARTWORK_PROVIDER_INVALID',0,{provider,reason:'REDIRECT_REJECTED'});}
-          const allowed=next.hostname==='musicbrainz.org' ? next.protocol==='https:' && next.pathname.startsWith('/ws/2/') : artworkUrl(next.href);
+          const allowed=endpoint==='ITUNES'
+            ? next.protocol==='https:' && next.hostname==='itunes.apple.com' && ['/search','/lookup'].includes(next.pathname)
+            : endpoint==='MUSICBRAINZ'
+              ? next.protocol==='https:' && next.hostname==='musicbrainz.org' && next.pathname.startsWith('/ws/2/')
+              : next.hostname==='coverartarchive.org' || next.hostname==='archive.org' || next.hostname.endsWith('.archive.org') ? artworkUrl(next.href) : null;
           if(!allowed || next.username || next.password || next.port) throw new ArtworkError('ARTWORK_PROVIDER_INVALID',0,{provider,reason:'REDIRECT_REJECTED'});
           next.protocol='https:'; url=next.href; continue;
         }
-        if(response.status===404) { await response.body?.cancel(); return null; }
+        if(response.status===404) { await response.body?.cancel(); await this.deps.succeeded?.(endpoint); return null; }
         if(response.status===429 || response.status>=500) {
-          const wait=retryDelay(response,this.deps.now()); await response.body?.cancel(); await this.deps.defer(wait);
+          const wait=retryDelay(response,this.deps.now()); await response.body?.cancel(); await this.deps.defer(wait,endpoint);
           if (++retries<2 && this.deps.now()+wait+200<this.deps.deadline) continue;
           throw new ArtworkError('ARTWORK_PROVIDER_UNAVAILABLE',wait,{provider,reason:'HTTP',httpStatus:response.status});
         }
         if(!response.ok) { await response.body?.cancel(); throw new ArtworkError('ARTWORK_PROVIDER_UNAVAILABLE',0,{provider,reason:'HTTP',httpStatus:response.status}); }
-        return await boundedJson(response,provider);
+        const result=await boundedJson(response,provider);
+        await this.deps.succeeded?.(endpoint);
+        return result;
       } catch(error) {
         if(error instanceof ArtworkError) {
+          if(error.code.startsWith('ARTWORK_PROVIDER_')) await this.deps.defer(error.retryAfterMs,endpoint,true);
           if(error.code==='ARTWORK_PROVIDER_INVALID' && !error.diagnostic) throw new ArtworkError(error.code,error.retryAfterMs,{provider,reason:'INVALID_RESPONSE'});
           throw error;
         }
+        await this.deps.defer(0,endpoint,true);
         throw new ArtworkError('ARTWORK_PROVIDER_UNAVAILABLE',0,{provider,reason:transportReason(error,signal)});
       }
     }
@@ -117,5 +128,33 @@ export class ArtworkProvider {
       if(thumbnailUrl && imageUrl) return {thumbnailUrl,imageUrl};
     }
     return null;
+  }
+  async itunesSearch(artist: string,title: string) {
+    const params=new URLSearchParams({term:`${artist} ${title}`,entity:'album',media:'music',country:'BR',limit:'20'});
+    const result=await this.json(`https://itunes.apple.com/search?${params}`);
+    return this.itunesResults(result);
+  }
+  async itunesAlbum(id: string) {
+    if(!/^itunes:[1-9][0-9]{0,14}$/.test(id)) throw new ArtworkError('ARTWORK_INVALID_REQUEST');
+    const params=new URLSearchParams({id:id.slice(7),entity:'album',country:'BR'});
+    const result=this.itunesResults(await this.json(`https://itunes.apple.com/lookup?${params}`));
+    const album=result.candidates.find(c=>c.id===id);
+    if(!album) throw new ArtworkError('ARTWORK_NOT_FOUND');
+    return album;
+  }
+  private itunesResults(result: Json | null) {
+    if(!result || !Array.isArray(result.results) || !Number.isSafeInteger(result.resultCount) || result.resultCount!==result.results.length)
+      throw new ArtworkError('ARTWORK_PROVIDER_INVALID',0,{provider:'ITUNES',reason:'INVALID_RESPONSE'});
+    const candidates=result.results.flatMap(value=>{
+      const row=object(value);
+      if(row.wrapperType!=='collection' || row.collectionType!=='Album' || !Number.isSafeInteger(row.collectionId) || !isArtworkId(`itunes:${row.collectionId}`) || typeof row.artistName!=='string' || !row.artistName.trim() || typeof row.collectionName!=='string' || !row.collectionName.trim()) return [];
+      const thumbnailUrl=artworkUrl(row.artworkUrl100);
+      const providerUrl=appleAlbumUrl(row.collectionViewUrl);
+      if(!thumbnailUrl || !/^https:\/\/is[1-9][0-9]*-ssl\.mzstatic\.com\//.test(thumbnailUrl) || !providerUrl) return [];
+      return [{id:`itunes:${row.collectionId}`,provider:'itunes' as const,artist:row.artistName,title:row.collectionName,
+        year:typeof row.releaseDate==='string' ? row.releaseDate.slice(0,4) : '',score:0,
+        artwork:{thumbnailUrl,imageUrl:thumbnailUrl,providerUrl,itunesCollectionId:String(row.collectionId),provider:'itunes' as const}}];
+    });
+    return {candidates:[...new Map(candidates.map(c=>[c.id,c])).values()],complete:Number(result.resultCount)<20};
   }
 }

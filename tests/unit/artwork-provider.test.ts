@@ -55,7 +55,7 @@ describe('provedores de capas',()=>{
   });
   it('respeita Retry-After sem repetir indefinidamente',async()=>{
     const f=fixture([new Response(null,{status:429,headers:{'retry-after':'2'}}),cover()]);
-    expect(await f.provider.cover(id)).not.toBeNull();expect(f.defer).toHaveBeenCalledWith(2000);expect(f.fetcher).toHaveBeenCalledTimes(2);
+    expect(await f.provider.cover(id)).not.toBeNull();expect(f.defer).toHaveBeenCalledWith(2000,'COVER_ART_ARCHIVE');expect(f.fetcher).toHaveBeenCalledTimes(2);
     const exhausted=fixture([new Response(null,{status:503}),new Response(null,{status:503})]);
     await expect(exhausted.provider.cover(id)).rejects.toMatchObject({code:'ARTWORK_PROVIDER_UNAVAILABLE'});
     expect(exhausted.fetcher).toHaveBeenCalledTimes(2);
@@ -67,7 +67,7 @@ describe('provedores de capas',()=>{
     const large=fixture([Response.json({extra:'x'.repeat(512001)})]);
     await expect(large.provider.cover(id)).rejects.toMatchObject({code:'ARTWORK_PROVIDER_INVALID'});
     const budget=fixture([]);budget.reserve.mockResolvedValue(30000);
-    await expect(budget.provider.cover(id)).rejects.toMatchObject({code:'ARTWORK_BUDGET'});expect(budget.fetcher).not.toHaveBeenCalled();
+    await expect(budget.provider.cover(id)).rejects.toMatchObject({code:'ARTWORK_COOLDOWN'});expect(budget.fetcher).not.toHaveBeenCalled();
   });
 });
 describe('cache e URLs de capas',()=>{
@@ -80,7 +80,7 @@ describe('cache e URLs de capas',()=>{
     const record=(status:AlbumArtwork['status'],extra:Partial<AlbumArtwork>={}):AlbumArtwork=>({status,selection:'automatic',releaseGroupId:null,thumbnailUrl:null,imageUrl:null,checkedAt:'',nextAttemptAt:null,...extra});
     const records=new Map([
       ['found',record('found')],['hidden',record('hidden',{selection:'manual'})],['ambiguous',record('ambiguous')],
-      ['missing',record('missing',{nextAttemptAt:new Date(now+1000).toISOString()})],['retry',record('error',{nextAttemptAt:new Date(now-1000).toISOString()})],
+      ['missing',record('missing',{fallbackCheckedAt:new Date(now).toISOString(),nextAttemptAt:new Date(now+1000).toISOString()})],['retry',record('error',{nextAttemptAt:new Date(now-1000).toISOString()})],
       ['absent',record('pending')],
     ]);
     const albums=[...records.keys(),'new'].map(albumId=>({albumId,isPresent:albumId!=='absent'}));

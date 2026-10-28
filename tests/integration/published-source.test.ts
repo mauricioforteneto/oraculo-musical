@@ -10,7 +10,7 @@ let db: PGlite;
 const ids: string[] = [];
 beforeAll(async () => {
   db = new PGlite();
-  for (const file of ["0001_foundation.sql","0002_source_publication.sql","0005_source_competition_results.sql","0006_album_artwork.sql"]) await db.exec(await readFile(`db/migrations/${file}`,"utf8"));
+  for (const file of ["0001_foundation.sql","0002_source_publication.sql","0005_source_competition_results.sql","0006_album_artwork.sql","0007_artwork_alternatives.sql"]) await db.exec(await readFile(`db/migrations/${file}`,"utf8"));
   shared.connect.mockResolvedValue({ query: (sql: string, args: unknown[]) => db.query(sql,args), release: vi.fn() });
   for (const folder of ["configured-folder","foreign-folder"]) {
     const source = (await db.query<{id:string}>("INSERT INTO oraculo.sources(season,folder_id) VALUES(2026,$1) RETURNING id",[folder])).rows[0].id;

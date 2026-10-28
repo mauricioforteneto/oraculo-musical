@@ -17,8 +17,10 @@ try {
   const artworkSummary={ready:true,total:44,found:44,missing:0,ambiguous:0,error:0,hidden:0,pending:0,due:0};
   const artworkValue={status:"found",selection:"manual",releaseGroupId:"11111111-1111-4111-8111-111111111111",thumbnailUrl:"https://archive.org/download/synthetic/250.jpg",imageUrl:"https://archive.org/download/synthetic/500.jpg",checkedAt:"2026-10-01",nextAttemptAt:null};
   const artworkCandidate={id:artworkValue.releaseGroupId,artist:"Artista de capa fictícia",title:"Disco fictício",year:"2026",score:100};
-  let slowBatch=false,batchCalls=0;
-  await page.route("https://archive.org/**",async route=>{
+  const appleArtwork={...artworkValue,provider:"itunes",releaseGroupId:null,itunesCollectionId:"123",providerUrl:"https://music.apple.com/br/album/synthetic/123",thumbnailUrl:"https://is1-ssl.mzstatic.com/image/thumb/synthetic/250.jpg",imageUrl:"https://is1-ssl.mzstatic.com/image/thumb/synthetic/500.jpg"};
+  const appleCandidate={...artworkCandidate,id:"itunes:123",provider:"itunes"};
+  let slowBatch=false,batchCalls=0,recoveryMode=null,recoveryCalls=0;
+  await page.route(/^https:\/\/(?:archive\.org|is1-ssl\.mzstatic\.com)\//,async route=>{
     if(route.request().url().endsWith("broken.jpg")) return route.fulfill({status:404,body:""});
     await route.fulfill({contentType:"image/svg+xml",body:'<svg xmlns="http://www.w3.org/2000/svg" width="250" height="250"><rect width="250" height="250" fill="#7c563b"/><circle cx="125" cy="125" r="76" fill="#182019"/><circle cx="125" cy="125" r="22" fill="#dfa775"/></svg>'});
   });
@@ -28,16 +30,17 @@ try {
     const url = new URL(route.request().url()).pathname;
     if(url==="/api/artwork/batch") {
       batchCalls++;
+      if(recoveryMode && recoveryCalls++===0) return route.fulfill({json:{processed:1,remaining:0,paused:false,summary:{...artworkSummary,found:43,error:1},nextRetryAt:new Date(Date.now()+(recoveryMode==='recover'?1200:60000)).toISOString()}});
       if(slowBatch) {
         await new Promise(resolve=>setTimeout(resolve,300));
         return route.fulfill({json:{processed:5,remaining:30,paused:false,summary:{...artworkSummary,found:14,pending:30,due:30}}});
       }
       return route.fulfill({json:{processed:5,remaining:0,paused:false,summary:artworkSummary}});
     }
-    if(url.endsWith("/search")) return route.fulfill({json:{candidates:[artworkCandidate]}});
+    if(url.endsWith("/search")) return route.fulfill({json:{candidates:[route.request().postDataJSON().provider==="itunes" ? appleCandidate : artworkCandidate]}});
     if(url.endsWith("/selection")) {
-      const action=route.request().postDataJSON().action;
-      return route.fulfill({json:action==="hide" || action==="automatic" ? {status:action==="hide"?"hidden":"pending"} : {candidate:artworkCandidate,artwork:artworkValue}});
+      const {action,groupId}=route.request().postDataJSON();
+      return route.fulfill({json:action==="hide" || action==="automatic" ? {status:action==="hide"?"hidden":"pending"} : {candidate:groupId?.startsWith("itunes:")?appleCandidate:artworkCandidate,artwork:groupId?.startsWith("itunes:")?appleArtwork:artworkValue}});
     }
     await route.fulfill({json: url.endsWith("/preview") ? {
       mode:"correction",draft:false,canConfirm:true,token:{synthetic:"review-token"},participants:[],issues:[],
@@ -186,6 +189,36 @@ try {
   await page.getByRole("link",{name:"Voltar aos álbuns",exact:true}).click();
   assert.equal(await page.getByRole("region",{name:"Capas para revisar",exact:true}).locator('ol li').count(),0);
   assert(await page.getByText('Nenhum álbum nesta situação corresponde aos filtros atuais.',{exact:true}).isVisible());
+  // iTunes review resolves IDs on the server and shows attribution beside the cover.
+  await page.goto(origin+"/albuns/00000000-0000-4000-8000-000000000001");
+  await page.getByText("Buscar ou corrigir capa",{exact:true}).click();
+  await page.getByLabel("Fonte da busca",{exact:true}).selectOption("itunes");
+  await page.getByRole("button",{name:"Pesquisar capas",exact:true}).click();
+  await page.getByRole("button",{name:/Visualizar capa/}).click();
+  await page.getByRole("button",{name:"Confirmar esta capa",exact:true}).click();
+  await page.getByRole("status").filter({hasText:/Capa confirmada/}).waitFor();
+  assert.equal(await page.getByRole("link",{name:/Ver álbum na Apple Music/}).getAttribute("href"),"https://music.apple.com/br/album/synthetic/123");
+  assert.equal(mutations.filter(m=>m.url.endsWith("/selection")).at(-1).body.groupId,"itunes:123");
+  for(const path of ["/","/albuns"]) {
+    await page.goto(origin+path);
+    assert(await page.getByRole("link",{name:/Ver álbum na Apple Music/}).first().isVisible());
+    assert.equal(await page.locator('a a').count(),0,"Store attribution must not nest links");
+  }
+  // Failed albums retry without another click; Stop also interrupts the waiting period.
+  await page.goto(origin+"/sincronizacao");recoveryMode='recover';recoveryCalls=0;
+  const beforeRecovery=batchCalls;
+  await page.getByRole("button",{name:/Retomar busca de capas/}).click();
+  await page.getByRole("status").filter({hasText:/Nova tentativa automática/}).waitFor();
+  await page.getByRole("status").filter({hasText:/Busca concluída/}).waitFor();
+  assert.equal(batchCalls,beforeRecovery+2);
+  recoveryMode='wait';recoveryCalls=0;
+  const beforeWaiting=batchCalls;
+  await page.getByRole("button",{name:/Retomar busca de capas/}).click();
+  await page.getByRole("status").filter({hasText:/Nova tentativa automática/}).waitFor();
+  await page.getByRole("button",{name:"Parar busca",exact:true}).click();
+  await page.getByRole("status").filter({hasText:/Busca pausada/}).waitFor();
+  assert.equal(batchCalls,beforeWaiting+1);
+  recoveryMode=null;
   assert.deepEqual(errors,[]);
-  console.log("Layout Chromium: 10 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, capas, revisão manual, parar/retomar e hashes passaram.");
+  console.log("Layout Chromium: 10 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
 } finally { await browser?.close(); await server?.close(); await rm(root,{recursive:true,force:true}); }

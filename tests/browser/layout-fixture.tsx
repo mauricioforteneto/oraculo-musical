@@ -28,6 +28,7 @@ const albums: AlbumRecord[] = [...field.albums,...Array.from({length:20},(_,i) =
 albums[0].artist = "Artista de nome muito longo para verificar a quebra de linha no celular";
 albums[0].source = "Referência completa de avaliação muito extensa que deve permanecer visível sem truncamento";
 albums[0].artwork = {status:"found",selection:"automatic",releaseGroupId:"11111111-1111-4111-8111-111111111111",thumbnailUrl:"https://archive.org/download/synthetic/250.jpg",imageUrl:"https://archive.org/download/synthetic/500.jpg",checkedAt:"2026-10-01",nextAttemptAt:null};
+albums[0].artwork = {...albums[0].artwork!,provider:"itunes",releaseGroupId:null,itunesCollectionId:"123",providerUrl:"https://music.apple.com/br/album/synthetic/123",thumbnailUrl:"https://is1-ssl.mzstatic.com/image/thumb/synthetic/250.jpg",imageUrl:"https://is1-ssl.mzstatic.com/image/thumb/synthetic/500.jpg"};
 albums[1].artwork = {...albums[0].artwork!,thumbnailUrl:"https://archive.org/download/synthetic/broken.jpg"};
 albums[2].artwork = {status:"error",selection:"automatic",releaseGroupId:null,thumbnailUrl:null,imageUrl:null,checkedAt:"2026-10-01",nextAttemptAt:"2026-10-01",errorCode:"ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_503"};
 albums[3].artwork = {...albums[2].artwork!,errorCode:"ARTWORK_PROVIDER_UNAVAILABLE"};

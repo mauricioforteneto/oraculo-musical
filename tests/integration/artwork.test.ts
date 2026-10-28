@@ -14,7 +14,7 @@ const cover=()=>Response.json({images:[{approved:true,front:true,thumbnails:{250
 const query:ArtworkQuery=async(sql,params)=>{const result=await db.query(sql,params);return {rows:result.rows as Record<string,unknown>[]};};
 beforeAll(async()=>{
   db=new PGlite();
-  for(const name of ['0001_foundation.sql','0002_source_publication.sql','0006_album_artwork.sql']) await db.exec(await readFile(`db/migrations/${name}`,'utf8'));
+  for(const name of ['0001_foundation.sql','0002_source_publication.sql','0006_album_artwork.sql','0007_artwork_alternatives.sql']) await db.exec(await readFile(`db/migrations/${name}`,'utf8'));
   store=new ArtworkStore(query);
   for(const folder of ['artwork-source','foreign-source']) {
     const sid=(await db.query<{id:string}>("INSERT INTO oraculo.sources(season,folder_id) VALUES(2026,$1) RETURNING id",[folder])).rows[0].id;
@@ -35,12 +35,75 @@ beforeEach(async()=>{
 afterEach(async()=>{await db.exec('ROLLBACK TO SAVEPOINT artwork_test; RESET ROLE');vi.unstubAllEnvs();});
 afterAll(async()=>{if(db){await db.exec('ROLLBACK');await db.close();}});
 describe('capas persistidas',()=>{
+  it('usa iTunes após HTTP 503, salva sua origem e não repete o serviço em cooldown',async()=>{
+    const token=await store.acquire();
+    for(const other of ids.slice(1,5)) await store.write(source,other,token,{status:'hidden',manual:true,userId:owner});
+    await store.release(token);
+    const album=(await store.albums(source)).find(a=>a.id===ids[0])!;
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>new URL(String(input)).hostname==='musicbrainz.org'
+      ? new Response(null,{status:503,headers:{'retry-after':'3600'}})
+      : Response.json({resultCount:1,results:[{wrapperType:'collection',collectionType:'Album',collectionId:123,
+        artistName:album.artist,collectionName:album.title,artworkUrl100:'https://is1-ssl.mzstatic.com/image/thumb/synthetic/100x100bb.jpg',
+        collectionViewUrl:'https://music.apple.com/br/album/synthetic/123'}]}));
+    const service=new ArtworkService(store,fetcher);
+    expect((await service.batch()).summary).toMatchObject({found:1,hidden:4,error:0});
+    const saved=(await readArtwork(query,source)).records.get(album.id)!;
+    expect(saved).toMatchObject({status:'found',provider:'itunes',itunesCollectionId:'123',releaseGroupId:null,providerUrl:'https://music.apple.com/br/album/synthetic/123'});
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    const before=await store.retryAt();
+    await expect(service.search(album.id)).rejects.toMatchObject({code:'ARTWORK_COOLDOWN',retryAfterMs:expect.any(Number)});
+    expect((await store.retryAt()).get('MUSICBRAINZ')).toEqual(before.get('MUSICBRAINZ'));
+    expect(fetcher).toHaveBeenCalledTimes(2);
+    expect((await service.batch()).processed).toBe(0);
+  });
+  it.each(['missing','error'] as const)('consulta negativo legado %s no iTunes sem refazer a busca original ou perder o diagnóstico',async status=>{
+    const token=await store.acquire();
+    for(const other of ids.slice(1,5)) await store.write(source,other,token,{status:'hidden',manual:true});
+    const errorCode=status==='error' ? 'ARTWORK_PROVIDER_UNAVAILABLE:COVER_ART_ARCHIVE:HTTP_503' : undefined;
+    await store.write(source,ids[0],token,{status,errorCode,nextAttemptAt:'2099-01-01'});await store.release(token);
+    const fetcher=vi.fn<typeof fetch>().mockResolvedValue(Response.json({resultCount:0,results:[]}));
+    const service=new ArtworkService(store,fetcher);
+    expect((await service.batch()).summary).toMatchObject({[status]:1,due:0});
+    expect(fetcher).toHaveBeenCalledOnce();expect(String(fetcher.mock.calls[0][0])).toContain('itunes.apple.com/search');
+    expect((await readArtwork(query,source)).records.get(ids[0])!.fallbackCheckedAt).toBeTruthy();
+    if(errorCode) expect((await readArtwork(query,source)).records.get(ids[0])!.errorCode).toBe(errorCode);
+    await service.batch();expect(fetcher).toHaveBeenCalledOnce();
+  });
+  it('confirma e preserva uma escolha manual do iTunes sem aceitar a URL do cliente',async()=>{
+    const fetcher=vi.fn<typeof fetch>().mockImplementation(async()=>Response.json({resultCount:1,results:[{wrapperType:'collection',collectionType:'Album',collectionId:123,
+      artistName:'Banda 1',collectionName:'Disco 1',artworkUrl100:'https://is1-ssl.mzstatic.com/image/thumb/synthetic/100x100bb.jpg',
+      collectionViewUrl:'https://music.apple.com/br/album/synthetic/123'}]}));
+    const service=new ArtworkService(store,fetcher);
+    const preview=await service.selection(ids[0],'preview','itunes:123',owner);
+    expect(preview.artwork).toMatchObject({provider:'itunes',releaseGroupId:null});
+    expect((await readArtwork(query,source)).records.size).toBe(0);
+    await service.selection(ids[0],'select','itunes:123',owner);
+    const saved=(await readArtwork(query,source)).records.get(ids[0])!;
+    expect(saved).toMatchObject({provider:'itunes',selection:'manual',itunesCollectionId:'123'});
+    fetcher.mockImplementation(async()=>{throw new TypeError('network');});
+    await expect(service.selection(ids[0],'select','itunes:123',owner)).rejects.toMatchObject({code:'ARTWORK_PROVIDER_UNAVAILABLE'});
+    expect((await readArtwork(query,source)).records.get(ids[0])).toEqual(saved);
+  },15000);
+  it('separa limites por serviço e aumenta a espera persistida após falhas',async()=>{
+    const token=await store.acquire();
+    await store.defer(token,0,'MUSICBRAINZ',true);
+    let retry=await store.retryAt();expect(retry.get('MUSICBRAINZ')!-Date.now()).toBeGreaterThan(28000);
+    expect(await store.reserveRequest(token,'ITUNES')).toBeLessThan(100);
+    expect(await store.reserveRequest(token,'ITUNES')).toBeGreaterThan(2900);
+    expect(await store.reserveRequest(token,'COVER_ART_ARCHIVE')).toBeLessThan(100);
+    await store.defer(token,0,'MUSICBRAINZ',true);
+    retry=await store.retryAt();expect(retry.get('MUSICBRAINZ')!-Date.now()).toBeGreaterThan(58000);
+    await store.succeeded(token,'MUSICBRAINZ');
+    await store.defer(token,120000,'MUSICBRAINZ',true);
+    retry=await store.retryAt();expect(retry.get('MUSICBRAINZ')!-Date.now()).toBeGreaterThan(118000);
+  });
   it('processa apenas presentes, persiste resultados e não repete negativos recentes',async()=>{
     // Stable album order for this test puts the transient failure last.
     const albums=await store.albums(source);
     const positions=new Map(albums.filter(a=>a.isPresent).map((a,i)=>[a.artist,i]));
     const fetcher=vi.fn<typeof fetch>().mockImplementation(async input=>{
       const url=new URL(String(input));
+      if(url.hostname==='itunes.apple.com') return Response.json({resultCount:0,results:[]});
       if(url.hostname==='coverartarchive.org') return url.pathname.includes(groupId) ? cover() : new Response(null,{status:404});
       const artist=url.searchParams.get('query')?.match(/artist:"(.*?)"/)?.[1] ?? '';
       const i=positions.get(artist)!;
@@ -51,14 +114,14 @@ describe('capas persistidas',()=>{
     });
     const service=new ArtworkService(store,fetcher);
     const result=await service.batch();
-    expect(result.processed).toBe(5);expect(result.paused).toBe(true);
-    expect(result.error).toBe('ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_503');
+    expect(result.processed).toBe(5);expect(result.paused).toBe(false);
+    expect(result.nextRetryAt).toBeDefined();
     expect(result.summary).toMatchObject({total:5,found:1,ambiguous:1,missing:2,error:1,due:0});
     const saved=await readArtwork(query,source);
     expect(saved.records.has(ids[5])).toBe(false);expect(saved.records.size).toBe(5);
     const error=[...saved.records.values()].find(v=>v.status==='error')!;
-    expect(error.errorCode).toBe(result.error);
-    expect(Date.parse(error.nextAttemptAt!)-Date.now()).toBeGreaterThan(29*60_000);
+    expect(error.errorCode).toBe('ARTWORK_PROVIDER_UNAVAILABLE:MUSICBRAINZ:HTTP_503');
+    expect(Date.parse(error.nextAttemptAt!)-Date.now()).toBeGreaterThan(100_000);
     const missing=[...saved.records.values()].find(v=>v.status==='missing')!;
     expect(Date.parse(missing.nextAttemptAt!)-Date.now()).toBeGreaterThan(6*86400_000);
     const requests=fetcher.mock.calls.length;

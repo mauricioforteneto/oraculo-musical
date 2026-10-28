@@ -34,7 +34,15 @@ describe('endpoints privados de capas',()=>{
     expect(response.status).toBe(200);expect(response.headers.get('cache-control')).toContain('no-store');
     expect(deps.selection).toHaveBeenCalledWith(id,'select',id,'owner');
     await search(request({artist:'Outro crédito',title:'Outro título'}),{params:Promise.resolve({id})});
-    expect(deps.search).toHaveBeenCalledWith(id,'Outro crédito','Outro título');
+    expect(deps.search).toHaveBeenCalledWith(id,'Outro crédito','Outro título',undefined);
+  });
+  it('aceita apenas namespaces conhecidos e o provedor explícito da busca',async()=>{
+    const response=await selection(request({action:'select',groupId:'itunes:123'}),{params:Promise.resolve({id})});
+    expect(response.status).toBe(200);expect(deps.selection).toHaveBeenCalledWith(id,'select','itunes:123','owner');
+    expect((await selection(request({action:'select',groupId:'itunes:https://evil.example'}),{params:Promise.resolve({id})})).status).toBe(400);
+    await search(request({provider:'itunes',artist:'Banda',title:'Disco'}),{params:Promise.resolve({id})});
+    expect(deps.search).toHaveBeenCalledWith(id,'Banda','Disco','itunes');
+    expect((await search(request({provider:'other'}),{params:Promise.resolve({id})})).status).toBe(400);
   });
   it('rejeita corpo excessivo e UUID inválido',async()=>{
     expect((await search(request({artist:'a'.repeat(2050)}),{params:Promise.resolve({id})})).status).toBe(400);
