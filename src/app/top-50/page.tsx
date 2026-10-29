@@ -9,7 +9,7 @@ export const metadata = { title: "Top 50 · Oráculo Musical" };
 export default async function Top50() {
   await requireOwner();
   const source = await readPageSource();
-  const state = source?.version ? await getCompetitionState(source.albums,source.playoffResults) : null;
+  const state = source?.version ? await getCompetitionState(source.albums,source.playoffResults,source.top50Decisions) : null;
   return <AppShell title="Top 50" description="A classificação provisória da temporada, com as regras e pendências da projeção." version={source?.version}>
     {state?.projection ? <Top50Panel projection={state.projection} /> : <section className={styles.card}><h2>Aguardando o corte oficial</h2><p>A classificação calculada aparecerá após a confirmação dos participantes.</p></section>}
   </AppShell>;

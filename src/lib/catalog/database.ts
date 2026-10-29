@@ -3,8 +3,9 @@ import { readArtwork } from "@/lib/artwork/database";
 import { summaryFor } from "@/lib/artwork/types";
 import type { BacklogRecord, LocalSourcePreview, PublishedPlayoffResult } from "./types";
 import { databasePool } from "@/lib/db/pool";
-import { WORKBOOK_PARSER_VERSION, PLAYOFF_PARSER_REVISION } from "@/lib/ingestion/workbook-parser";
+import { PLAYOFF_EXTRACTION_VERSION, PLAYOFF_PARSER_REVISION } from "@/lib/ingestion/workbook-parser";
 import { PUBLISHED_PLAYOFF_RESULTS_SQL } from "@/lib/competition/results-query";
+import { readTop50Decisions } from "@/lib/competition/decision-storage";
 
 type PublishedSourceRow = {
   source_id: string;
@@ -107,10 +108,11 @@ export async function getPublishedSource(season: number, folderId: string): Prom
       ),
       client.query<{ record: PublishedPlayoffResult }>(
         PUBLISHED_PLAYOFF_RESULTS_SQL,
-        [source.source_id, source.source_version_id, WORKBOOK_PARSER_VERSION, String(PLAYOFF_PARSER_REVISION)],
+        [source.source_id, source.source_version_id, PLAYOFF_EXTRACTION_VERSION, String(PLAYOFF_PARSER_REVISION)],
       ),
     ]) : [{ rows: [] }, { rows: [] }, { rows: [] }];
 
+    const decisions = source.source_version_id ? await readTop50Decisions(client, source.source_id, source.source_version_id) : { records: [], ready: true, extracted: true };
     const covers = await readArtwork((sql, params) => client.query(sql, params), source.source_id);
     const albums = albumRows.rows.map(({ record, is_present, album_id, record_version, record_file, source_locator }) => ({ ...record, isPresent: is_present, albumId: album_id,
       provenance: {version:record_version,fileName:record_file,sourceLocator:source_locator}, artwork: covers.records.get(album_id) }));
@@ -144,6 +146,9 @@ export async function getPublishedSource(season: number, folderId: string): Prom
       albums,
       backlog: backlogRows.rows.map(({ record }) => record),
       playoffResults: playoffResultRows.rows.map(({ record }) => record),
+      top50Decisions: decisions.records,
+      top50DecisionsReady: decisions.ready,
+      top50DecisionsExtracted: decisions.extracted,
     };
   } finally {
     client.release();

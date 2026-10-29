@@ -1,4 +1,4 @@
-import { WORKBOOK_PARSER_VERSION, PLAYOFF_PARSER_REVISION } from "@/lib/ingestion/workbook-parser";
+import { PLAYOFF_EXTRACTION_VERSION, PLAYOFF_PARSER_REVISION } from "@/lib/ingestion/workbook-parser";
 import { PUBLISHED_PLAYOFF_RESULTS_SQL } from "@/lib/competition/results-query";
 import { comparePublishedVersions, HISTORY_DOMAINS, historyBlockAvailable, makeHistoryRecord,
   type HistoryDomain, type HistoryRecord, type HistorySnapshot, type HistoryVersion, type VersionHistoryData } from "./version-history";
@@ -40,7 +40,7 @@ async function snapshot(query: HistoryQuery, row: VersionRow): Promise<HistorySn
     query<RecordRow>(`SELECT a.identity_key AS key,r.record,r.source_locator FROM oraculo.source_album_records r
       JOIN oraculo.albums a ON a.id=r.album_id AND a.source_id=r.source_id WHERE r.source_id=$1 AND r.source_version_id=$2`, [row.source_id, row.id]),
     query<RecordRow>("SELECT record FROM oraculo.source_backlog_records WHERE source_id=$1 AND source_version_id=$2 ORDER BY item_order", [row.source_id, row.id]),
-    query<RecordRow>(PUBLISHED_PLAYOFF_RESULTS_SQL, [row.source_id, row.id, WORKBOOK_PARSER_VERSION, String(PLAYOFF_PARSER_REVISION)]),
+    query<RecordRow>(PUBLISHED_PLAYOFF_RESULTS_SQL, [row.source_id, row.id, PLAYOFF_EXTRACTION_VERSION, String(PLAYOFF_PARSER_REVISION)]),
   ]);
   return { version: meta(row), blocks: {
     albums: { available: historyBlockAvailable(albums.rows.length, row.counts?.albums), records: albums.rows.map(r => makeHistoryRecord("albums", r.record, row.version, r.key, r.source_locator)) },
@@ -101,7 +101,7 @@ export async function loadVersionHistory(query: HistoryQuery, season: number, fo
     const keys = [...new Set(after.blocks[id].records.filter(r => !oldKeys.has(r.key)).map(r => r.key))];
     if (!keys.length) continue;
     const params: unknown[] = [selected.source_id, previous.version, JSON.stringify(id === "albums" ? keys : keys.map(k => JSON.parse(k)))];
-    if (id === "playoffs") params.push(WORKBOOK_PARSER_VERSION, String(PLAYOFF_PARSER_REVISION));
+    if (id === "playoffs") params.push(PLAYOFF_EXTRACTION_VERSION, String(PLAYOFF_PARSER_REVISION));
     const rows = await query<RecordRow>(earlierSQL(id), params);
     earlier[id] = rows.rows.map(r => makeHistoryRecord(id, r.record, r.version!, id === "albums" ? JSON.parse(r.key!) : undefined, r.source_locator));
   }

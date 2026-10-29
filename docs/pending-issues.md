@@ -1,6 +1,6 @@
 # Central de pendências
 
-Página privada `/pendencias`, disponível no menu desktop, em **Mais → Pendências** no celular e por atalhos no Início, Top 50 e Sincronização. Não requer migração ou novas credenciais.
+Página privada `/pendencias`, disponível no menu desktop, em **Mais → Pendências** no celular e por atalhos no Início, Top 50 e Sincronização. Não requer novas credenciais. A leitura de decisões manuais exige a migração 0008.
 
 ## Conteúdo
 
@@ -26,6 +26,10 @@ Filtros de tipo, origem e impacto combinam com busca por álbum/artista/motivo/l
 **Copiar orientação desta pendência** ou **Copiar pendências filtradas** prepara texto para colar no chat que gera o XLSX, com evidências, efeito, orientação e pedido de nova versão sem sobrescrever a anterior. A cópia é local e só ocorre por clique. Se o navegador não permitir clipboard, o texto está disponível em um campo selecionável, inclusive por teclado/celular. O aplicativo não envia mensagens ao chat e não escreve no Drive.
 
 Corrigir dados contraditórios pode remover a pendência na importação seguinte. Empate irredutível precisa de decisão explícita compatível com o regulamento; simplesmente preencher uma posição derivada no XLSX não cria critério de desempate nem muda a regra do app. A central não presume participação, vencedor ou decisão e não altera notas, seeds, ranking ou resultados.
+
+O aplicativo consome decisões manuais somente da aba estruturada `Desempates Top 50`, com o grupo completo, contexto do empate e confirmação explícita. A orientação do empate e a de cada aviso de posição do grupo incluem o contrato mesmo quando copiadas isoladamente. Enquanto não houver decisão confirmada e válida, todo o grupo mantém `Rank Top 50 provisório` em `Albuns 2026` e `Pos.` em `Top 50` vazios; nota, fase, bônus e índice permanecem. Retirar posições atribuídas manualmente remove os avisos derivados, mas conserva a pendência do empate. Texto histórico não é aplicado como decisão.
+
+O texto copiado separa correções de dados, confirmações do proprietário e mudanças necessárias no aplicativo. Ele exige evidências, coerência entre as duas abas e relato do que foi corrigido e do que continua pendente. Uma nova versão é solicitada quando há correção aplicável; inventar campos, regras ou aprovações para declarar resolução é vedado. O contrato está em [Desempates manuais do Top 50](top50-manual-decisions.md). Decisões inválidas, pendentes, desatualizadas ou conflitantes geram apontamentos com a origem publicada; uma decisão válida remove o empate do corte e aparece no Top 50 com sua confirmação. A migração 0008 é necessária; antes dela, a central informa que a leitura está indisponível.
 
 ## Validação
 

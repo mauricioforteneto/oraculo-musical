@@ -29,6 +29,12 @@ const routes = [
   ['pendências',()=>PendingIssues()],
 ] as const;
 describe("novas rotas privadas", () => {
+  for (const [name, route] of routes.slice(2)) it(`encaminha as decisões da publicação para a competição: ${name}`, async () => {
+    const source = { version: "105", albums: [syntheticAlbum(1)], playoffResults: [], top50Decisions: [] };
+    deps.catalog.mockResolvedValue(source);
+    await route();
+    expect(deps.competition).toHaveBeenCalledWith(source.albums, source.playoffResults, source.top50Decisions);
+  });
   for (const [name, route] of routes) {
     it(`autoriza antes de qualquer leitura: ${name}`, async () => {
       deps.owner.mockRejectedValue(new Error("NEXT_REDIRECT"));

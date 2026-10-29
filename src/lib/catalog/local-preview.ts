@@ -1,7 +1,7 @@
 import "server-only";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import type { AlbumRecord, BacklogRecord, LocalSourcePreview, PublishedPlayoffResult } from "./types";
+import type { AlbumRecord, BacklogRecord, LocalSourcePreview, PublishedPlayoffResult, Top50ManualDecision } from "./types";
 
 const text = (value: unknown) => typeof value === "string" ? value : "";
 const number = (value: unknown) => typeof value === "number" && Number.isFinite(value) ? value : null;
@@ -104,5 +104,10 @@ export async function getLocalSourcePreview(): Promise<LocalSourcePreview | null
     albums,
     backlog,
     playoffResults,
+    top50Decisions: Array.isArray(data.top50Decisions) ? data.top50Decisions.filter((item): item is Top50ManualDecision =>
+      !!item && typeof item === "object" && typeof item.decisionId === "string" && typeof item.artist === "string"
+      && typeof item.title === "string" && typeof item.status === "string" && typeof item.phase === "string"
+      && typeof item.confirmedAt === "string" && typeof item.confirmedBy === "string" && typeof item.confirmationReference === "string"
+      && typeof item.rulesVersion === "string" && typeof item.sourceSheet === "string" && typeof item.sourceRow === "number") : [],
   };
 }

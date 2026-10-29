@@ -22,9 +22,9 @@ export function PendingIssuesPage({report,loadFailed=false}:{report:IssueReport|
   return <AppShell title="Central de pendências" description="Confira o que precisa de correção ou decisão na planilha antes de avançar a temporada." version={report?.version}>
     <div className={common.stack}>
       {loadFailed ? <section className={common.card} role="alert"><h2>Não foi possível carregar as pendências</h2><p>Não foi possível conferir a fonte e a competição. Recarregue a página para tentar novamente.</p><a className={common.action} href="/pendencias">Tentar novamente</a></section> : report && <>
-        <section className={common.card} aria-label="Como resolver pendências"><h2>Corrija na fonte e importe uma nova versão</h2>
+        <section className={common.card} aria-label="Como resolver pendências"><h2>Confira o que pode ser corrigido na planilha</h2>
           <p>{report.version!==null ? `Publicação em análise: v${report.version}${report.publishedAt ? ` · ${dateTime(report.publishedAt)}`:''}.`:'Ainda não há uma publicação válida.'} A lista é recalculada a cada consulta; após sincronizar a correção, os itens que deixarem de ocorrer desaparecem.</p>
-          <p>Copie a orientação para o chat que gera o XLSX. Decisões de participação e desempate precisam ser explícitas. Resultados ainda não publicados são aguardados normalmente.</p>
+          <p>Copie a orientação para o chat que gera o XLSX. Corrija os dados comprovados; decisões de participação e desempate precisam de confirmação do proprietário. Desempates manuais devem estar na aba Desempates Top 50, com o grupo completo e a confirmação. Até uma decisão válida ser importada, o grupo empatado no corte permanece sem posição. Resultados ainda não publicados são aguardados normalmente.</p>
           <div className={common.actions}><Link className={common.action} href="/sincronizacao">Abrir sincronização</Link><Link className={common.action} href="/top-50">Ver Top 50</Link><Link className={common.action} href="/playoffs">Ver Playoffs</Link></div>
           {report.notices.map(notice=><p key={notice}>{notice}</p>)}
         </section>

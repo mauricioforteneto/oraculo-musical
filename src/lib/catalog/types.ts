@@ -60,6 +60,26 @@ export type PublishedPlayoffResult = {
   sourceRow: number;
 };
 
+export type Top50ManualDecision = {
+  decisionId: string;
+  season: number | null;
+  rulesVersion: string;
+  artist: string;
+  title: string;
+  originalScore: number | null;
+  phase: string;
+  phaseScore: number | null;
+  index: number | null;
+  order: number | null;
+  status: string;
+  confirmedBy: string;
+  confirmedAt: string;
+  confirmationReference: string;
+  sourceSheet: string;
+  sourceRow: number;
+  parseErrors: string[];
+};
+
 export type LocalSourcePreview = {
   artworkSummary?: ArtworkSummary;
   version: number | string | null;
@@ -91,4 +111,7 @@ export type LocalSourcePreview = {
   albums: AlbumRecord[];
   backlog: BacklogRecord[];
   playoffResults: PublishedPlayoffResult[];
+  top50Decisions?: Top50ManualDecision[];
+  top50DecisionsReady?: boolean;
+  top50DecisionsExtracted?: boolean;
 };

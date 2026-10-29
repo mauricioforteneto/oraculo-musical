@@ -29,7 +29,7 @@ export default async function Home() {
   const source = usingPreview
     ? await getLocalSourcePreview()
     : process.env.DATABASE_READ_URL ? await getPublishedSource(season, folderId) : null;
-  const competition = !usingPreview && source?.version ? await getCompetitionState(source.albums, source.playoffResults) : null;
+  const competition = !usingPreview && source?.version ? await getCompetitionState(source.albums, source.playoffResults, source.top50Decisions) : null;
   return <AppShell title="O ano em discos." description="Um retrato da sua escuta, da primeira avaliação à disputa pelo Top 50." version={source?.version} localPreview={usingPreview}>
     <Dashboard source={source} competition={competition} />
   </AppShell>;

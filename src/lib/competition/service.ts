@@ -3,7 +3,7 @@ import { databasePool } from "@/lib/db/pool";
 import { configuredDriveReader } from "@/lib/ingestion/google";
 import { SourceError } from "@/lib/ingestion/drive";
 import { parseSourceWorkbook, WorkbookParseError, WORKBOOK_PARSER_VERSION } from "@/lib/ingestion/workbook";
-import type { AlbumRecord, PublishedPlayoffResult } from "@/lib/catalog/types";
+import type { AlbumRecord, PublishedPlayoffResult, Top50ManualDecision } from "@/lib/catalog/types";
 import { albumIdentity, buildParticipants, CUTOFF_UTC, firstRound, participantChanges, RULES_VERSION, type Participant } from "./rules";
 import { projectTop50 } from "./top50";
 import { freezeTokenMatches, type FreezeToken } from "./token";
@@ -44,7 +44,7 @@ async function participantsFor(role: "read" | "sync", freezeId: string): Promise
     FROM oraculo.competition_freeze_participants WHERE freeze_id=$1 ORDER BY seed`, [freezeId]);
   return rows.rows.map(p => ({ identityKey: p.identity_key, artist: p.artist, title: p.title, originalScore: Number(p.original_score), route: p.route, seed: p.seed, sourceRow: p.source_row, evidence: p.evidence }));
 }
-export async function getCompetitionState(albums: AlbumRecord[], results: PublishedPlayoffResult[]) {
+export async function getCompetitionState(albums: AlbumRecord[], results: PublishedPlayoffResult[], decisions: Top50ManualDecision[] = []) {
   const { season, folder } = configuration();
   const id = await sourceId("read", season, folder);
   const active = await activeFor("read", id);
@@ -55,7 +55,7 @@ export async function getCompetitionState(albums: AlbumRecord[], results: Publis
   return { cutoff: CUTOFF_UTC, active: active ? { id: active.id, fileName: active.file_name, fileVersion: active.file_version,
     sha256: active.sha256, frozenAt: active.frozen_at, frozenBy: active.frozen_by, participants: active.participants,
     correctionReason: active.correction_reason, bracket: firstRound(active.participants) } : null,
-    projection: active ? projectTop50(albums, active.participants, results, active.cutoff_album_keys) : null,
+    projection: active ? projectTop50(albums, active.participants, results, active.cutoff_album_keys, decisions) : null,
     history: audit.map(row => ({ id: row.id, fileName: row.file_name, fileVersion: row.file_version, frozenAt: row.frozen_at, correctionReason: row.correction_reason, changes: row.changes })) };
 }
 
@@ -104,7 +104,7 @@ export async function previewFreeze(mode: FreezeMode) {
     token: { fileId: candidate.file.id, fileVersion: candidate.sourceVersion, driveRevision: candidate.file.version, modifiedAt: candidate.file.modifiedTime,
       sha256: downloaded.sha256, activeFreezeId: active?.id ?? null } satisfies FreezeToken,
     participants: built.participants, issues, bracket: built.canFreeze ? firstRound(built.participants) : null, changes,
-    projection: built.canFreeze ? projectTop50(parsed.albums, built.participants, parsed.playoffResults, parsed.albums.map(a => albumIdentity(a))) : null };
+    projection: built.canFreeze ? projectTop50(parsed.albums, built.participants, parsed.playoffResults, parsed.albums.map(a => albumIdentity(a)), parsed.top50Decisions) : null };
 }
 
 export async function confirmFreeze(input: { mode: FreezeMode; token: FreezeToken; backupAttested: boolean; eligibilityAttested?: boolean; noMatchAttested?: boolean; reason?: string }, userId: string) {

@@ -1,4 +1,5 @@
-import type { AlbumRecord, PublishedPlayoffResult } from "@/lib/catalog/types";
+import type { AlbumRecord, PublishedPlayoffResult, Top50ManualDecision } from "@/lib/catalog/types";
+import { resolveTop50Decisions } from "./manual-decisions";
 import { albumIdentity, firstRound, MATCH_PENDING_LABELS, type Participant } from "./rules";
 import { buildBracketView, type BracketPhaseId } from "./bracket";
 
@@ -13,6 +14,8 @@ export type Top50Entry = {
   status: "active" | "eliminated" | "eligible" | "champion" | "runner-up";
   phase: string; bonus: number | null; index: number | null; position: number | null;
   late: boolean; conflicts: string[]; warnings: string[];
+  manualDecisionId?: string;
+  phasePerformance?: number;
 };
 type ScoredEntry = Top50Entry & { phaseOrder: number; phaseScore: number };
 const fold = (text: string) => text.normalize("NFD").replace(/\p{Diacritic}/gu, "").trim().toLowerCase();
@@ -20,7 +23,7 @@ const compare = (a: ScoredEntry, b: ScoredEntry) => b.index! - a.index! || b.pha
   || b.phaseScore - a.phaseScore || b.originalScore - a.originalScore
   || (a.seed !== null && b.seed !== null ? a.seed - b.seed : 0);
 
-export function projectTop50(albums: AlbumRecord[], participants: Participant[], results: PublishedPlayoffResult[], cutoffAlbumKeys: string[] | null = null) {
+export function projectTop50(albums: AlbumRecord[], participants: Participant[], results: PublishedPlayoffResult[], cutoffAlbumKeys: string[] | null = null, decisions: Top50ManualDecision[] = []) {
   const bracket = firstRound(participants);
   if (!bracket) return null;
   const view = buildBracketView(bracket, results);
@@ -56,6 +59,7 @@ export function projectTop50(albums: AlbumRecord[], participants: Participant[],
   }
   function score(entry: Top50Entry, phase: ScoredPhase, performance = 0) {
     entry.phase = labels[phase]; entry.bonus = TOP50_BONUSES[phase]; entry.index = entry.originalScore + entry.bonus;
+    entry.phasePerformance = performance;
     scored.push({ ...entry, phaseOrder: phaseOrder[phase], phaseScore: performance });
   }
   const participantKeys = new Set(participants.map(p => p.identityKey));
@@ -100,16 +104,29 @@ export function projectTop50(albums: AlbumRecord[], participants: Participant[],
   const reserved = champion ? 2 : survivors.length;
   const slots = 50 - reserved;
   const eligible = scored.filter(e => e.conflicts.length === 0).sort((a, b) => compare(a, b) || a.artist.localeCompare(b.artist, "pt-BR") || a.title.localeCompare(b.title, "pt-BR"));
+  const groups: ScoredEntry[][] = [];
+  for (const entry of eligible) {
+    if (!groups.length || compare(groups.at(-1)![0], entry) !== 0) groups.push([]);
+    groups.at(-1)!.push(entry);
+  }
+  const manual = resolveTop50Decisions(groups, decisions, TOP50_RULES_VERSION);
+  const resolvedCompare = (a: ScoredEntry, b: ScoredEntry) => compare(a, b)
+    || (manual.order.has(a.identityKey) && manual.order.has(b.identityKey) ? manual.order.get(a.identityKey)! - manual.order.get(b.identityKey)! : 0);
+  eligible.sort((a, b) => resolvedCompare(a, b) || a.artist.localeCompare(b.artist, "pt-BR") || a.title.localeCompare(b.title, "pt-BR"));
+  for (const decision of manual.applied) for (const entry of eligible) {
+    if (decision.orderedKeys.includes(entry.identityKey)) entry.manualDecisionId = decision.decisionId;
+  }
   const boundary = eligible[slots - 1];
-  const tieAtCut = !!boundary && !!eligible[slots] && compare(boundary, eligible[slots]) === 0;
+  const tieAtCut = !!boundary && !!eligible[slots] && resolvedCompare(boundary, eligible[slots]) === 0;
   let rank = 0;
   eligible.forEach((entry, i) => {
-    if (i === 0 || compare(entry, eligible[i - 1]) !== 0) rank = i + 1;
-    if (i < slots && !(tieAtCut && compare(entry, boundary) === 0)) entry.position = reserved + rank;
+    if (i === 0 || resolvedCompare(entry, eligible[i - 1]) !== 0) rank = i + 1;
+    if (i < slots && !(tieAtCut && resolvedCompare(entry, boundary) === 0)) entry.position = reserved + rank;
   });
   const entries: Top50Entry[] = [...fixed, ...scored].sort((a, b) => (a.position ?? Infinity) - (b.position ?? Infinity) || (b.index ?? 0) - (a.index ?? 0))
-    .map(({ identityKey, artist, title, originalScore, seed, status, phase, bonus, index, position, late, conflicts, warnings }) =>
-      ({ identityKey, artist, title, originalScore, seed, status, phase, bonus, index, position, late, conflicts, warnings }));
+    .map(({ identityKey, artist, title, originalScore, seed, status, phase, bonus, index, position, late, conflicts, warnings, manualDecisionId, phasePerformance }) =>
+      ({ identityKey, artist, title, originalScore, seed, status, phase, bonus, index, position, late, conflicts, warnings,
+        ...(manualDecisionId ? { manualDecisionId } : {}), ...(phasePerformance === undefined ? {} : { phasePerformance }) }));
   for (const entry of [...entries, ...survivors]) {
     const album = catalog.get(entry.identityKey);
     if (!album) continue;
@@ -121,7 +138,8 @@ export function projectTop50(albums: AlbumRecord[], participants: Participant[],
     if (album.top50SourceRank !== null && album.top50SourceRank !== entry.position) entry.warnings.push("Posição informada difere da posição calculada pela regra atual.");
   }
   return { rulesVersion: TOP50_RULES_VERSION, completed: !!champion, reserved, slots, survivors, entries, tieAtCut, resultIssues,
-    cutTieKeys: tieAtCut ? eligible.filter(e => compare(e,boundary) === 0).map(e => e.identityKey) : [],
+    cutTieKeys: tieAtCut ? eligible.filter(e => resolvedCompare(e,boundary) === 0).map(e => e.identityKey) : [],
+    appliedDecisions: manual.applied, decisionIssues: manual.issues,
     unresolved: entries.filter(e => e.conflicts.length > 0).length,
     warningCount: [...entries, ...survivors].filter(e => e.warnings.length > 0).length };
 }

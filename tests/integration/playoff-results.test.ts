@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import { readFile } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
 import { PUBLISHED_PLAYOFF_RESULTS_SQL } from "../../src/lib/competition/results-query";
-import { PLAYOFF_PARSER_REVISION, WORKBOOK_PARSER_VERSION } from "../../src/lib/ingestion/workbook-parser";
+import { PLAYOFF_PARSER_REVISION, PLAYOFF_EXTRACTION_VERSION } from "../../src/lib/ingestion/workbook-parser";
 
 let db: PGlite;
 const sourceId = "00000000-0000-4000-8000-000000000001";
@@ -26,7 +26,7 @@ async function mark(status: string) {
 }
 async function records() {
   return (await db.query<{ record: { winner: string } }>(PUBLISHED_PLAYOFF_RESULTS_SQL,
-    [sourceId, versionId, WORKBOOK_PARSER_VERSION, String(PLAYOFF_PARSER_REVISION)])).rows.map(row => row.record.winner);
+    [sourceId, versionId, PLAYOFF_EXTRACTION_VERSION, String(PLAYOFF_PARSER_REVISION)])).rows.map(row => row.record.winner);
 }
 
 describe("leitura das extrações versionadas de resultados", () => {
@@ -37,7 +37,7 @@ describe("leitura das extrações versionadas de resultados", () => {
   });
   it("seleciona uma extração inteira, idempotente, após reprocessar a mesma versão", async () => {
     const sql = `INSERT INTO oraculo.source_competition_results VALUES ($1,$2,$3,1,'{"winner":"current"}') ON CONFLICT DO NOTHING`;
-    const params = [sourceId, versionId, WORKBOOK_PARSER_VERSION];
+    const params = [sourceId, versionId, PLAYOFF_EXTRACTION_VERSION];
     await db.query(sql, params); await db.query(sql, params);
     await mark("unchanged");
     expect(await records()).toEqual(["current"]);

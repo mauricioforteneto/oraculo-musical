@@ -102,3 +102,7 @@ O usuário dispensou por ora os ensaios com segunda conta e pasta privada de tes
 ## Ativação das capas
 
 Aplicar a migração `0006_album_artwork.sql` pelo procedimento administrativo acima, com backup verificado, antes de ativar a busca em produção. O aplicativo continua consultável antes dessa migração, com os discos de fallback e busca de capas desabilitada. Nenhuma API key é necessária. Após disponibilizar o código e aplicar a migração, abrir Sincronização e usar Buscar capas para o catálogo já importado. Requisitos de rede, comportamento e validação real pendente estão em [artwork.md](artwork.md).
+
+## Ativação dos desempates manuais
+
+Aplicar `0008_top50_manual_decisions.sql` pelo fluxo administrativo, publicar o código e sincronizar o XLSX com a aba `Desempates Top 50`. O parser `2026.4` aceita a aba opcional; uma versão já publicada pode ser reprocessada sem alterar seu conteúdo. Sem a migração, o catálogo continua disponível e a central informa que decisões não podem ser lidas. Sem a tabela na planilha, nenhum texto histórico é convertido em decisão. Conferir o contrato e os casos de revisão em [top50-manual-decisions.md](top50-manual-decisions.md).

@@ -30,7 +30,17 @@ export function Top50Panel({ projection }: { projection: Top50Projection }) {
       <summary>{projection.survivors.length} álbuns em disputa — sem posição individual</summary>
       <ul className={styles.top50Notes}>{projection.survivors.map(e => <li key={e.identityKey}><strong>Seed #{e.seed} · {e.artist}</strong><span>{e.title} · Em disputa, sem bônus nem índice definidos</span></li>)}</ul>
     </details>}
-    {projection.tieAtCut && <p className={styles.top50Notice}>Empate na última vaga: o grupo empatado fica sem posição até decisão manual.</p>}
+    {projection.tieAtCut && <p className={styles.top50Notice}>Empate na última vaga: o grupo empatado permanece sem posição até uma decisão confirmada e válida na aba Desempates Top 50 ser importada.</p>}
+    {(projection.appliedDecisions ?? []).length>0 && <details className={styles.top50Details}>
+      <summary>Desempates manuais aplicados ({projection.appliedDecisions.length})</summary>
+      <ul className={styles.top50Notes}>{projection.appliedDecisions.map(decision=><li key={decision.decisionId}>
+        <strong>Decisão {decision.decisionId} · {decision.confirmedBy} · {decision.confirmedAt}</strong>
+        <span>{decision.rows.map(row=>`${row.order}º ${row.artist} — ${row.title}`).join(' → ')}</span>
+        <span>Confirmação: {decision.confirmationReference}</span>
+        <span>Origem: {decision.rows.map(row=>`${row.sourceSheet}!${row.sourceRow}`).join(', ')}</span>
+      </li>)}</ul>
+    </details>}
+    {(projection.decisionIssues ?? []).length>0 && <p className={styles.top50Notice}><Link href="/pendencias">Conferir decisões manuais que não puderam ser aplicadas ({projection.decisionIssues.length})</Link></p>}
     {(projection.tieAtCut || projection.unresolved>0 || projection.resultIssues.length>0 || warnings.length>0) && <p className={styles.top50Notice}><Link href="/pendencias">Conferir a central de pendências e copiar orientações para a planilha</Link></p>}
     {projection.unresolved > 0 && <p className={styles.top50Notice}>{projection.unresolved} álbum(ns) com fatos conflitantes, sem posição provisória.</p>}
     {projection.resultIssues.length > 0 && <details className={styles.top50Details}>
@@ -61,6 +71,7 @@ function Top50List({ entries }: { entries: Top50Entry[] }) {
     <span className={styles.top50Position}>#{e.position}</span>
     <div className={styles.top50Identity}><strong>{e.artist}</strong><span>{e.title}</span>
       <small>{e.status === "eliminated" ? "Eliminado · " : ""}{e.phase}{e.seed !== null ? ` · seed original #${e.seed}` : ""}{e.late ? " · entrada após o corte" : ""}</small>
+      {e.manualDecisionId && <small>Desempate manual · {e.manualDecisionId}</small>}
     </div>
     <div className={styles.top50Index}>{e.index === null ? <span>Posição garantida pela final</span> : <><strong>{e.index}</strong><span>{e.originalScore} + {e.bonus}</span><small>ÍNDICE</small></>}</div>
   </li>)}</ol>;

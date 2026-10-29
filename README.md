@@ -42,6 +42,8 @@ A estrutura e as responsabilidades de cada página estão em [Navegação e pág
 
 As capas de Início, Álbuns e avaliação são buscadas no MusicBrainz e Cover Art Archive após sincronizar, com preenchimento e revisão manual. A ativação requer a migração `0006`; consulte [Capas dos álbuns](docs/artwork.md).
 
+O Top 50 reconhece decisões explícitas na aba `Desempates Top 50`, com validação do grupo completo, contexto e confirmação. Requer a migração `0008`; consulte [Desempates manuais](docs/top50-manual-decisions.md). Observações e posições preenchidas não substituem essa tabela.
+
 ## Preparação local
 
 Requer Node.js 24 (versão fixada em `.nvmrc`). Use `npm ci` e `npm run dev`; no PowerShell com scripts desabilitados, use `npm.cmd`. Abra http://localhost:3000, igual ao `APP_ORIGIN`. Em desenvolvimento no loopback, `.private/source-preview.json` permite consultar a prévia local privada; fora desse caso, sem credenciais o acesso permanece fechado. Nenhum dado fictício é apresentado como acervo pessoal.

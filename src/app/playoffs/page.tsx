@@ -13,7 +13,7 @@ export default async function Playoffs({ searchParams }: { searchParams: Promise
   await requireOwner();
   const historical = (await searchParams).aba === "historico";
   const source = await readPageSource();
-  const state = !historical && source?.version ? await getCompetitionState(source.albums,source.playoffResults) : null;
+  const state = !historical && source?.version ? await getCompetitionState(source.albums,source.playoffResults,source.top50Decisions) : null;
   const history = historical && source?.version ? await getCompetitionPhaseHistory(Number(process.env.SOURCE_SEASON ?? "2026"), process.env.GOOGLE_DRIVE_FOLDER_ID ?? "",String(source.version)) : null;
   return <AppShell title="Playoffs" description="Confrontos, resultados publicados e os caminhos de cada álbum na competição." version={source?.version}>
     <div className={styles.stack}>

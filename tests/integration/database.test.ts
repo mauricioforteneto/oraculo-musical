@@ -19,6 +19,7 @@ beforeAll(async () => {
   await db.exec(await readFile("db/migrations/0002_source_publication.sql", "utf8"));
   await db.exec(await readFile("db/migrations/0003_competition_freeze.sql", "utf8"));
   await db.exec(await readFile("db/migrations/0004_freeze_attestations.sql", "utf8"));
+  await db.exec(await readFile("db/migrations/0008_top50_manual_decisions.sql", "utf8"));
 }, 30000);
 afterAll(async () => { if (db) { await db.exec("ROLLBACK"); await db.close(); } });
 
@@ -31,6 +32,11 @@ async function denied(role: string, sql: string) {
 }
 
 describe("permissões reais do banco", () => {
+  it("preserva decisões importadas como registros imutáveis para os papéis de execução", async () => {
+    await denied("oraculo_reader", "INSERT INTO oraculo.source_top50_decisions VALUES(gen_random_uuid(),gen_random_uuid(),1,1,'{}')");
+    await denied("oraculo_sync", "UPDATE oraculo.source_top50_decisions SET record='{}'");
+    await denied("oraculo_sync", "DELETE FROM oraculo.source_top50_decisions");
+  });
   it("leitor consulta e não modifica avaliações", async () => {
     await db.exec("SET LOCAL ROLE oraculo_reader");
     await expect(db.exec("SELECT total FROM oraculo.original_evaluations")).resolves.toBeDefined();

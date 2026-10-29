@@ -11,7 +11,7 @@ export default async function PendingIssues() {
   let loadFailed=false;
   try {
     const source=await readPageSource();
-    const competition=source?.version!=null ? await getCompetitionState(source.albums,source.playoffResults):null;
+    const competition=source?.version!=null ? await getCompetitionState(source.albums,source.playoffResults,source.top50Decisions):null;
     report=buildIssueReport(source,competition);
   } catch {
     console.error('Pending issue report load failed');

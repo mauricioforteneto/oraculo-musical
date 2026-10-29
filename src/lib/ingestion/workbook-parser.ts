@@ -1,4 +1,5 @@
-import type { AlbumRecord, BacklogRecord, PlayoffPhase, PublishedPlayoffResult } from "../catalog/types";
+import type { AlbumRecord, BacklogRecord, PlayoffPhase, PublishedPlayoffResult, Top50ManualDecision } from "../catalog/types";
+import { parseTop50Decisions } from "./top50-decisions";
 
 export type WorkbookIssue = {
   code: string;
@@ -7,8 +8,9 @@ export type WorkbookIssue = {
   message: string;
 };
 
-export const WORKBOOK_PARSER_VERSION = "2026.3";
+export const WORKBOOK_PARSER_VERSION = "2026.4";
 export const PLAYOFF_PARSER_REVISION = 3;
+export const PLAYOFF_EXTRACTION_VERSION = "2026.3";
 
 export type WorkbookSheetData = {
   sheet: string;
@@ -25,6 +27,7 @@ export type ParsedSourceWorkbook = {
   albums: ParsedAlbum[];
   backlog: BacklogRecord[];
   playoffResults: PublishedPlayoffResult[];
+  top50Decisions: Top50ManualDecision[];
   issues: WorkbookIssue[];
   counts: {
     albumRows: number;
@@ -504,6 +507,7 @@ export function parseWorkbookSheets(
   const summary = summaryRecord(summarySheet);
   if (summarySheet) addSummaryIssues(summary, albums, backlog, issues);
   const playoffResults = parsePublishedPlayoffResults(sheets, issues);
+  const top50Decisions = parseTop50Decisions(sheets, issues);
   const reportedOriginalDifferences = issues.filter((issue) => issue.code === "REPORTED_ORIGINAL_DIFFERENCE").length;
   const errors = issues.filter((issue) => issue.severity === "error").length;
   const warnings = issues.length - errors;
@@ -517,6 +521,7 @@ export function parseWorkbookSheets(
     albums,
     backlog,
     playoffResults,
+    top50Decisions,
     issues,
     counts: {
       albumRows,

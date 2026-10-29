@@ -48,6 +48,51 @@ describe('central de pendências',()=>{
     const internal=projectTop50([...field.albums,...outsiders.slice(0,2)],field.participants,[],null)!;
     expect(buildIssueReport({...source,albums:[...field.albums,...outsiders.slice(0,2)],playoffResults:[]},{...competition,projection:internal}).items.some(i=>i.code==='TOP50_CUT_TIE')).toBe(false);
   });
+  it('orienta o empate e cada aviso isolado sem transformar posições manuais em decisão aplicada',()=>{
+    const {source,competition}=syntheticIssues('100',true);
+    const field=syntheticField();
+    const higher=Array.from({length:24},(_,i)=>syntheticAlbum(i+100,{originalScore:80,playoffSeed:null}));
+    const tied=Array.from({length:3},(_,i)=>syntheticAlbum(i+200,{
+      originalScore:78,playoffSeed:null,repescagem:'Eliminado — Etapa 2',
+      repescagemNote:'Decisão manual registrada no texto da planilha.',
+      top50BestPhase:'Repescagem',top50Bonus:1,top50Index:79,top50SourceRank:i<2 ? 49+i:null,
+    }));
+    source.albums=[...field.albums,...higher,...tied];
+    competition.projection=projectTop50(source.albums,field.participants,source.playoffResults,source.albums.map(a=>albumIdentity(a)));
+    const before=structuredClone({source,competition});
+    const report=buildIssueReport(source,competition);
+    expect(report.items).toHaveLength(3);
+    const tie=report.items.find(i=>i.code==='TOP50_CUT_TIE')!;
+    const differences=report.items.filter(i=>i.code==='TOP50_SOURCE_DIFFERENCE');
+    expect(tie.subjects).toHaveLength(3);expect(differences).toHaveLength(2);
+    for(const selected of [[tie],...differences.map(item=>[item]),report.items]) {
+      const prompt=issuePrompt(selected,report.version);
+      expect(prompt).toContain('Use a aba Desempates Top 50');
+      expect(prompt).not.toContain('O aplicativo ainda não aplica desempates manuais');
+      expect(prompt).toContain('todo o grupo sem posição');
+      expect(prompt).toContain('Rank Top 50 provisório (Albuns 2026) e Pos. (Top 50)');
+      expect(prompt).toContain('preservando notas originais, fatos competitivos');
+      expect(prompt).toContain('Mantenha fase, bônus e índice conforme o cálculo atual informado');
+      expect(prompt).toContain('Não invente a ordem do grupo');
+      expect(prompt).toContain('preserve seu registro como histórico');
+      for(const album of tied) expect(prompt).toContain(`${album.artist} — ${album.title}`);
+    }
+    expect(differences.every(item=>item.messages.some(message=>message.includes('sem ordem de desempate')))).toBe(true);
+    expect(differences.every(item=>item.action.includes('o empate permanece pendente'))).toBe(true);
+    expect({source,competition}).toEqual(before);
+    const cleared=source.albums.map(album=>tied.some(item=>albumIdentity(item)===albumIdentity(album)) ? {...album,top50SourceRank:null}:album);
+    const projection=projectTop50(cleared,field.participants,source.playoffResults,cleared.map(a=>albumIdentity(a)));
+    const after=buildIssueReport({...source,albums:cleared},{...competition,projection});
+    expect(after.items.map(item=>item.code)).toEqual(['TOP50_CUT_TIE']);
+    expect(projection!.entries.filter(entry=>tied.some(album=>albumIdentity(album)===entry.identityKey))
+      .every(entry=>entry.position===null && entry.originalScore===78 && entry.bonus===1 && entry.index===79)).toBe(true);
+    const wrongIndex=cleared.map(album=>albumIdentity(album)===albumIdentity(tied[0]) ? {...album,top50Index:80}:album);
+    const wrongProjection=projectTop50(wrongIndex,field.participants,source.playoffResults,wrongIndex.map(a=>albumIdentity(a)));
+    const wrongReport=buildIssueReport({...source,albums:wrongIndex},{...competition,projection:wrongProjection});
+    const indexWarning=wrongReport.items.find(item=>item.code==='TOP50_SOURCE_DIFFERENCE')!;
+    expect(indexWarning.messages).toContain('Índice informado (80) difere do calculado (79).');
+    expect(indexWarning.action).toContain('corrija os demais valores derivados divergentes conforme o cálculo atual informado');
+  });
   it('não trata jogos futuros e resultados ausentes como erro',()=>{
     const {source,competition}=syntheticIssues('100',true);
     source.playoffResults=[];competition.projection=projectTop50(source.albums,competition.active!.participants,[],null);
@@ -105,6 +150,11 @@ describe('central de pendências',()=>{
     const prompt=issuePrompt(report.items,report.version);
     expect(prompt).toContain('Publicação de referência: v100');expect(prompt).toContain('nova versão numérica');expect(prompt).toContain('Preserve notas originais');
     expect(prompt).toContain('Tentativa recusada · v101');expect(prompt).toContain('Albuns 2026!52');expect(prompt).toContain('sem sobrescrever a anterior');
+    expect(prompt).toContain('Separe correção de dados, decisão do proprietário e mudança necessária no aplicativo');
+    expect(prompt).toContain('Não altere notas, fases, participação, scores ou resultados');
+    expect(prompt).toContain('sem gerar uma nova versão apenas para declarar resolução');
+    expect(prompt).toContain('posição não definida deve ficar vazia, nunca zero');
+    expect(prompt).toContain('Só declare validação no aplicativo se ela tiver sido realizada');
     expect(locatorParts("'Albuns 2026'!$C$52")).toEqual({sheet:'Albuns 2026',row:52});
     expect(locatorParts('Resumo')).toEqual({sheet:'Resumo',row:null});
     expect(evidenceText({label:'Registro',version:null,locator:null})).toContain('versão não registrada');
@@ -120,6 +170,7 @@ describe('central de pendências',()=>{
     const {source,competition}=syntheticIssues();const report=buildIssueReport(source,competition);
     const html=renderToStaticMarkup(<PendingIssuesPage report={report}/>);
     expect(html).toContain('Central de pendências');expect(html).toContain('Copiar pendências filtradas');expect(html).toContain('Albuns 2026!52');expect(html).toContain('Tentativa recusada');
+    expect(html).toContain('Desempates manuais devem estar na aba Desempates Top 50');
     expect(html).toContain('/albuns/00000000-0000-4000-8000-000000000050');
     state.query='q=inexistente';expect(renderToStaticMarkup(<PendingIssuesPage report={report}/>)).toContain('Nenhuma pendência corresponde aos filtros');
     const empty=syntheticIssues('102',true);state.query='';expect(renderToStaticMarkup(<PendingIssuesPage report={buildIssueReport(empty.source,empty.competition)}/>)).toContain('Nenhuma pendência identificada');
