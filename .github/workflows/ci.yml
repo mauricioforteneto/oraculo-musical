@@ -71,6 +71,23 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Verificar layout e comportamento em quatro larguras
         run: npm run test:layout
+      - name: Disponibilizar capturas para revisão pelo conector
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import { existsSync, readdirSync, readFileSync } from 'node:fs';
+          const directory = 'test-results/layout';
+          if (existsSync(directory)) {
+            for (const name of readdirSync(directory).filter(name => /^(oraculo-(albuns|capas-revisar)-\d+(-viewport)?|failure)\.png$/.test(name)).sort()) {
+              console.log(`::group::Captura ${name}`);
+              console.log(`LAYOUT_CAPTURE_BEGIN ${name}`);
+              const encoded = readFileSync(`${directory}/${name}`).toString('base64');
+              for (let offset = 0; offset < encoded.length; offset += 120) console.log(encoded.slice(offset, offset + 120));
+              console.log('LAYOUT_CAPTURE_END');
+              console.log('::endgroup::');
+            }
+          }
+          NODE
       - name: Guardar capturas e trace, inclusive em caso de falha
         if: always()
         uses: actions/upload-artifact@v4

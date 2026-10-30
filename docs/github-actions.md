@@ -33,6 +33,11 @@ Na página da execução, abaixo dos trabalhos, a área **Artifacts** oferece
 Um teste verde comprova as verificações automáticas, mas as capturas ainda
 precisam ser conferidas visualmente. O ZIP pode ser baixado pelo celular e
 anexado à conversa se o conector não conseguir disponibilizá-lo diretamente.
+As mesmas imagens PNG também são exportadas em blocos identificados e codificados
+no log da etapa **Disponibilizar capturas para revisão pelo conector**. Isso
+permite que o assistente reconstrua as imagens pelos logs quando o conector só
+oferece um link para o ZIP. Somente capturas do cenário sintético são exportadas;
+o trace permanece exclusivamente no artefato.
 
 ## Rodar novamente
 

@@ -109,5 +109,9 @@ o **build padrão com Turbopack e configuração original** e 15 testes de acess
 O coletor de imagens tinha uma espera sem limite por `decode()` de capas lazy
 fora da tela; a preparação de captura foi ajustada para solicitar essas imagens
 e aguardar sua conclusão por no máximo dez segundos, preservando as asserções.
-A confirmação do layout e a revisão visual aguardam a execução seguinte.
+Na execução seguinte, [Verify #27](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41044153581),
+passaram novamente o trabalho `verify` completo e o comando `npm run test:layout`.
+A revisão visual das capturas está pendente. Uma exportação das imagens PNG
+no log do trabalho de layout permite obtê-las pelo conector, que disponibiliza o
+ZIP apenas como link de download; o artefato com PNGs e trace foi preservado.
 O fluxo pelo celular está em [github-actions.md](github-actions.md).
