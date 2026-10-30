@@ -1,4 +1,5 @@
-import { mkdtemp, writeFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, writeFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
 import { createServer } from "vite";
@@ -6,13 +7,18 @@ import { chromium } from "playwright-core";
 import assert from "node:assert/strict";
 const repo = fileURLToPath(new URL("../../",import.meta.url));
 const root = await mkdtemp(resolve(repo,".private-layout-check-"));
-let server, browser;
+const artifactDir = resolve(repo,process.env.LAYOUT_ARTIFACT_DIR || "test-results/layout");
+await mkdir(artifactDir,{recursive:true});
+let server, browser, context, page;
 try {
-  await writeFile(resolve(root,"index.html"),'<html lang="pt-BR"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><body><div id="root"></div><script type="module" src="/tests/browser/layout-fixture.tsx"></script></body></html>');
+  await writeFile(resolve(root,"index.html"),'<html lang="pt-BR"><head><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Oráculo Musical — teste com dados fictícios</title><meta name="description" content="Verificação de layout com componentes reais e dados sintéticos."></head><body><div id="root"></div><script type="module" src="/tests/browser/layout-fixture.tsx"></script></body></html>');
   server = await createServer({root,configFile:false,define:{"process.env":"{}"},resolve:{alias:{"@":resolve(repo,"src"),"next/navigation":resolve(repo,"tests/browser/navigation.tsx"),"next/link":resolve(repo,"tests/browser/navigation.tsx")}},server:{host:"127.0.0.1",port:3216,strictPort:true,fs:{allow:[repo]}},plugins:[{name:"fixture-source",resolveId(id){ if(id.startsWith("/tests/")||id.startsWith("/src/")) return repo+id; }}]});
   await server.listen();
-  browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || "/usr/bin/chromium",headless:true,args:["--no-sandbox"]});
-  const page = await browser.newPage({viewport:{width:390,height:844}});
+  const executablePath = process.env.CHROMIUM_PATH || (existsSync(chromium.executablePath()) ? chromium.executablePath() : "/usr/bin/chromium");
+  browser = await chromium.launch({executablePath,headless:true,args:["--no-sandbox"]});
+  context = await browser.newContext({viewport:{width:390,height:844}});
+  await context.tracing.start({screenshots:true,snapshots:true,sources:true});
+  page = await context.newPage();
   await page.addInitScript(()=>{
     Object.defineProperty(navigator,"clipboard",{configurable:true,value:{writeText:async text=>{
       if(window.fixtureClipboardBlocked) throw new Error("synthetic clipboard denial");
@@ -76,9 +82,14 @@ try {
         const footer = await page.locator("footer").boundingBox(); const bar = await nav.boundingBox();
         assert(footer.y+footer.height <= bar.y,`covered footer at ${width}`);
       }
+      if(path === "/albuns" || path === "/albuns?capas=revisar") {
+        const shot = path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns";
+        await page.locator("img").evaluateAll(images=>Promise.all(images.map(image=>image.decode().catch(()=>{}))));
+        await page.evaluate(()=>scrollTo(0,0));
+        await page.screenshot({path:resolve(artifactDir,`${shot}-${width}.png`),fullPage:true});
+        await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.png`)});
+      }
     }
-    await page.goto(origin+"/albuns");
-    await page.screenshot({path:`/tmp/oraculo-albuns-${width}.png`,fullPage:true});
   }
   await page.goto(origin+"/sincronizacao");
   await page.getByText("Ver falhas das capas (2)",{exact:true}).click();
@@ -260,4 +271,10 @@ try {
   recoveryMode=null;
   assert.deepEqual(errors,[]);
   console.log("Layout Chromium: 11 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, central de pendências, cópia/fallback, correção da fonte, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
-} finally { await browser?.close(); await server?.close(); await rm(root,{recursive:true,force:true}); }
+} catch(error) {
+  await page?.screenshot({path:resolve(artifactDir,"failure.png"),fullPage:true}).catch(()=>{});
+  throw error;
+} finally {
+  await context?.tracing.stop({path:resolve(artifactDir,"trace.zip")}).catch(error=>console.error("Não foi possível salvar o trace:",error.message));
+  await browser?.close(); await server?.close(); await rm(root,{recursive:true,force:true});
+}

@@ -1,0 +1,118 @@
+/* Hallmark · shape: app screen · genre: atmospheric · theme: brand · redesign: full
+ * paper: var(--background) · accent: var(--primary) · display: Georgia · body: Arial
+ * nav: kept · signature: album ranking · states: full, empty, filtered
+ * axes: dark/roman-serif/warm · posture: restrained · v2.0.0 */
+/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V, kept the familiar ranking to preserve the catalog task */
+/* Hallmark · reworded "ORIGINAL" to "Original" · 67 requires sentence case */
+/* Hallmark · reworded "Buscar ou corrigir capa →" to "Buscar ou corrigir capa" · 63 removes decorative arrows */
+.catalog {
+  min-width: 0;
+  color: var(--foreground);
+  font-family: var(--catalog-font-body);
+  font-size: var(--catalog-text-md);
+}
+
+.pageHeading { margin-bottom: 32px; }
+.pageHeading > span { display: none; }
+.pageHeading h1 { margin: 0 0 12px; font-family: var(--catalog-font-display); font-size: 40px; line-height: 1.15; }
+.pageHeading p { font-size: var(--catalog-text-md); line-height: 1.6; }
+.pageHeading h1, .resultsHeading h2 { text-wrap: balance; }
+
+.toolbar { display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: end; gap: 32px; padding-bottom: 24px; }
+.search { display: grid; gap: 12px; min-width: 0; color: var(--muted-foreground); font-size: var(--catalog-text-sm); }
+.searchField { position: relative; display: flex; align-items: center; min-width: 0; }
+.searchField > svg { position: absolute; left: 16px; pointer-events: none; color: var(--muted-foreground); }
+.search input {
+  width: 100%; min-width: 0; min-height: 48px; padding: 12px 16px 12px 48px;
+  border: 1px solid var(--catalog-control-border); border-radius: var(--catalog-radius);
+  background: var(--background); color: var(--foreground); font-size: var(--catalog-text-md);
+  caret-color: var(--primary);
+}
+.search input::placeholder { color: var(--muted-foreground); opacity: 1; }
+.scoreFilter p { margin: 0 0 12px; color: var(--muted-foreground); font-size: var(--catalog-text-sm); line-height: 1.4; }
+.filters { display: flex; flex-wrap: wrap; gap: 4px; }
+.filters button, .artworkFilters button {
+  min-height: 48px; padding: 12px 16px; border: 1px solid transparent;
+  border-radius: var(--catalog-radius); background: transparent;
+  color: var(--muted-foreground); font-size: var(--catalog-text-sm); line-height: 1.4;
+}
+.filters button[aria-pressed="true"], .artworkFilters button[aria-pressed="true"] {
+  border-color: var(--primary); background: var(--catalog-selection); color: var(--primary);
+}
+.artworkReview { display: grid; gap: 12px; padding: 20px 0 24px; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.artworkHeading { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; }
+.artworkHeading h2 { margin: 0; font-family: var(--catalog-font-body); font-size: var(--catalog-text-md); line-height: 1.5; font-weight: 500; }
+.artworkHeading p { margin: 0; color: var(--muted-foreground); font-size: var(--catalog-text-sm); line-height: 1.5; }
+.artworkFilters { display: flex; flex-wrap: wrap; gap: 4px; }
+.artworkFilters button { padding-inline: 12px; }
+
+.results { padding-top: 32px; min-width: 0; }
+.resultsHeading { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 12px 24px; }
+.resultsHeading h2 { min-width: 0; margin: 0; font-family: var(--catalog-font-display); font-size: 28px; font-weight: 400; line-height: 1.3; overflow-wrap: break-word; }
+.resultCount { margin: 0; color: var(--muted-foreground); font-size: var(--catalog-text-sm); font-variant-numeric: tabular-nums; }
+.resultCount strong { color: var(--foreground); font-weight: 500; }
+.resultsNote, .reviewDescription { margin: 8px 0 0; color: var(--muted-foreground); font-size: var(--catalog-text-sm); line-height: 1.6; }
+.reviewDescription { max-width: 64ch; }
+.columns { display: grid; grid-template-columns: 44px minmax(0,1fr) 96px; gap: 16px; padding: 24px 16px 12px; margin-top: 8px; border-bottom: 1px solid var(--border); color: var(--muted-foreground); font-size: 12px; }
+.columns > span:last-child { text-align: right; }
+.ranking { list-style: none; margin: 0; padding: 0; }
+.album { min-width: 0; border-bottom: 1px solid var(--border); }
+.row {
+  display: grid; grid-template-columns: 44px 80px minmax(0,1fr) 80px; gap: 16px;
+  align-items: center; min-height: 128px; padding: 24px 16px;
+  border-radius: var(--catalog-radius); color: var(--foreground); text-decoration: none;
+}
+.position { color: var(--muted-foreground); font-size: var(--catalog-text-lg); font-variant-numeric: tabular-nums; overflow-wrap: break-word; }
+.cover { display: block; width: 80px; height: 80px; }
+.cover > span { width: 100%; height: 100%; border: 0; border-radius: var(--catalog-radius); background: var(--muted); color: var(--muted-foreground); }
+.identity { display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+.identity strong { font-size: var(--catalog-text-lg); font-weight: 500; line-height: 1.4; }
+.albumTitle { color: var(--foreground); font-size: var(--catalog-text-md); line-height: 1.5; }
+.metadata { display: flex; flex-wrap: wrap; gap: 4px 16px; color: var(--muted-foreground); font-size: var(--catalog-text-sm); line-height: 1.5; }
+.metadata > span { color: var(--destructive); }
+.reviewLink { margin-top: 4px; color: var(--primary); font-size: var(--catalog-text-sm); line-height: 1.5; }
+.score { color: var(--foreground); font-family: var(--catalog-font-display); font-size: var(--catalog-text-score); line-height: 1.1; text-align: right; font-variant-numeric: tabular-nums; }
+.score small { display: block; margin-top: 8px; color: var(--muted-foreground); font-family: var(--catalog-font-body); font-size: 12px; line-height: 1.4; }
+.attribution { padding: 0 16px 8px 172px; }
+.attribution:empty { display: none; }
+.attribution a { display: inline-flex; align-items: center; min-height: 44px; padding: 0; color: var(--muted-foreground); }
+.empty { padding: 32px 0; margin: 0; max-width: 64ch; color: var(--muted-foreground); font-size: var(--catalog-text-md); line-height: 1.7; }
+.empty a { display: inline-flex; align-items: center; min-height: 44px; color: var(--primary); text-decoration: underline; text-underline-offset: 4px; }
+.more { display: flex; align-items: center; justify-content: center; min-height: 48px; padding: 12px 24px; margin: 32px auto 0; border: 1px solid var(--catalog-control-border); border-radius: var(--catalog-radius); background: transparent; color: var(--foreground); font-size: var(--catalog-text-sm); line-height: 1.5; white-space: nowrap; }
+
+.catalog :is(a,button,input):focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+.catalog input:focus-visible { outline-offset: -3px; }
+.catalog button { white-space: nowrap; }
+.catalog button:active, .catalog a:active { background: var(--secondary); }
+.catalog :is(button,input):disabled { opacity: .55; cursor: not-allowed; }
+@media (hover: hover) {
+  .row:hover { background: var(--catalog-hover); }
+  .filters button:not([aria-pressed="true"]):hover, .artworkFilters button:not([aria-pressed="true"]):hover, .more:hover { background: var(--muted); }
+  .search input:hover { background: var(--card); }
+  .attribution a:hover { color: var(--primary); }
+}
+@media (max-width: 760px) {
+  .toolbar { grid-template-columns: minmax(0,1fr); gap: 20px; }
+  .scoreFilter { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; }
+  .scoreFilter p { margin: 0; }
+}
+@media (max-width: 520px) {
+  .pageHeading { margin-bottom: 24px; }
+  .pageHeading h1 { font-size: 32px; }
+  .toolbar { padding-bottom: 20px; }
+  .artworkReview { padding-block: 16px 20px; gap: 8px; }
+  .artworkFilters button { padding-inline: 8px; }
+  .results { padding-top: 24px; }
+  .resultsHeading h2 { font-size: 24px; }
+  .columns { grid-template-columns: 32px minmax(0,1fr) 80px; gap: 8px; padding-inline: 0; }
+  .row { grid-template-columns: 24px 48px minmax(0,1fr) 48px; gap: 8px; min-height: 108px; padding: 20px 0; }
+  .position { font-size: var(--catalog-text-md); }
+  .cover { width: 48px; height: 48px; }
+  .identity strong, .albumTitle { font-size: var(--catalog-text-md); }
+  .score { font-size: var(--catalog-text-title); }
+  .attribution { padding: 0 0 8px 88px; }
+  .more { width: 100%; padding-inline: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .catalog *, .catalog *::before, .catalog *::after { transition-duration: 0s; animation-duration: 0s; }
+}

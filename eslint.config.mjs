@@ -2,5 +2,5 @@ import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 export default defineConfig([...nextVitals, ...nextTs, globalIgnores([
-  ".next/**", "node_modules/**", ".private/**", "coverage/**", "next-env.d.ts", "playwright-report/**", "test-results/**",
+  ".next/**", "node_modules/**", ".private/**", ".agents/skills/hallmark/**", "coverage/**", "next-env.d.ts", "playwright-report/**", "test-results/**",
 ])]);
