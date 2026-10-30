@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
-import Link from "next/link";
+import { SeasonLink as Link } from "./season-context";
 import { BarChart3, Disc3, Globe2, Headphones, Music2 } from "lucide-react";
 import { AppShell } from "./app-shell";
 import { albumsForStatisticsGroup, type CatalogStatistics, type StatisticsDimension } from "@/lib/catalog/statistics";
@@ -10,7 +10,7 @@ import styles from "./statistics-page.module.css";
 const dimensions: { id: StatisticsDimension; label: string }[] = [{ id: "genres", label: "Gêneros" }, { id: "countries", label: "Países" }, { id: "artists", label: "Artistas" }];
 const number = (value: number) => value.toLocaleString("pt-BR", { maximumFractionDigits: 2 });
 
-export function StatisticsPage({ statistics, version, loadFailed = false }: { statistics: CatalogStatistics | null; version: string | null; loadFailed?: boolean }) {
+export function StatisticsPage({ statistics, version, loadFailed = false, season }: { statistics: CatalogStatistics | null; version: string | null; loadFailed?: boolean; season?: number }) {
   const [dimension, setDimension] = useState<StatisticsDimension>("genres");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
@@ -21,7 +21,7 @@ export function StatisticsPage({ statistics, version, loadFailed = false }: { st
   const visibleGroups = showAll ? groups : groups.slice(0, 10);
   const maxCount = Math.max(1, ...groups.map(g => g.count));
 
-  return <AppShell title="Estatísticas" description="Seu acervo em perspectiva: gêneros, países e artistas da publicação atual." version={version}><div className={styles.page}>
+  return <AppShell season={season} title="Estatísticas" description="Seu acervo em perspectiva: gêneros, países e artistas da publicação atual." version={version}><div className={styles.page}>
     {loadFailed ? <section className={styles.empty} role="alert"><h2>Não foi possível carregar as estatísticas</h2>
       <p>O catálogo está indisponível neste momento. Tente recarregar a página ou volte ao acervo.</p><a href="/estatisticas">Tentar novamente</a></section>
       : !statistics || statistics.total === 0 ? <section className={styles.empty}><Disc3 size={32} aria-hidden="true" />

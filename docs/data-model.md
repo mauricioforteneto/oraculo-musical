@@ -60,3 +60,7 @@ Se houver crash após commit mas antes da resposta, a próxima leitura do sync_r
 O rank da fonte é preservado como `source_rank`; a posição anual é calculada por nota original. Promoção 80*, total do Play-in /25, total do Pré-playoff /25 e total de confronto /20 têm campos distintos. Faixa regular é classificação histórica, não estado atual da competição. Regras pendentes retornam motivo de indisponibilidade, não zero ou posição fictícia.
 
 Não armazenar a mesma lista de avaliações como novos registros quando reaparece em indicadores, resumo ou chave. Relações dependem de identidade verificada; joins por aproximação ficam proibidos.
+
+## Temporadas e regras
+
+A configuração por ano, os adaptadores de campeonato, as rotas com `temporada`, a migração aditiva e o procedimento de ativação de 2027 estão em [temporadas.md](temporadas.md). A página privada de regras independe de uma fonte importada.

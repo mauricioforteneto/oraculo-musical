@@ -1,5 +1,18 @@
 # Backlog e critérios de aceite
 
+## Temporadas 2026/2027 — primeira entrega
+
+- [x] Contexto por temporada em páginas, APIs, catálogo, capas, histórico e sincronização; definição pública separada das pastas privadas.
+- [x] Adaptadores discriminados: campeonato legado preservado e classificação mensal `2027-monthly-1`, com duas vagas por mês e desempates importados.
+- [x] Página privada `/regras?temporada=2026|2027`, resumo vigente, regulamento completo e histórico; funciona sem publicação.
+- [x] Extrações por versão, fechamentos imutáveis, correções confirmadas e bloqueio de duplicidade entre meses; migração aditiva e planilha fictícia.
+- [ ] Ativar a fonte privada de 2027 após backup, migração, cadastro e configuração no servidor. A entrega do código não comprova ativação.
+- [ ] Definir corte de dezembro e prazo do Year-End do AOTY; fechamento de dezembro permanece desabilitado.
+- [ ] Definir calendário final e regras do mata-mata, incluindo campo menor que 24; implementar em entrega própria.
+
+Contrato e roteiro: [temporadas.md](temporadas.md). A identidade editorial atual e a preferência claro/escuro são compartilhadas pelos anos.
+
+
 ## Atualização — histórico de versões
 
 - [x] Página privada `/historico` com versões importadas e comparação com a anterior disponível; snapshots de álbuns, backlog e resultados dos Playoffs.

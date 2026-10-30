@@ -6,6 +6,7 @@ import { databasePool } from "@/lib/db/pool";
 import { PLAYOFF_EXTRACTION_VERSION, PLAYOFF_PARSER_REVISION } from "@/lib/ingestion/workbook-parser";
 import { PUBLISHED_PLAYOFF_RESULTS_SQL } from "@/lib/competition/results-query";
 import { readTop50Decisions } from "@/lib/competition/decision-storage";
+import { readMonthlyState } from "@/lib/competition/monthly-storage";
 
 type PublishedSourceRow = {
   source_id: string;
@@ -117,6 +118,8 @@ export async function getPublishedSource(season: number, folderId: string): Prom
     const albums = albumRows.rows.map(({ record, is_present, album_id, record_version, record_file, source_locator }) => ({ ...record, isPresent: is_present, albumId: album_id,
       provenance: {version:record_version,fileName:record_file,sourceLocator:source_locator}, artwork: covers.records.get(album_id) }));
     return {
+      season,
+      ...(season === 2027 && source.source_version_id ? { monthly: await readMonthlyState(client, source.source_id, source.source_version_id, String(source.version), albums) } : {}),
       artworkSummary: summaryFor(albums, covers.records, covers.ready),
       version: source.version,
       fileName: source.file_name,

@@ -26,6 +26,8 @@ export function AlbumDetails({ album }: { album: RankedAlbum | null }) {
     {album.evaluationCompleteness === "incomplete" && <div className={styles.detailNotice}><AlertTriangle size={15} aria-hidden="true" /><span>Os quatro pilares não estão estruturados na fonte; o total original não representa uma soma validada.</span></div>}
     {hasDifference && <div className={styles.detailNotice}><ArrowDownRight size={15} aria-hidden="true" /><span>A nota informada na planilha difere da avaliação original. O ranking usa a original.</span></div>}
     <dl className={styles.detailFacts}>
+      {album.evaluatedOn !== undefined && <div><dt>Conclusão da avaliação</dt><dd>{album.evaluatedOn ? album.evaluatedOn.split("-").reverse().join("/") : "Não informada"}</dd></div>}
+      {album.releaseYear !== undefined && <div><dt>Ano de lançamento</dt><dd>{album.releaseYear ?? "Não informado"}</dd></div>}
       <div><dt>Faixa informada</dt><dd>{album.tier || "Não informada"}</dd></div>
       <div><dt>Posição na planilha</dt><dd>{album.sourceRank ? "#" + album.sourceRank : "Não informada"}</dd></div>
       {album.soundScore !== null && <div><dt>Construção sonora</dt><dd>{scoreLabel(album.soundScore)}/25</dd></div>}

@@ -1,4 +1,5 @@
 "use client";
+import { useSeasonFetch } from "./season-context";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LockKeyhole } from "lucide-react";
@@ -13,6 +14,7 @@ function label(p: Participant) { return `#${p.seed} ${p.artist} — ${p.title}`;
 function routeLabel(route: Participant["route"]) { return route === "elite" ? "Elite" : route === "direct" ? "Entrada direta" : "Pré-playoff"; }
 export function CompetitionOperations({ state, ready }: { state: State | null; ready: boolean }) {
   const router = useRouter();
+  const request = useSeasonFetch();
   const [preview, setPreview] = useState<Preview | null>(null);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -25,7 +27,7 @@ export function CompetitionOperations({ state, ready }: { state: State | null; r
   async function loadPreview(selectedMode: FreezeMode) {
     setBusy(true); setFeedback(""); setPreview(null); setBackup(false); setEligibility(false); setNoMatch(false); setReason("");
     try {
-      const response = await fetch("/api/competition/preview", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: selectedMode }) });
+      const response = await request("/api/competition/preview", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ mode: selectedMode }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error ?? "PREVIEW_FAILED");
       setPreview(result as Preview);
@@ -37,7 +39,7 @@ export function CompetitionOperations({ state, ready }: { state: State | null; r
     if (!preview || !preview.canConfirm || !backup || busy) return;
     setBusy(true); setFeedback("");
     try {
-      const response = await fetch("/api/competition/freeze", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
+      const response = await request("/api/competition/freeze", { method: "POST", credentials: "same-origin", headers: { "Content-Type": "application/json" }, body: JSON.stringify({
         mode: preview.mode, token: preview.token, backupAttested: backup, eligibilityAttested: eligibility, noMatchAttested: noMatch, reason,
       }) });
       const result = await response.json();

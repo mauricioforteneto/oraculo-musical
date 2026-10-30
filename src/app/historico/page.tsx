@@ -1,3 +1,4 @@
+import { pageSeason } from "@/lib/seasons/context";
 import type { Metadata } from "next";
 import { requireOwner } from "@/lib/auth";
 import { getVersionHistory } from "@/lib/catalog/version-history-database";
@@ -10,12 +11,13 @@ export const metadata: Metadata = { title: "Histórico de versões · Oráculo M
 export default async function History({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   await requireOwner();
   const params = await searchParams;
+  const context = pageSeason(params);
   let history: VersionHistoryData | null = null;
   let loadFailed = false;
   try {
-    history = await getVersionHistory(Number(process.env.SOURCE_SEASON ?? "2026"), process.env.GOOGLE_DRIVE_FOLDER_ID ?? "", params.versao, params.pagina);
+    history = context.folderId ? await getVersionHistory(context.year, context.folderId, params.versao, params.pagina) : null;
   } catch {
     loadFailed = true; console.error("Version history load failed");
   }
-  return <VersionHistoryPage key={history?.selected.version ?? "empty"} history={history} loadFailed={loadFailed} />;
+  return <VersionHistoryPage season={context.year} key={`${context.year}:${history?.selected.version ?? "empty"}`} history={history} loadFailed={loadFailed} />;
 }

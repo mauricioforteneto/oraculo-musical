@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
-import Link from 'next/link';
+import { SeasonLink as Link } from "./season-context";
+import { useSeason } from "./season-context";
+import { seasonHref } from "@/lib/seasons/definitions";
 import { useSearchParams } from 'next/navigation';
 import { AppShell } from './app-shell';
 import { ISSUE_CATEGORIES, evidenceText, issuePrompt, type IssueReport, type PendingIssue } from '@/lib/issues/report';
@@ -9,17 +11,18 @@ import { dateTime } from '@/lib/catalog/presentation';
 import { isUuid } from '@/lib/artwork/types';
 import common from './workspace.module.css';
 import styles from './pending-issues-page.module.css';
-export function PendingIssuesPage({report,loadFailed=false}:{report:IssueReport|null;loadFailed?:boolean}) {
+export function PendingIssuesPage({report,loadFailed=false,season}:{report:IssueReport|null;loadFailed?:boolean;season?:number}) {
   const params=useSearchParams();
+  const context=useSeason();
   const filters=issueFilters(params);
   const [feedback,setFeedback]=useState('');
   const items=report?.items ?? [],filtered=filterIssues(items,filters);
-  function update(next:Partial<IssueFilters>) {window.history.replaceState(null,'',`/pendencias${issueQuery({...filters,...next})}`);setFeedback('');}
+  function update(next:Partial<IssueFilters>) {window.history.replaceState(null,'',seasonHref(`/pendencias${issueQuery({...filters,...next})}`,season ?? context.year, context.explicit || season===2027));setFeedback('');}
   async function copy(items:PendingIssue[]) {
     try {await navigator.clipboard.writeText(issuePrompt(items,report?.version ?? null));setFeedback('Orientação copiada. Cole no chat que gera a planilha.');}
     catch {setFeedback('Não foi possível copiar automaticamente. Abra “Texto para o chat da planilha”, selecione o texto e copie manualmente.');}
   }
-  return <AppShell title="Central de pendências" description="Confira o que precisa de correção ou decisão na planilha antes de avançar a temporada." version={report?.version}>
+  return <AppShell season={season} title="Central de pendências" description="Confira o que precisa de correção ou decisão na planilha antes de avançar a temporada." version={report?.version}>
     <div className={common.stack}>
       {loadFailed ? <section className={common.card} role="alert"><h2>Não foi possível carregar as pendências</h2><p>Não foi possível conferir a fonte e a competição. Recarregue a página para tentar novamente.</p><a className={common.action} href="/pendencias">Tentar novamente</a></section> : report && <>
         <section className={common.card} aria-label="Como resolver pendências"><h2>Confira o que pode ser corrigido na planilha</h2>
