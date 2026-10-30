@@ -66,7 +66,7 @@ function AppShellContent({ children, title, description, version, localPreview =
     <header className={styles.topbar}>
       <Link href="/" className={styles.brand} aria-label="Oráculo Musical, início"><Brand /></Link>
       <span className={styles.desktopCaption}>Minha escuta em {year}</span>
-      <span className={styles.version}><span className={styles.mobileSeason}>{year}</span>{publicationLabel ?? (localPreview ? "Prévia local" : "Fonte")}{publicationLabel ? "" : version != null ? ` v${version}` : " sem publicação"}</span>
+      <span className={styles.version}><span className={styles.mobileSeason}>{year}</span><span>{publicationLabel ?? (localPreview ? "Prévia local" : "Fonte")}{publicationLabel ? "" : version != null ? ` v${version}` : " sem publicação"}</span></span>
     </header>
     <div className={styles.frame}>
     <aside className={styles.sidebar}>

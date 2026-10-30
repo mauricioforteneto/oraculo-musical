@@ -12,7 +12,7 @@ export default async function Rules({searchParams}: {searchParams:Promise<Season
   const season = pageSeasonDefinition(await searchParams);
   const originalText = await readFile(join(process.cwd(), "docs", "campeonato", `regras-${season.year}.md`), "utf8");
   const consolidatedText = season.year===2026 ? await readFile(join(process.cwd(), "docs", "campeonato", "regras-2026-vigentes.md"), "utf8") : undefined;
-  return <AppShell season={season.year} publicationLabel="Regulamento" title={`Regras de ${season.year}`} description="Regulamento, decisões confirmadas e pontos que continuam em aberto.">
+  return <AppShell season={season.year} publicationLabel="Regulamento" title={`Regras de ${season.year}`}>
     <RulesContent year={season.year} originalText={originalText} consolidatedText={consolidatedText} />
   </AppShell>;
 }

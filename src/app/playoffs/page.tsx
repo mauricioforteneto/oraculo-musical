@@ -17,7 +17,7 @@ export default async function Playoffs({ searchParams }: { searchParams: Promise
   const source = await readPageSource(context);
   const state = historical ? { format: "legacy-2026", data: null } as const : await loadCompetitionState(context, source);
   const history = historical && source?.version ? await getCompetitionPhaseHistory(context.year, context.folderId, String(source.version)) : null;
-  return <AppShell season={context.year} title={context.format === "monthly" ? "Campeonato 2027" : "Playoffs"} description={context.format === "monthly" ? "Classificação por mês, desempates e fechamentos confirmados da temporada." : "Confrontos, resultados publicados e os caminhos de cada álbum na competição."} version={source?.version}>
+  return <AppShell season={context.year} title={context.format === "monthly" ? "Classificação mensal" : "Playoffs"} description={context.format === "monthly" ? undefined : "Confrontos, resultados publicados e os caminhos de cada álbum na competição."} version={source?.version}>
     <div className={styles.stack}>
       {context.format === "legacy-2026" && <nav className={styles.actions} aria-label="Seções dos Playoffs"><Link className={styles.action} href="/playoffs" aria-current={!historical ? "page" : undefined}>Chave e resultados</Link><Link className={styles.action} href="/playoffs?aba=historico" aria-current={historical ? "page" : undefined}>Histórico das fases</Link></nav>}
       <Link className={styles.link} href="/regras">Regras da temporada</Link>
