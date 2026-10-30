@@ -148,17 +148,17 @@
   .toolbar { gap: 16px; }
 }
 @media(max-width: 520px) {
-  .pageHeading { margin-bottom: 24px; }
+  .pageHeading { margin-bottom: 16px; }
   .pageHeading h1 { font-size: 40px; }
   .pageHeading p { font-size: 16px; }
-  .toolbar { padding-bottom: 0; }
+  .toolbar { padding-bottom: 0; gap: 12px; }
   .scoreFilter { gap: 4px 12px; }
   .scoreFilter p { margin: 0; }
-  .artworkReview { padding-bottom: 8px; }
-  .results { padding-top: 16px; }
+  .artworkReview { padding-bottom: 0; }
+  .results { padding-top: 12px; }
   .resultsHeading { gap: 8px 16px; }
   .columns { grid-template-columns: 44px minmax(0,1fr) 80px; gap: 12px; padding-top: 12px; }
-  .row { grid-template-columns: 16px 64px minmax(0,1fr) 40px; gap: 8px; min-height: 112px; padding: 20px 0; }
+  .row { grid-template-columns: 16px 64px minmax(0,1fr) 40px; gap: 8px; min-height: 112px; padding: 16px 0; }
   .position { font-size: 14px; }
   .cover { width: 64px; height: 64px; }
   .identity .albumTitle { font-size: 22px; }

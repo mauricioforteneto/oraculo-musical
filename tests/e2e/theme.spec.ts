@@ -44,7 +44,7 @@ test("armazenamento bloqueado mantém tema utilizável e informa que não foi sa
   await expect(page.locator("html")).toHaveAttribute("data-mode", "light");
   await page.getByLabel("Tema", { exact: true }).selectOption("dark");
   await expect(page.locator("html")).toHaveAttribute("data-mode", "dark");
-  await expect(page.getByRole("status")).toContainText("não permitiu salvar");
+  await expect(page.getByRole("status").filter({ hasText: "Tema aplicado nesta página" })).toContainText("não permitiu salvar");
 });
 
 test("sem JavaScript, o tema ainda segue a preferência do sistema", async ({ browser }) => {
