@@ -10,10 +10,12 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 # Hallmark
 
-Hallmark está instalado neste repositório em `.agents/skills/hallmark/`.
+Hallmark é uma ferramenta local, não versionada, em `.agents/skills/hallmark/`.
 Quando o usuário solicitar Hallmark, leia primeiro
 `.agents/skills/hallmark/SKILL.md` e as referências exigidas para a tarefa.
 Essa leitura explícita também funciona quando o Cloud não lista skills locais.
+Se a skill estiver ausente, siga a instalação com versão fixada em
+`docs/hallmark.md` antes de usá-la.
 
 - Para auditoria, siga o modo `audit`; auditoria produz um relatório.
 - Redesign de telas existentes exige um pedido explícito do usuário.

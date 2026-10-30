@@ -1,8 +1,24 @@
 # Hallmark no Oráculo Musical
 
-Skill de design instalada somente neste projeto, em `.agents/skills/hallmark/`.
+Skill de design instalada localmente neste projeto, em `.agents/skills/hallmark/`.
+Essa pasta é ignorada pelo Git; a skill não é uma dependência da aplicação nem
+dos testes no GitHub Actions. O repositório mantém apenas o instalador com versão
+fixada, estas instruções e os resultados da auditoria.
 O `AGENTS.md` orienta a leitura explícita quando o usuário solicitar Hallmark;
 a descoberta automática pelo catálogo desta sessão Cloud não foi confirmada.
+
+## Instalar em um novo ambiente Cloud
+
+Na raiz do projeto, quando precisar usar a skill:
+
+```sh
+bash scripts/install-hallmark.sh
+```
+
+O instalador busca o commit oficial indicado abaixo, mantém a licença e copia
+somente a skill para a pasta local ignorada. Requer Git, tar e acesso ao GitHub.
+Se a pasta já existir, seus arquivos são preservados. A instalação não roda
+durante `npm ci`, o build ou o GitHub Actions.
 
 ## Origem e versão
 
@@ -11,11 +27,12 @@ a descoberta automática pelo catálogo desta sessão Cloud não foi confirmada.
 - Commit fixado: `4f6a46c6dc325d40ab268c93e25c7b96676ebccd`.
 - Origem: `skills/hallmark/` desse commit.
 - Licença MIT preservada em `.agents/skills/hallmark/LICENSE`.
-- Os arquivos copiados foram conferidos pelo SHA-1 Git de cada blob.
-- O conteúdo inclui instruções, metadados, referências, os 50 temas em texto e
-  scripts. As fixtures de desenvolvimento são omitidas, como no instalador do autor.
-- As 50 imagens JPG de prévia dos temas ainda não estão presentes: o download
-  binário não concluiu neste ambiente. Os temas em texto estão disponíveis.
+- Na restauração do pacote, os arquivos copiados foram conferidos pelo SHA-1 Git
+  de cada blob. Essa cópia local contém instruções, metadados, referências,
+  os 50 temas em texto e scripts; as fixtures de desenvolvimento foram omitidas.
+- A cópia restaurada não contém as 50 imagens JPG de prévia dos temas, cujo
+  download não concluiu no ambiente anterior. O instalador de um ambiente novo
+  obtém o conteúdo oficial das referências no commit fixado.
 
 Atualizações devem usar um commit explícito, revisar suas alterações e atualizar
 esta referência. A instalação não usa atualização automática.
@@ -54,5 +71,6 @@ Auditorias visuais com `--render` precisam de `puppeteer-core` e Chrome/Chromium
 Chromium está disponível neste ambiente; `puppeteer-core` ainda não está instalado.
 Uma verificação estática não comprova a renderização no navegador.
 
-Os artefatos locais `.hallmark/` ficam fora do Git. Os scripts de terceiros são
+Tanto a skill local `.agents/skills/hallmark/` quanto os artefatos `.hallmark/`
+ficam fora do Git. Os scripts de terceiros são
 excluídos do ESLint da aplicação e mantêm a implementação original do autor.

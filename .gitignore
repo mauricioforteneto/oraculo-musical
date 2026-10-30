@@ -20,6 +20,7 @@ downloads/
 *.sql.gz
 
 # Build, dependências e ferramentas
+/.agents/skills/hallmark/
 node_modules/
 .next/
 out/
