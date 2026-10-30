@@ -5,7 +5,7 @@
 /* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V, kept the familiar ranking to preserve the catalog task */
 /* Hallmark · reworded "ORIGINAL" to "Original" · 67 requires sentence case */
 /* Hallmark · reworded "Buscar ou corrigir capa →" to "Buscar ou corrigir capa" · 63 removes decorative arrows */
-/* Hallmark · finish-review: subagent · fix · 1 finding · gap: none · score in docs/catalog-visual-audit.md */
+/* Hallmark · finish-review: subagent · fix · 1 finding · 1 resolved · gap: none */
 .catalog {
   min-width: 0;
   color: var(--foreground);

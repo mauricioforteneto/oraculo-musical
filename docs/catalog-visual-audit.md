@@ -136,4 +136,16 @@ anterior; a ausência de capturas anteriores impede uma comparação visual dire
 Os cenários capturados são catálogo cheio e revisão filtrada; carregamento,
 erro e vazio não receberam aceite visual por essas imagens.
 
-A resolução do achado deve ser confirmada nas capturas da execução posterior.
+**Achado resolvido:** a execução [Verify #29](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41045260635)
+passou os dois trabalhos, incluindo a nova medição dos rótulos nas quatro
+larguras. As novas capturas em 360 e 390 px confirmaram a separação visual.
+Pontuação da revisão: **finish-review: subagent · 1 achado · 1 resolvido · gap:
+none**. O achado era de acabamento, sem Floor identificado.
+
+Resultado da entrega: build padrão na configuração original aprovado, lint e
+TypeScript aprovados, **213 unitários + 37 de integração + 15 de acesso** aprovados,
+layout e comportamento aprovados em **11 telas × 4 larguras**, e revisão visual
+do catálogo e da revisão de capas concluída dentro dos limites registrados acima.
+Auditoria estática final: **0 FAIL, 0 REFLEX, 0 WARN**, links **2/2** e handlers
+**5/5** preservados. A branch e o [PR #1 em rascunho](https://github.com/mauricioforteneto/oraculo-musical/pull/1)
+guardam as alterações; não houve merge nem publicação do aplicativo.
