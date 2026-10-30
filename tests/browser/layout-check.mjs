@@ -96,6 +96,12 @@ try {
         await page.evaluate(()=>scrollTo(0,0));
         await page.screenshot({path:resolve(artifactDir,`oraculo-${kind}-${mode}-${width}-viewport.jpg`),type:"jpeg",quality:90});
         await page.screenshot({path:resolve(artifactDir,`oraculo-${kind}-${mode}-${width}.png`),fullPage:true});
+        if(path.startsWith("/regras")) {
+          await page.getByRole("navigation",{name:"Índice das regras"}).getByRole("link",{name:"Regulamento completo",exact:true}).click();
+          const disclosure=path.endsWith("2026")?"Ler o regulamento vigente consolidado de 2026":"Ler as definições de 2027 e seus pontos pendentes";
+          await page.getByText(disclosure,{exact:true}).click();
+          assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Overflow no regulamento aberto em ${width}px`);
+        }
         if(path.startsWith("/playoffs")) {
           await page.getByRole("button",{name:/Dezembro/}).click();
           await page.getByText("Preparar fechamento na planilha",{exact:true}).click();

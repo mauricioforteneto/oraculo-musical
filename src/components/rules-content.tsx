@@ -15,7 +15,7 @@ function Document({ text }: { text: string }) {
     return <p key={index}>{value}</p>;
   })}</div>;
 }
-export function RulesContent({ year, originalText }: { year: number; originalText: string }) {
+export function RulesContent({ year, originalText, consolidatedText }: { year: number; originalText: string; consolidatedText?: string }) {
   const monthly = year === 2027;
   const sections = monthly ? [
     { id: "elegibilidade", title: "Quem participa", text: `Lançamentos de ${year} cuja avaliação original seja concluída em ${year}. Discos de outros anos continuam no catálogo e no ranking anual, sem disputar as vagas mensais.` },
@@ -35,6 +35,7 @@ export function RulesContent({ year, originalText }: { year: number; originalTex
     <nav className={styles.index} aria-label="Índice das regras">{sections.map(section => <a href={`#${section.id}`} key={section.id}>{section.title}</a>)}<a href="#texto-integral">Regulamento completo</a><a href="#alteracoes">Histórico</a></nav>
     {sections.map(section => <section id={section.id} key={section.id} className={styles.ruleSection}><h2>{section.title}</h2><p>{section.text}</p></section>)}
     <section id="texto-integral" className={styles.ruleSection}><h2>Regulamento completo</h2>
+      {!monthly && consolidatedText && <details className={styles.disclosure}><summary>Ler o regulamento vigente consolidado de 2026</summary><p>Confirmado: consolidação dos adendos aprovados. Prevalece nos pontos que substituíram o texto original.</p><Document text={consolidatedText} /></details>}
       <details className={styles.disclosure}><summary>{monthly ? "Ler as definições de 2027 e seus pontos pendentes" : "Ler o texto original e os adendos de 2026"}</summary>
         {!monthly && <p>Registro histórico preservado. As disposições substituídas pelos adendos não prevalecem sobre o resumo vigente acima, especialmente a ordenação do Top 50.</p>}
         <Document text={originalText} />

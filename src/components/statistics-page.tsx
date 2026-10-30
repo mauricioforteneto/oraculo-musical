@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { SeasonLink as Link } from "./season-context";
 import { BarChart3, Disc3, Globe2, Headphones, Music2 } from "lucide-react";
+import { seasonHref } from "@/lib/seasons/definitions";
 import { AppShell } from "./app-shell";
 import { albumsForStatisticsGroup, type CatalogStatistics, type StatisticsDimension } from "@/lib/catalog/statistics";
 import styles from "./statistics-page.module.css";
@@ -23,7 +24,7 @@ export function StatisticsPage({ statistics, version, loadFailed = false, season
 
   return <AppShell season={season} title="Estatísticas" description="Seu acervo em perspectiva: gêneros, países e artistas da publicação atual." version={version}><div className={styles.page}>
     {loadFailed ? <section className={styles.empty} role="alert"><h2>Não foi possível carregar as estatísticas</h2>
-      <p>O catálogo está indisponível neste momento. Tente recarregar a página ou volte ao acervo.</p><a href="/estatisticas">Tentar novamente</a></section>
+      <p>O catálogo está indisponível neste momento. Tente recarregar a página ou volte ao acervo.</p><a href={seasonHref("/estatisticas",season ?? 2026,season!=null)}>Tentar novamente</a></section>
       : !statistics || statistics.total === 0 ? <section className={styles.empty}><Disc3 size={32} aria-hidden="true" />
         <h2>Nenhum álbum presente para analisar</h2><p>As estatísticas aparecem quando houver álbuns na versão publicada. Confira a página de Sincronização para publicar a fonte.</p></section>
       : <>

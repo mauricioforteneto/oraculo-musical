@@ -16,7 +16,7 @@ export default async function PendingIssues({searchParams = Promise.resolve({})}
     const source=await readPageSource(context);
     const state=await loadCompetitionState(context,source);
     const competition=state.format === "legacy-2026" ? state.data : null;
-    report=buildIssueReport(source,competition);
+    report=buildIssueReport(source,competition,context.year);
   } catch {
     console.error('Pending issue report load failed');
     loadFailed=true;

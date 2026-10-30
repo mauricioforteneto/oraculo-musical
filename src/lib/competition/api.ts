@@ -13,7 +13,7 @@ export async function ownerForCompetition(request: Request) {
   return { userId: data.user!.id };
 }
 export function competitionResponse(error: unknown) {
-  if (error instanceof SeasonError) return Response.json({ error: error.code }, {status: error.code === "SOURCE_CONFIGURATION_INVALID" ? 503 : 400, headers:noStore});
+  if (error instanceof SeasonError) return Response.json({ error: error.code }, {status: ["SOURCE_CONFIGURATION_INVALID","SOURCE_NOT_CONFIGURED"].includes(error.code) ? 503 : 400, headers:noStore});
   const { code, status } = competitionFailure(error);
   return Response.json({ error: code }, { status, headers: noStore });
 }

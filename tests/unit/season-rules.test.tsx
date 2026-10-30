@@ -8,6 +8,7 @@ vi.mock("@/lib/catalog/database", () => ({ getPublishedSource: deps.catalog }));
 vi.mock("next/navigation", () => ({ usePathname: () => "/regras", useSearchParams: () => new URLSearchParams(`temporada=${deps.year}`), useRouter: () => ({push:vi.fn()}), notFound: () => {throw new Error("NEXT_NOT_FOUND");} }));
 import Rules from "../../src/app/regras/page";
 import Playoffs from "../../src/app/playoffs/page";
+import { buildIssueReport, issuePrompt } from "../../src/lib/issues/report";
 beforeEach(() => { vi.clearAllMocks(); deps.owner.mockResolvedValue({id:"owner"}); vi.stubEnv("SOURCE_SEASON","2026"); });
 afterEach(() => vi.unstubAllEnvs());
 describe("regras privadas independentes de publicação", () => {
@@ -19,7 +20,7 @@ describe("regras privadas independentes de publicação", () => {
     expect(html).toContain(`Regras de ${year}`); expect(html).toContain("Regulamento completo");
     expect(html).toContain("Histórico de alterações"); expect(deps.catalog).not.toHaveBeenCalled();
     expect(html).toContain(`/albuns?temporada=${year}`);
-    if(year===2026) { expect(html).toContain(RULES_VERSION); expect(html).toContain(TOP50_RULES_VERSION); expect(html).toContain("substitui as disposições anteriores"); }
+    if(year===2026) { expect(html).toContain(RULES_VERSION); expect(html).toContain(TOP50_RULES_VERSION); expect(html).toContain("substitui as disposições anteriores"); expect(html).toContain("Ler o regulamento vigente consolidado de 2026"); expect(html).toContain("Primeira rodada, reseeding e chave fixa"); }
     else { expect(html).toContain("2027-monthly-1"); expect(html).toContain("24 vagas"); expect(html).toContain("Corte de dezembro"); expect(html).toContain("Em aberto:"); }
   });
   it("autoriza antes de consultar a temporada ou o regulamento", async () => {
@@ -35,5 +36,12 @@ describe("regras privadas independentes de publicação", () => {
     const html=renderToStaticMarkup(await Playoffs({searchParams:Promise.resolve({temporada:"2027"})}));
     expect(html).toContain("Classificação mensal"); expect(html).not.toContain("Congelar participantes");
     expect(deps.catalog).toHaveBeenCalledWith(2027,"");
+  });
+  it("as orientações de pendências de 2027 usam somente as abas mensais", () => {
+    const report=buildIssueReport(null,null,2027);
+    expect(report.season).toBe(2027);
+    const prompt=issuePrompt([],"1",2027);
+    expect(prompt).toContain("Albuns 2027");expect(prompt).toContain("Fechamentos mensais");
+    expect(prompt).not.toContain("Albuns 2026");expect(prompt).not.toContain("Desempates Top 50");
   });
 });

@@ -3,6 +3,7 @@
 import { useId, useState } from "react";
 import { SeasonLink as Link } from "./season-context";
 import { History } from "lucide-react";
+import { seasonHref } from "@/lib/seasons/definitions";
 import { AppShell } from "./app-shell";
 import { HISTORY_DOMAINS, HISTORY_KINDS, filterHistoryChanges, type HistoryChange, type HistoryChangeKind,
   type HistoryDomain, type HistoryValue, type VersionHistoryData } from "@/lib/catalog/version-history";
@@ -33,7 +34,7 @@ export function VersionHistoryPage({ history, loadFailed = false, season }: { hi
   return <AppShell season={season} title="Histórico de versões" description="Compare as publicações importadas de álbuns e resultados dos Playoffs." version={history?.selected.version}><div className={styles.page}>
     <p className={styles.note}>Horários são de importação ou modificação do arquivo, não de escuta ou realização de partidas.</p>
 
-    {loadFailed ? <section className={styles.panel} role="alert"><h2>Histórico indisponível neste momento</h2><p>Tente recarregar a página. Seus dados permanecem preservados.</p><a href="/historico">Tentar novamente</a></section>
+    {loadFailed ? <section className={styles.panel} role="alert"><h2>Histórico indisponível neste momento</h2><p>Tente recarregar a página. Seus dados permanecem preservados.</p><a href={seasonHref("/historico",season ?? 2026,season!=null)}>Tentar novamente</a></section>
       : !history ? <section className={styles.panel}><History size={28} aria-hidden="true" /><h2>Nenhuma publicação disponível</h2><p>O histórico aparecerá após uma publicação da fonte. Confira a página de Sincronização para publicar a fonte.</p></section>
       : <>
         {history.notices.filter(n => !/backlog/i.test(n)).map(notice => <p className={styles.notice} role="status" key={notice}>{notice}</p>)}
