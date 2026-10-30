@@ -49,9 +49,10 @@ node tests/browser/design-preview-check.mjs
 ```
 
 Ele verifica 360, 390, 768 e 1280 px, captura viewport e página inteira, compara
-com o layout atual em 390 e 1280 px e guarda PNGs e `index.html` no artefato
+com o layout atual em 390 e 1280 px e guarda PNGs, cópias JPEG e `index.html` no artefato
 `hallmark-duas-direcoes-<execução>` por sete dias. As prévias são também exportadas
-nos logs para que o conector as disponibilize nesta conversa. Nenhum deploy é feito.
+em JPEG nos logs para que o conector as disponibilize nesta conversa, com menor
+volume; os PNGs originais permanecem no artefato. Nenhum deploy é feito.
 
 Após a escolha, a direção selecionada pode ser implementada nos componentes reais
 e depois levada às demais páginas com o mesmo sistema visual.

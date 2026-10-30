@@ -48,7 +48,7 @@ function Preview() {
     history.replaceState(null,"",`${path}?${next}`);
   }
   function href(destination:string) { return `${destination}?${params}`; }
-  if(direction==="atual") return <AppShell title="Álbuns" description="Explore o ranking anual pela nota original e consulte cada avaliação." headingClassName={catalogStyles.pageHeading}><CatalogPage albums={albums}/></AppShell>;
+  if(direction==="atual") return <AppShell title="Álbuns" description="Explore o ranking anual pela nota original e consulte cada avaliação." headingClassName={catalogStyles.pageHeading}><CatalogPage albums={albums}/><details data-credits><summary>Créditos das capas demonstrativas</summary><ul>{photos.map(photo=><li key={photo.id}><a href={photo.page}>{photo.author}</a> ({photo.license}, Wikimedia Commons)</li>)}</ul></details></AppShell>;
   const detail=path.startsWith("/albuns/") ? ranked.find(a=>a.albumId===path.split("/")[2]):undefined;
   const isCatalogue=path==="/albuns";
   return <div className="prototype">

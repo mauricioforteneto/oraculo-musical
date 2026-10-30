@@ -80,6 +80,8 @@ try {
       const name=`oraculo-preview-${direction}-${width}`;
       await page.screenshot({path:resolve(output,`${name}-viewport.png`)});
       await page.screenshot({path:resolve(output,`${name}.png`),fullPage:true});
+      await page.screenshot({path:resolve(output,`${name}-viewport.jpg`),type:"jpeg",quality:90});
+      await page.screenshot({path:resolve(output,`${name}.jpg`),type:"jpeg",quality:90,fullPage:true});
       console.log(`Prévia ${direction}: ${width}px, imagens e fonte carregadas, sem overflow.`);
       if(direction!=="atual") {
         await page.getByRole("searchbox").fill("Entre marés");
