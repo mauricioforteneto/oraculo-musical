@@ -1,6 +1,7 @@
 import { ArrowUpRight, ChartNoAxesColumnIncreasing, Disc3, LockKeyhole, ShieldCheck } from "lucide-react";
 import { authConfigured } from "@/lib/auth";
 import { Brand } from "@/components/brand";
+import { ThemeSwitcher } from "@/components/theme-switcher";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 export const dynamic = "force-dynamic";
@@ -8,7 +9,7 @@ export default async function Login({ searchParams }: { searchParams: Promise<{ 
   const { error } = await searchParams;
   const ready = authConfigured();
   return <div className="entry">
-    <header className="entry-header"><Brand /><span className="header-note"><LockKeyhole size={12} aria-hidden="true" /> Seu espaço pessoal</span></header>
+    <header className="entry-header"><Brand /><div className="entry-preferences"><span className="header-note"><LockKeyhole size={12} aria-hidden="true" /> Seu espaço pessoal</span><ThemeSwitcher /></div></header>
     <main className="entry-body"><section aria-labelledby="welcome-title">
       <p className="eyebrow">PARA QUEM OUVE DE VERDADE</p>
       <h1 id="welcome-title" className="hero-title">Discos que ficam.<br /><em>Escutas que<br />contam histórias.</em></h1>

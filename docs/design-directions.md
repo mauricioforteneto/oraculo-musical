@@ -1,8 +1,13 @@
 # Duas direções visuais para Álbuns
 
-Prévias isoladas para escolher uma nova identidade antes de alterar a interface
-publicada. Não há mudança em `src/`, autenticação, banco ou ranking de produção.
-A skill Hallmark continua local e ignorada pelo Git.
+O usuário escolheu a direção **A, Revista musical**, com a possibilidade de
+usar tema escuro. A implementação agora aplica A em `src/`, com Claro, Escuro
+e Seguir o sistema. O escuro mantém o layout editorial e o vermelho de A;
+não adota a grade e a identidade azul de B. Autenticação, banco e regras do
+ranking são preservados. A skill Hallmark continua local e ignorada pelo Git.
+
+As imagens abaixo registram as propostas originais, anteriores à implementação.
+O sistema escolhido está em [design.md](../design.md).
 
 ## Comparação no celular
 

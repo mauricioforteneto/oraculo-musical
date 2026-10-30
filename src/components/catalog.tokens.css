@@ -1,17 +1,9 @@
-/* Hallmark · shape: app screen · genre: atmospheric · theme: brand · redesign: full
- * nav: kept · signature: album ranking · states: full, empty, filtered
- * axes: dark/roman-serif/warm · posture: restrained · v2.0.0 */
-/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V, kept the familiar ranking to preserve the catalog task */
+/* Hallmark · shape: app screen · genre: editorial · theme: Editorial (A, by request) · modes: light+dark · v2.0.0 */
+/* Hallmark · pre-emit critique: catalogue roles alias the shared system in both modes */
 :root {
-  --catalog-font-body: Arial, Helvetica, sans-serif;
-  --catalog-font-display: Georgia, serif;
-  --catalog-control-border: #6f7e6e;
-  --catalog-selection: #302b20;
-  --catalog-hover: #1d2820;
-  --catalog-text-sm: 0.875rem;
-  --catalog-text-md: 1rem;
-  --catalog-text-lg: 1.2rem;
-  --catalog-text-title: 1.44rem;
-  --catalog-text-score: 1.728rem;
-  --catalog-radius: 6px;
+  --catalog-font-body: var(--font-ui); --catalog-font-display: var(--font-display);
+  --catalog-control-border: var(--control-border); --catalog-selection: var(--selection);
+  --catalog-hover: var(--surface-hover); --catalog-radius: 0;
+  --catalog-text-sm: .875rem; --catalog-text-md: 1rem; --catalog-text-lg: 1.2rem;
+  --catalog-text-title: 1.44rem; --catalog-text-score: 1.728rem;
 }

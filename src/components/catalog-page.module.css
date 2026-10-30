@@ -1,11 +1,5 @@
-/* Hallmark · shape: app screen · genre: atmospheric · theme: brand · redesign: full
- * paper: var(--background) · accent: var(--primary) · display: Georgia · body: Arial
- * nav: kept · signature: album ranking · states: full, empty, filtered
- * axes: dark/roman-serif/warm · posture: restrained · v2.0.0 */
-/* Hallmark · pre-emit critique: P4 H4 E4 S4 R5 V3 · weakest: V, kept the familiar ranking to preserve the catalog task */
-/* Hallmark · reworded "ORIGINAL" to "Original" · 67 requires sentence case */
-/* Hallmark · reworded "Buscar ou corrigir capa →" to "Buscar ou corrigir capa" · 63 removes decorative arrows */
-/* Hallmark · finish-review: subagent · fix · 1 finding · 1 resolved · gap: none */
+/* Hallmark · shape: app screen · genre: editorial · theme: Editorial (A, by request) · modes: light+dark · redesign: full · v2.0.0 */
+/* Hallmark · pre-emit critique: the album title and original score lead, with cover maintenance behind a disclosure */
 .catalog {
   min-width: 0;
   color: var(--foreground);
@@ -116,4 +110,60 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .catalog *, .catalog *::before, .catalog *::after { transition-duration: 0s; animation-duration: 0s; }
+}
+
+/* Editorial A: album title, cover and original score form the reading order. */
+.pageHeading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.pageHeading h1 { margin: 0; font-size: 48px; font-weight: 800; font-variation-settings: "wdth" 75, "opsz" 96; letter-spacing: -.03em; line-height: 1.08; }
+.pageHeading p { max-width: 42ch; font-family: var(--font-reading); color: var(--ink-secondary); font-size: 17px; line-height: 1.5; }
+.toolbar { gap: 24px; padding-bottom: 12px; }
+.search, .scoreFilter p { gap: 8px; }
+.search input { background: var(--card); }
+.scoreFilter p { margin-bottom: 8px; }
+.filters button { padding-inline: 12px; color: var(--foreground); }
+.filters button[aria-pressed="true"] { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
+.artworkReview { display: block; padding: 0 0 16px; border: 0; }
+.artworkReview summary { display: list-item; width: fit-content; min-height: 44px; padding-block: 12px; cursor: pointer; color: var(--muted-foreground); font-size: 14px; }
+.artworkReview[open] { padding-bottom: 24px; }
+.artworkHeading { padding-block: 8px 12px; }
+.artworkHeading h2 { font-weight: 600; }
+.results { padding-top: 24px; border-top: 4px solid var(--foreground); }
+.resultsHeading { justify-content: start; gap: 12px 24px; }
+.resultsHeading h2 { font-family: var(--font-display); font-weight: 800; font-variation-settings: "wdth" 75, "opsz" 48; font-size: 24px; letter-spacing: -.02em; }
+.resultsNote { margin-top: 4px; }
+.columns { grid-template-columns: 44px minmax(0,1fr) 96px; gap: 12px; margin-top: 0; padding: 16px 0 12px; }
+.row { grid-template-columns: 32px 112px minmax(0,1fr) 72px; gap: 24px; min-height: 160px; padding: 24px 0; }
+.position { font-family: var(--font-ui); font-size: 16px; }
+.cover { width: 112px; height: 112px; }
+.identity { gap: 4px; }
+.identity .albumTitle { font-family: var(--font-display); font-size: 28px; font-weight: 800; font-variation-settings: "wdth" 75, "opsz" 48; color: var(--foreground); line-height: 1.15; overflow-wrap: break-word; }
+.artist { font-family: var(--font-reading); font-size: 17px; color: var(--ink-secondary); line-height: 1.4; font-weight: var(--body-weight); }
+.score { font-size: 40px; font-weight: 800; font-variation-settings: "wdth" 75, "opsz" 48; }
+.score small { font-weight: 400; }
+.attribution { padding: 0 0 8px 192px; }
+.catalog summary:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
+@media(max-width: 760px) {
+  .pageHeading { display: block; }
+  .pageHeading h1 { margin-bottom: 12px; }
+  .toolbar { gap: 16px; }
+}
+@media(max-width: 520px) {
+  .pageHeading { margin-bottom: 24px; }
+  .pageHeading h1 { font-size: 40px; }
+  .pageHeading p { font-size: 16px; }
+  .toolbar { padding-bottom: 0; }
+  .scoreFilter { gap: 4px 12px; }
+  .scoreFilter p { margin: 0; }
+  .artworkReview { padding-bottom: 8px; }
+  .results { padding-top: 16px; }
+  .resultsHeading { gap: 8px 16px; }
+  .columns { grid-template-columns: 44px minmax(0,1fr) 80px; gap: 12px; padding-top: 12px; }
+  .row { grid-template-columns: 16px 64px minmax(0,1fr) 40px; gap: 8px; min-height: 112px; padding: 20px 0; }
+  .position { font-size: 14px; }
+  .cover { width: 64px; height: 64px; }
+  .identity .albumTitle { font-size: 22px; }
+  .artist { font-size: 14px; }
+  .metadata { font-size: 12px; }
+  .score { font-size: 28px; }
+  .attribution { padding-left: 96px; }
 }

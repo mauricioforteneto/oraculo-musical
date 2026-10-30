@@ -1,4 +1,6 @@
-.cover { display: inline-grid; place-items: center; flex-shrink: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: #202a21; color: #ac9b80; aspect-ratio: 1; }
+/* Hallmark · shape: app screen · genre: editorial · theme: Editorial (A, by request) · modes: light+dark · v2.0.0 */
+/* Hallmark · pre-emit critique: shared surfaces preserve existing workflows while inheriting the selected editorial identity */
+.cover { display: inline-grid; place-items: center; flex-shrink: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 6px; background: var(--card); color: var(--primary); aspect-ratio: 1; }
 .small { width: 56px; height: 56px; }
 .large { width: min(100%,256px); height: auto; }
 .cover img { display: block; width: 100%; height: 100%; object-fit: contain; }
@@ -13,7 +15,7 @@
 .candidates button { display: grid; gap: 6px; width: 100%; min-height: 44px; padding: 14px; background: var(--background); border: 1px solid var(--border); border-radius: 6px; color: var(--foreground); text-align: left; overflow-wrap: anywhere; }
 .candidates button:hover { border-color: var(--primary); }
 .candidates span { color: var(--muted-foreground); font-size: 14px; }
-.preview { padding: 16px; margin: 16px 0; border: 1px solid #806344; border-radius: 8px; }
+.preview { padding: 16px; margin: 16px 0; border: 1px solid var(--control-border); border-radius: 8px; }
 .progress { accent-color: var(--primary); width: 100%; height: 14px; }
 .provider { display: grid; gap: 8px; margin-block: 16px; font-size: 14px; color: var(--muted-foreground); }
 .provider select { width: 100%; min-width: 0; min-height: 44px; padding: 10px; background: var(--background); color: var(--foreground); border: 1px solid var(--border); border-radius: 6px; font: inherit; }

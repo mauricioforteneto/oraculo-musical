@@ -36,7 +36,8 @@ export function CatalogPage({ albums }: { albums: AlbumRecord[] }) {
         <div className={styles.filters} role="group" aria-label="Filtrar por nota original">{(["all","90","80","70"] as const).map(n => <button key={n} type="button" aria-pressed={filters.nota === n} onClick={() => update({ nota:n,limite:15 })}>{n === "all" ? "Todos" : `${n}+`}</button>)}</div>
       </div>
     </section>
-    <section className={styles.artworkReview} aria-label="Revisão das capas">
+    <details className={styles.artworkReview} open={Boolean(filters.capas)}>
+      <summary>Revisão de capas</summary>
       <div className={styles.artworkHeading}>
         <h2>Capas dos álbuns</h2>
         <p>Encontre as capas que precisam da sua escolha ou de uma nova pesquisa.</p>
@@ -45,7 +46,7 @@ export function CatalogPage({ albums }: { albums: AlbumRecord[] }) {
         <button type="button" aria-pressed={!filters.capas} onClick={()=>update({capas:undefined,limite:15})}>Todas as capas</button>
         {ARTWORK_FILTERS.map(item=><button type="button" key={item.id} aria-pressed={filters.capas===item.id} onClick={()=>update({capas:item.id,limite:15})}>{item.label} ({albums.filter(a=>matchesArtworkFilter(a,item.id)).length})</button>)}
       </div>
-    </section>
+    </details>
     <section className={styles.results} aria-label={artworkView?.title ?? "Ranking anual"}>
       <div className={styles.resultsHeading}>
         <h2>{artworkView?.title ?? "Ranking anual"}</h2>
@@ -59,8 +60,8 @@ export function CatalogPage({ albums }: { albums: AlbumRecord[] }) {
           <span className={styles.position}>{a.annualPosition || "Sem posição"}</span>
           <span className={styles.cover}><AlbumCover artwork={a.artwork} artist={a.artist} title={a.title} /></span>
           <span className={styles.identity}>
-            <strong>{a.artist}</strong>
-            <span className={styles.albumTitle}>{a.title}</span>
+            <strong className={styles.albumTitle}>{a.title}</strong>
+            <span className={styles.artist}>{a.artist}</span>
             <small className={styles.metadata}>{a.country || "País não informado"}{a.isPresent === false && <span>Ausente na versão atual</span>}</small>
             {filters.capas && <small className={styles.reviewLink}>Buscar ou corrigir capa</small>}
           </span>

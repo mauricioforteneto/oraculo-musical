@@ -1,6 +1,7 @@
 # Identidade visual
 
-Direção aprovada: interface escura, com estética editorial musical. Aplicada às telas existentes de entrada e preparação do acervo; não representa funcionalidades futuras prontas.
+Direção aprovada: A, Revista musical, com tema claro e escuro escolhidos pelo
+usuário. O sistema atual está registrado em [design.md](../design.md).
 
 ## Base
 
@@ -8,13 +9,18 @@ Tailwind CSS 4 via PostCSS; componentes locais personalizáveis no padrão shadc
 
 ## Paleta e tipografia
 
-- Fundo carvão #101412; cartões verde profundo #181e1a.
-- Texto principal marfim #f0eee5; secundário #a8b3a9.
-- Ação principal em cobre claro #dfa775, com texto escuro #21190f.
-- Bordas #354038; avisos com contraste explícito e erros salmão #f4a599.
-- Títulos editoriais serifados, controles e conteúdo em sans-serif. Fontes do sistema, sem requisição externa.
+- Papel claro quente e tinta escura; modo escuro com superfícies quentes em três níveis.
+- Vermelho para ações, seleção e foco, com contraste próprio em cada tema.
+- Bricolage Grotesque condensada nos títulos e Source Serif 4 na leitura.
+- Fontes variáveis auto-hospedadas no build por `next/font/google`.
+- Tokens semânticos em `src/app/theme.tokens.css`, compartilhados entre telas.
 
-Tokens semânticos em globals.css alimentam Tailwind e componentes. Cor nunca é o único indicador de estado. Foco visível, controles com altura mínima de 44 px e respeito a prefers-reduced-motion. Tema escuro fixo nesta etapa.
+Os tokens alimentam Tailwind e componentes. Cor nunca é o único indicador de
+estado. Foco visível, controles com altura mínima de 44 px e respeito a
+prefers-reduced-motion. O seletor Tema oferece Claro, Escuro e Seguir o sistema:
+na lateral do desktop, em Mais no celular e na entrada. A escolha fica no
+navegador, acompanha outras abas e é lida antes da primeira pintura. Se o
+armazenamento estiver bloqueado, o tema funciona na página e informa o limite.
 
 Entrada com identidade musical, arte de vinil em CSS e login Google. Acervo com estado vazio honesto, sem notas, capas ou rankings pessoais inventados. Ícones decorativos ocultos para leitores de tela. Layout empilha em telas estreitas; conteúdo e ações não dependem de hover.
 
@@ -23,4 +29,8 @@ Nas próximas telas: capas com origem real validada, notas legíveis, ranking ad
 
 ## Estrutura das páginas
 
-A navegação compartilhada usa lateral no desktop e barra inferior em telas até 1000 px. Verde escuro, cobre e títulos serifados permanecem; texto principal de 14–16 px, alvos de pelo menos 44 px e nomes com quebra de linha. Cartões e espaçamentos do novo layout usam os tokens globais. Responsabilidades, menu Mais e área segura estão em [navigation.md](navigation.md).
+A navegação compartilhada usa lateral no desktop e barra inferior em telas até
+1000 px. O catálogo tem linhas editoriais, título do álbum em destaque, capas
+maiores e notas originais com números tabulares. A revisão de capas fica em
+disclosure, aberto automaticamente quando há um filtro de capa na URL.
+Responsabilidades, menu Mais e área segura estão em [navigation.md](navigation.md).
