@@ -4,6 +4,27 @@ Prévias isoladas para escolher uma nova identidade antes de alterar a interface
 publicada. Não há mudança em `src/`, autenticação, banco ou ranking de produção.
 A skill Hallmark continua local e ignorada pelo Git.
 
+## Comparação no celular
+
+| A. Revista musical | B. Discoteca escura |
+| --- | --- |
+| ![Proposta clara no celular](previews/revista-mobile.jpg) | ![Proposta escura no celular](previews/discoteca-mobile.jpg) |
+| Favorece a comparação de posições e notas. | Favorece o reconhecimento pelas capas. |
+
+Desktop: [Revista musical](previews/revista-desktop.jpg) e
+[Discoteca escura](previews/discoteca-desktop.jpg).
+
+As capturas acima vêm da [execução de prévias #3](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41054791423).
+A revisão Hallmark independente retornou **ship**, sem defeitos objetivos de
+legibilidade, contraste ou colisão nas quatro larguras. Busca, filtros, retorno,
+vazio e primeiro álbum na primeira tela passaram. A aplicação também passou
+build, lint, TypeScript, 213 testes unitários, 37 de integração, 15 de acesso e
+seu teste de layout na [execução Verify #35](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41054791553).
+
+A versão anterior mostrava as situações de capa diretamente. Nas propostas,
+elas ficam dentro de “Revisão de capas”, liberando espaço para o ranking. Essa
+troca deve ser considerada na escolha. Créditos em [previews/README.md](previews/README.md).
+
 ## A. Revista musical
 
 Base Hallmark: Editorial, escolha 1/3 do sorteio editorial. Papel claro,
