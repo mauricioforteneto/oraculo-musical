@@ -1,40 +1,42 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: Editorial (A, by request) · modes: light+dark · v2.0.0 */
+/* Hallmark · pre-emit critique: shared surfaces preserve existing workflows while inheriting the selected editorial identity */
 .page { min-width: 0; }
-.scope, .explanation { color: #aeb9aa; font-size: 13px; line-height: 1.7; }
+.scope, .explanation { color: var(--muted-foreground); font-size: 13px; line-height: 1.7; }
 .scope { margin-bottom: 24px; max-width: 760px; }
 .metrics { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
-.metric { min-width: 0; display: grid; gap: 14px; padding: 18px; background: #19211b; border: 1px solid #354038; border-radius: 8px; }
-.metric > span { display: flex; align-items: center; gap: 8px; color: #b6c2af; font-size: 12px; }
-.metric > strong { color: #e8bc8d; font: 32px/1 Georgia, serif; }
-.metric > small { color: #aeb9aa; font-size: 11px; line-height: 1.5; }
-.explorer, .albums { padding: 24px; border: 1px solid #354038; border-radius: 8px; margin-top: 24px; background: #151d17; min-width: 0; }
-.explorer h2, .albums h2, .empty h2 { margin: 20px 0 12px; font: 28px/1.2 Georgia, serif; overflow-wrap: anywhere; }
+.metric { min-width: 0; display: grid; gap: 14px; padding: 18px; background: var(--card); border: 1px solid var(--control-border); border-radius: 8px; }
+.metric > span { display: flex; align-items: center; gap: 8px; color: var(--muted-foreground); font-size: 12px; }
+.metric > strong { color: var(--primary); font: 32px/1 var(--font-display); }
+.metric > small { color: var(--muted-foreground); font-size: 11px; line-height: 1.5; }
+.explorer, .albums { padding: 24px; border: 1px solid var(--control-border); border-radius: 8px; margin-top: 24px; background: var(--card); min-width: 0; }
+.explorer h2, .albums h2, .empty h2 { margin: 20px 0 12px; font: 28px/1.2 var(--font-display); overflow-wrap: anywhere; }
 .selector { display: flex; flex-wrap: wrap; gap: 8px; }
-.selector button, .action { border: 1px solid #475144; border-radius: 5px; padding: 10px 15px; color: #ddc09e; background: #1d271f; font: inherit; font-size: 13px; }
-.selector button[aria-pressed="true"] { border-color: #bc8e5c; background: #302b20; color: #f1d0a6; }
+.selector button, .action { border: 1px solid var(--control-border); border-radius: 5px; padding: 10px 15px; color: var(--primary); background: var(--card); font: inherit; font-size: 13px; }
+.selector button[aria-pressed="true"] { border-color: var(--control-border); background: var(--selection); color: var(--primary); }
 .groups { list-style: none; margin: 22px 0 16px; padding: 0; display: grid; gap: 8px; }
-.group { width: 100%; text-align: left; border: 1px solid #354038; border-radius: 6px; background: #1b251d; padding: 14px; color: #e0e6d8; display: grid; gap: 10px; }
-.group:hover { background: #253024; border-color: #8b7453; }
-.group[aria-pressed="true"] { border-color: #dfa775; background: #2a2d20; }
+.group { width: 100%; text-align: left; border: 1px solid var(--control-border); border-radius: 6px; background: var(--card); padding: 14px; color: var(--foreground); display: grid; gap: 10px; }
+.group:hover { background: var(--card); border-color: var(--control-border); }
+.group[aria-pressed="true"] { border-color: var(--control-border); background: var(--card); }
 .groupHeading { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: baseline; gap: 8px 20px; }
 .groupHeading strong { font-size: 15px; font-weight: 500; overflow-wrap: anywhere; }
-.groupHeading > span { font-size: 12px; color: #ccb58f; }
-.groupNote { color: #aebca5; font-size: 12px; line-height: 1.5; }
-.track { display: block; height: 7px; width: 100%; border-radius: 4px; background: #303c2f; overflow: hidden; }
-.track > span { display: block; height: 100%; background: #c99a69; border-radius: inherit; }
+.groupHeading > span { font-size: 12px; color: var(--primary); }
+.groupNote { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.track { display: block; height: 7px; width: 100%; border-radius: 4px; background: var(--card); overflow: hidden; }
+.track > span { display: block; height: 100%; background: var(--selection); border-radius: inherit; }
 .albumHeading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .albumHeading h2 { margin: 0; }
 .albumList { list-style: none; margin: 20px 0 0; padding: 0; }
-.albumList li { padding: 16px 0; border-top: 1px solid #354038; display: grid; grid-template-columns: minmax(0, 1fr) 76px; gap: 12px; align-items: center; }
+.albumList li { padding: 16px 0; border-top: 1px solid var(--control-border); display: grid; grid-template-columns: minmax(0, 1fr) 76px; gap: 12px; align-items: center; }
 .albumList li > div { min-width: 0; display: grid; gap: 6px; overflow-wrap: anywhere; }
 .albumList strong { font-size: 15px; }
-.albumList li > div > span { font-size: 14px; color: #d3dccb; }
-.albumList li > div > small { color: #a1b19b; font-size: 12px; line-height: 1.5; }
-.score { text-align: right; color: #e8bc8d; font: 24px/1.2 Georgia, serif; }
-.score small { display: block; margin-top: 6px; color: #aeb9aa; font: 9px/1.4 Arial, sans-serif; }
-.empty { padding: 40px 24px; margin-top: 24px; border: 1px solid #354038; border-radius: 8px; background: #19211b; }
-.empty p { color: #b2bdad; font-size: 14px; max-width: 650px; }
-.empty a { color: #e8bc8d; }
-.page button:focus-visible, .page a:focus-visible { outline: 2px solid #e9b68b; outline-offset: 4px; }
+.albumList li > div > span { font-size: 14px; color: var(--foreground); }
+.albumList li > div > small { color: var(--muted-foreground); font-size: 12px; line-height: 1.5; }
+.score { text-align: right; color: var(--primary); font: 24px/1.2 var(--font-display); }
+.score small { display: block; margin-top: 6px; color: var(--muted-foreground); font: 9px/1.4 var(--font-ui); }
+.empty { padding: 40px 24px; margin-top: 24px; border: 1px solid var(--control-border); border-radius: 8px; background: var(--card); }
+.empty p { color: var(--muted-foreground); font-size: 14px; max-width: 650px; }
+.empty a { color: var(--primary); }
+.page button:focus-visible, .page a:focus-visible { outline: 2px solid var(--ring); outline-offset: 4px; }
 @media (max-width: 800px) { .metrics { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 520px) {
   .header { align-items: flex-start; flex-wrap: wrap; gap: 22px; }

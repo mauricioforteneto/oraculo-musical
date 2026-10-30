@@ -5,13 +5,15 @@ import { resolve } from "node:path";
 import { createServer } from "vite";
 import { chromium } from "playwright-core";
 import assert from "node:assert/strict";
+import { THEME_INIT_SCRIPT, THEME_STORAGE_KEY } from "../../src/lib/theme-init.mjs";
 const repo = fileURLToPath(new URL("../../",import.meta.url));
 const root = await mkdtemp(resolve(repo,".private-layout-check-"));
 const artifactDir = resolve(repo,process.env.LAYOUT_ARTIFACT_DIR || "test-results/layout");
 await mkdir(artifactDir,{recursive:true});
 let server, browser, context, page;
 try {
-  await writeFile(resolve(root,"index.html"),'<html lang="pt-BR"><head><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Oráculo Musical — teste com dados fictícios</title><meta name="description" content="Verificação de layout com componentes reais e dados sintéticos."></head><body><div id="root"></div><script type="module" src="/tests/browser/layout-fixture.tsx"></script></body></html>');
+  const fonts = "https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=Source+Serif+4:opsz,wght@8..60,200..900&display=swap";
+  await writeFile(resolve(root,"index.html"),`<html lang="pt-BR"><head><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Oráculo Musical — teste com dados fictícios</title><meta name="description" content="Verificação de layout com componentes reais e dados sintéticos."><script>${THEME_INIT_SCRIPT}</script><link rel="stylesheet" href="${fonts}"></head><body><div id="root"></div><script type="module" src="/tests/browser/layout-fixture.tsx"></script></body></html>`);
   server = await createServer({root,configFile:false,define:{"process.env":"{}"},resolve:{alias:{"@":resolve(repo,"src"),"next/navigation":resolve(repo,"tests/browser/navigation.tsx"),"next/link":resolve(repo,"tests/browser/navigation.tsx")}},server:{host:"127.0.0.1",port:3216,strictPort:true,fs:{allow:[repo]}},plugins:[{name:"fixture-source",resolveId(id){ if(id.startsWith("/tests/")||id.startsWith("/src/")) return repo+id; }}]});
   await server.listen();
   const executablePath = process.env.CHROMIUM_PATH || (existsSync(chromium.executablePath()) ? chromium.executablePath() : "/usr/bin/chromium");
@@ -61,11 +63,18 @@ try {
     } : url.endsWith("/freeze") ? {participants:24,fileVersion:"101"} : {status:"succeeded",version:"101"}});
   });
   const origin = "http://127.0.0.1:3216";
+  await page.goto(origin+"/albuns");
+  for (const mode of ["light","dark"]) {
+  await page.evaluate(({key,mode})=>localStorage.setItem(key,mode),{key:THEME_STORAGE_KEY,mode});
   for (const width of [360,390,768,1280]) {
     await page.setViewportSize({width,height:844});
     for (const path of ["/","/pendencias","/albuns","/albuns?capas=revisar","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao"]) {
       await page.goto(origin+path);
       await page.locator("main h1").waitFor();
+      await page.evaluate(async()=>{await document.fonts.load('800 28px "Bricolage Grotesque"');await document.fonts.load('400 17px "Source Serif 4"');await document.fonts.ready;});
+      assert(await page.evaluate(()=>document.fonts.check('800 28px "Bricolage Grotesque"')), "Fonte editorial indisponível");
+      assert(await page.evaluate(()=>["Bricolage Grotesque","Source Serif 4"].every(name=>Array.from(document.fonts).some(face=>face.family.includes(name) && face.status==="loaded"))), "Famílias editoriais não carregadas");
+      assert.equal(await page.locator("html").getAttribute("data-mode"),mode);
       assert.equal(await page.locator("main").count(),1);
       assert.equal(await page.locator("h1").count(),1);
       assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),`overflow: ${path} at ${width}`);
@@ -83,7 +92,7 @@ try {
         assert(footer.y+footer.height <= bar.y,`covered footer at ${width}`);
       }
       if(path === "/albuns" || path === "/albuns?capas=revisar") {
-        const shot = path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns";
+        const shot = `${path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns"}-${mode}`;
         // Text can overflow a grid cell without overflowing the page itself.
         const positionRight = await page.getByText("Posição",{exact:true}).evaluate(element=>{
           const range=document.createRange(); range.selectNodeContents(element);
@@ -97,10 +106,35 @@ try {
         await page.evaluate(()=>scrollTo(0,0));
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}.png`),fullPage:true});
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.png`)});
+        await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.jpg`),type:"jpeg",quality:90});
+        await page.screenshot({path:resolve(artifactDir,`${shot}-${width}.jpg`),type:"jpeg",quality:90,fullPage:true});
+        if(path==="/albuns") {
+          const first=await page.getByRole("region",{name:"Ranking anual",exact:true}).locator("ol > li").first().boundingBox();
+          const bar=width < 1000 ? await page.getByRole("navigation",{name:"Navegação mobile",exact:true}).boundingBox() : null;
+          assert(first && first.y + first.height <= (width < 1000 ? bar.y : 844),`Primeiro álbum fora da primeira tela em ${width}px (${mode})`);
+        }
       }
     }
-    console.log(`Layout: 11 telas e capturas verificadas em ${width}px.`);
+    console.log(`Layout: 11 telas e capturas verificadas em ${width}px, tema ${mode}.`);
   }
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(origin+"/albuns");
+  await page.getByRole("button",{name:"Mais",exact:true}).click();
+  await page.screenshot({path:resolve(artifactDir,`oraculo-tema-${mode}-390-viewport.jpg`),type:"jpeg",quality:90});
+  await page.getByRole("button",{name:"Fechar menu",exact:true}).click();
+  }
+  // Exercise the real mobile menu, storage, and desktop selector together.
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(origin+"/albuns");
+  await page.getByRole("button",{name:"Mais",exact:true}).click();
+  const theme=page.getByRole("dialog").getByLabel("Tema",{exact:true});
+  await theme.selectOption("light");
+  assert.equal(await page.locator("html").getAttribute("data-mode"),"light");
+  await page.getByRole("button",{name:"Fechar menu",exact:true}).click();
+  await page.reload();
+  assert.equal(await page.locator("html").getAttribute("data-mode"),"light");
+  await page.setViewportSize({width:1280,height:844});
+  assert.equal(await page.locator("aside").getByLabel("Tema",{exact:true}).inputValue(),"light");
   await page.goto(origin+"/sincronizacao");
   await page.getByText("Ver falhas das capas (2)",{exact:true}).click();
   assert(await page.getByText(/MusicBrainz respondeu com erro HTTP 503/).isVisible());
@@ -280,7 +314,7 @@ try {
   assert.equal(batchCalls,beforeWaiting+1);
   recoveryMode=null;
   assert.deepEqual(errors,[]);
-  console.log("Layout Chromium: 11 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, central de pendências, cópia/fallback, correção da fonte, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
+  console.log("Layout Chromium: 11 telas × 4 larguras × 2 temas; preferência persistida, menu, foco, teclado, busca/retorno, links, sincronização, central de pendências, cópia/fallback, correção da fonte, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
 } catch(error) {
   await page?.screenshot({path:resolve(artifactDir,"failure.png"),fullPage:true}).catch(()=>{});
   throw error;

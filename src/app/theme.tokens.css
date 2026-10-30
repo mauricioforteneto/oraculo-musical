@@ -1,0 +1,42 @@
+/* Hallmark · shape: app screen · genre: editorial · theme: Editorial (A, by request) · modes: light+dark · v2.0.0 */
+/* Hallmark · pre-emit critique: album titles and original scores lead; dark red is lifted to preserve text contrast on elevated surfaces */
+:root {
+  color-scheme: light;
+  --background: oklch(97% 0.007 86); --card: oklch(94% 0.01 86); --muted: oklch(91% 0.012 84);
+  --foreground: oklch(18% 0.012 280); --ink-secondary: oklch(32% 0.011 280); --muted-foreground: oklch(47% 0.01 75);
+  --border: oklch(81% 0.009 85); --control-border: oklch(59% 0.01 80);
+  --primary: oklch(48% 0.18 29); --primary-foreground: oklch(98% 0.006 86);
+  --secondary: oklch(93% 0.025 29); --selection: oklch(93% 0.025 29); --surface-hover: oklch(94% 0.01 86);
+  --destructive: oklch(46% 0.17 29); --warning: oklch(42% 0.09 73); --warning-surface: oklch(94% 0.025 73);
+  --success: oklch(38% 0.07 145); --success-surface: oklch(94% 0.02 145);
+  --backdrop: oklch(18% 0.012 86 / 0.65); --body-weight: 400;
+  --font-display: var(--font-bricolage, "Bricolage Grotesque"), Arial, sans-serif;
+  --font-reading: var(--font-source-serif, "Source Serif 4"), Georgia, serif;
+  --font-ui: var(--font-bricolage, "Bricolage Grotesque"), Arial, sans-serif;
+  --card-foreground: var(--foreground); --ring: var(--primary);
+  --content-width: 1440px;
+}
+:root[data-mode="dark"] {
+  color-scheme: dark;
+  --background: oklch(15% 0.01 86); --card: oklch(18% 0.01 86); --muted: oklch(21% 0.012 84);
+  --foreground: oklch(95% 0.012 280); --ink-secondary: oklch(86% 0.011 280); --muted-foreground: oklch(72% 0.01 75);
+  --border: oklch(32% 0.009 85); --control-border: oklch(58% 0.01 80);
+  --primary: oklch(64% 0.14 29); --primary-foreground: oklch(15% 0.006 86);
+  --secondary: oklch(24% 0.025 29); --selection: oklch(24% 0.025 29); --surface-hover: oklch(21% 0.01 86);
+  --destructive: oklch(72% 0.13 29); --warning: oklch(78% 0.09 73); --warning-surface: oklch(24% 0.025 73);
+  --success: oklch(77% 0.07 145); --success-surface: oklch(24% 0.02 145);
+  --body-weight: 350;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-mode]) {
+  color-scheme: dark;
+  --background: oklch(15% 0.01 86); --card: oklch(18% 0.01 86); --muted: oklch(21% 0.012 84);
+  --foreground: oklch(95% 0.012 280); --ink-secondary: oklch(86% 0.011 280); --muted-foreground: oklch(72% 0.01 75);
+  --border: oklch(32% 0.009 85); --control-border: oklch(58% 0.01 80);
+  --primary: oklch(64% 0.14 29); --primary-foreground: oklch(15% 0.006 86);
+  --secondary: oklch(24% 0.025 29); --selection: oklch(24% 0.025 29); --surface-hover: oklch(21% 0.01 86);
+  --destructive: oklch(72% 0.13 29); --warning: oklch(78% 0.09 73); --warning-surface: oklch(24% 0.025 73);
+  --success: oklch(77% 0.07 145); --success-surface: oklch(24% 0.02 145);
+  --body-weight: 350;
+  }
+}

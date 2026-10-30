@@ -1,0 +1,64 @@
+name: Design previews
+on:
+  pull_request:
+    paths:
+      - tests/browser/design-preview/**
+      - tests/browser/design-preview-check.mjs
+      - .github/workflows/design-previews.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: design-previews-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  previews:
+    name: Duas direções Hallmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Recuperar fotografias já baixadas
+        uses: actions/cache/restore@v4
+        with:
+          path: test-results/design-preview-media/
+          key: hallmark-preview-photos-${{ hashFiles('tests/browser/design-preview/photos.json') }}
+      - name: Capturar as propostas e verificar os controles
+        run: node tests/browser/design-preview-check.mjs
+      - name: Preservar fotografias baixadas para próximas tentativas
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: test-results/design-preview-media/
+          key: hallmark-preview-photos-${{ hashFiles('tests/browser/design-preview/photos.json') }}
+      - name: Disponibilizar imagens para o conector
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import { existsSync, readdirSync, readFileSync } from 'node:fs';
+          const directory = 'test-results/design-previews';
+          if (existsSync(directory)) {
+            for (const name of readdirSync(directory).filter(name => /^oraculo-preview-(revista|discoteca|atual)-\d+(-viewport)?\.jpg$/.test(name) || name === 'failure.png').sort()) {
+              console.log(`::group::Prévia ${name}`);
+              console.log(`LAYOUT_CAPTURE_BEGIN ${name}`);
+              const encoded=readFileSync(`${directory}/${name}`).toString('base64');
+              for(let offset=0;offset<encoded.length;offset+=2000) console.log(encoded.slice(offset,offset+2000));
+              console.log('LAYOUT_CAPTURE_END');
+              console.log('::endgroup::');
+            }
+          }
+          NODE
+      - name: Guardar prévias e comparação
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: hallmark-duas-direcoes-${{ github.run_id }}
+          path: test-results/design-previews/
+          if-no-files-found: warn
+          retention-days: 7
