@@ -24,8 +24,19 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
+      - name: Recuperar fotografias já baixadas
+        uses: actions/cache/restore@v4
+        with:
+          path: test-results/design-preview-media/
+          key: hallmark-preview-photos-${{ hashFiles('tests/browser/design-preview/photos.json') }}
       - name: Capturar as propostas e verificar os controles
         run: node tests/browser/design-preview-check.mjs
+      - name: Preservar fotografias baixadas para próximas tentativas
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: test-results/design-preview-media/
+          key: hallmark-preview-photos-${{ hashFiles('tests/browser/design-preview/photos.json') }}
       - name: Disponibilizar imagens para o conector
         if: always()
         run: |

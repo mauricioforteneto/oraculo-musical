@@ -9,20 +9,37 @@ import { chromium } from "playwright-core";
 const repo=fileURLToPath(new URL("../../",import.meta.url));
 const root=await mkdtemp(resolve(repo,".private-design-preview-"));
 const output=resolve(repo,"test-results/design-previews");
+const media=resolve(repo,"test-results/design-preview-media");
 const photos=JSON.parse(await readFile(resolve(repo,"tests/browser/design-preview/photos.json"),"utf8"));
 let server,browser,page;
 await mkdir(output,{recursive:true});
+await mkdir(media,{recursive:true});
 try {
   const photoBytes=[];
-  for(const photo of photos) {
+  for(const [index,photo] of photos.entries()) {
+    const cached=resolve(media,`${index}.jpg`);
+    if(existsSync(cached)) {photoBytes.push({body:await readFile(cached),contentType:"image/jpeg"});continue;}
     let lastError;
     for(const url of [photo.thumbnail,photo.file]) {
-      try {
-        const response=await fetch(url,{headers:{"User-Agent":"OraculoMusical-DesignPreview/1.0 (licensed Wikimedia Commons photographs)"},signal:AbortSignal.timeout(20000)});
-        if(!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
-        photoBytes.push({body:Buffer.from(await response.arrayBuffer()),contentType:response.headers.get("content-type") || "image/jpeg"});
-        lastError=null; break;
-      } catch(error) { lastError=error; }
+      for(let attempt=0;attempt<4;attempt++) {
+        try {
+          const response=await fetch(url,{headers:{"User-Agent":"OraculoMusicalDesignPreview/1.0 (https://github.com/mauricioforteneto/oraculo-musical; licensed photo fixture)"},signal:AbortSignal.timeout(20000)});
+          if([429,503].includes(response.status) && attempt<3) {
+            const retry=response.headers.get("retry-after");
+            const seconds=retry && /^\d+$/.test(retry) ? Number(retry):retry ? Math.max(0,(Date.parse(retry)-Date.now())/1000):10*(attempt+1);
+            if(!Number.isFinite(seconds) || seconds>120) throw new Error(`HTTP ${response.status}: espera solicitada excede o orçamento da prévia`);
+            console.log(`Fotografia ${index+1}: HTTP ${response.status}; nova tentativa em ${Math.ceil(seconds)}s.`);
+            await new Promise(resolve=>setTimeout(resolve,Math.max(1000,seconds*1000)));continue;
+          }
+          if(!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
+          const body=Buffer.from(await response.arrayBuffer());
+          await writeFile(cached,body);
+          photoBytes.push({body,contentType:response.headers.get("content-type") || "image/jpeg"});
+          console.log(`Fotografia ${index+1} disponível (${body.length} bytes).`);
+          lastError=null; break;
+        } catch(error) {lastError=error;break;}
+      }
+      if(!lastError) break;
     }
     if(lastError) throw lastError;
   }
