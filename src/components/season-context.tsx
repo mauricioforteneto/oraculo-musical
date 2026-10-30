@@ -1,5 +1,5 @@
 "use client";
-import { createContext, useCallback, useContext, useMemo, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useId, type ReactNode } from "react";
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import NextLink from "next/link";
 import { SEASONS, seasonHref } from "@/lib/seasons/definitions";
@@ -31,11 +31,12 @@ export function useArtworkPost() {
   return useCallback(<T,>(href:string, body:Record<string,unknown>, signal?:AbortSignal) => artworkPost<T>(seasonHref(href,year),body,signal),[year]);
 }
 export function SeasonSwitcher() {
+  const id=useId();
   const { year } = useSeason();
   const pathname = usePathname();
   const router = useRouter();
-  return <label className={styles.control}>Temporada<select value={year} onChange={event => {
+  return <div className={styles.control}><label htmlFor={id}>Temporada</label><select id={id} value={year} onChange={event => {
     const path = pathname?.startsWith("/albuns/") ? "/albuns" : pathname ?? "/";
     router.push(seasonHref(path, Number(event.target.value)));
-  }}>{SEASONS.map(season => <option value={season.year} key={season.year}>{season.year}</option>)}</select></label>;
+  }}>{SEASONS.map(season => <option value={season.year} key={season.year}>{season.year}</option>)}</select></div>;
 }

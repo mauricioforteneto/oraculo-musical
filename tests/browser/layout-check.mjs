@@ -64,11 +64,12 @@ try {
   });
   const origin = "http://127.0.0.1:3216";
   await page.goto(origin+"/albuns");
+  const screenRoutes=["/","/pendencias","/albuns","/albuns?capas=revisar","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao","/regras?temporada=2026","/regras?temporada=2027","/albuns?temporada=2027","/playoffs?temporada=2027","/?temporada=2027","/pendencias?temporada=2027","/top-50?temporada=2027","/estatisticas?temporada=2027","/historico?temporada=2027","/sincronizacao?temporada=2027"];
   for (const mode of ["light","dark"]) {
   await page.evaluate(({key,mode})=>localStorage.setItem(key,mode),{key:THEME_STORAGE_KEY,mode});
   for (const width of [360,390,768,1280]) {
     await page.setViewportSize({width,height:844});
-    for (const path of ["/","/pendencias","/albuns","/albuns?capas=revisar","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao","/regras?temporada=2026","/regras?temporada=2027","/albuns?temporada=2027","/playoffs?temporada=2027"]) {
+    for (const path of screenRoutes) {
       await page.goto(origin+path);
       await page.locator("main h1").waitFor();
       await page.evaluate(async()=>{await document.fonts.load('800 28px "Bricolage Grotesque"');await document.fonts.load('400 17px "Source Serif 4"');await document.fonts.ready;});
@@ -91,7 +92,7 @@ try {
         const footer = await page.locator("footer").boundingBox(); const bar = await nav.boundingBox();
         assert(footer.y+footer.height <= bar.y,`covered footer at ${width}`);
       }
-      if(path.includes("temporada=")) {
+      if(path.includes("temporada=") && ["/regras","/albuns","/playoffs"].some(route=>path.startsWith(route))) {
         const kind=path.startsWith("/regras")?`regras-${path.endsWith("2026")?2026:2027}`:path.startsWith("/playoffs")?"mensal-2027":"albuns-2027";
         await page.evaluate(()=>scrollTo(0,0));
         await page.screenshot({path:resolve(artifactDir,`oraculo-${kind}-${mode}-${width}-viewport.jpg`),type:"jpeg",quality:90});
@@ -109,8 +110,8 @@ try {
           assert(await page.getByText(/O corte de dezembro e o prazo do AOTY/).isVisible());
         }
       }
-      if(path === "/albuns" || path === "/albuns?capas=revisar") {
-        const shot = `${path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns"}-${mode}`;
+      if(path === "/albuns" || path === "/albuns?capas=revisar" || path === "/albuns?temporada=2027") {
+        const shot = `${path.includes("temporada=") ? "oraculo-albuns-2027" : path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns"}-${mode}`;
         // Text can overflow a grid cell without overflowing the page itself.
         const positionRight = await page.getByText("Posição",{exact:true}).evaluate(element=>{
           const range=document.createRange(); range.selectNodeContents(element);
@@ -126,14 +127,14 @@ try {
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.png`)});
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.jpg`),type:"jpeg",quality:90});
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}.jpg`),type:"jpeg",quality:90,fullPage:true});
-        if(path==="/albuns") {
+        if(path==="/albuns" || path==="/albuns?temporada=2027") {
           const first=await page.getByRole("region",{name:"Ranking anual",exact:true}).locator("ol > li").first().boundingBox();
           const bar=width < 1000 ? await page.getByRole("navigation",{name:"Navegação mobile",exact:true}).boundingBox() : null;
           assert(first && first.y + first.height <= (width < 1000 ? bar.y : 844),`Primeiro álbum fora da primeira tela em ${width}px (${mode})`);
         }
       }
     }
-    console.log(`Layout: 15 telas e capturas verificadas em ${width}px, tema ${mode}.`);
+    console.log(`Layout: ${screenRoutes.length} telas e capturas verificadas em ${width}px, tema ${mode}.`);
   }
   // Season switching clears source-bound filters and closes the mobile menu.
   await page.setViewportSize({width:390,height:844});
