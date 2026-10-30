@@ -1,0 +1,57 @@
+# Duas direções visuais para Álbuns
+
+Prévias isoladas para escolher uma nova identidade antes de alterar a interface
+publicada. Não há mudança em `src/`, autenticação, banco ou ranking de produção.
+A skill Hallmark continua local e ignorada pelo Git.
+
+## A. Revista musical
+
+Base Hallmark: Editorial, escolha 1/3 do sorteio editorial. Papel claro,
+tinta escura, vermelho como sinal por solicitação do usuário, Bricolage Grotesque
+condensada nos títulos e Source Serif 4 no texto. Regras e alinhamentos de uma
+revista, sem cartões externos; capas e notas conduzem a leitura em linhas.
+
+## B. Discoteca escura
+
+Base Hallmark: Ribbon, escolha 2/3 do sorteio atmospheric, variante noturna.
+Grafite azulado, texto claro, azul como sinal por solicitação do usuário,
+Instrument Sans e Figtree. As capas aparecem em uma grade de três colunas no
+desktop e duas no celular, com posição e nota junto de cada álbum. Ornamentação
+de marketing do tema não é usada numa tela de aplicação.
+
+## O que comparar
+
+- Visibilidade do primeiro álbum na primeira tela do celular.
+- Leitura de título, artista, posição e nota.
+- Lista editorial versus navegação por capas.
+- Conforto do tema claro e do tema escuro.
+
+Busca, filtros por nota, revisão de capas recolhível, navegação até a avaliação e
+retorno mantêm contexto em URL no cenário de demonstração. A navegação para
+outras telas informa o limite desta prévia. Não há ações de escrita no acervo.
+
+## Material demonstrativo
+
+Os títulos, artistas e notas são explicitamente fictícios. Ambas as direções e
+a referência atual usam exatamente os mesmos oito registros. As notas partem
+dos valores sintéticos já usados nos testes; não representam o acervo do usuário.
+Quatro fotografias licenciadas da biblioteca Hallmark substituem as capas, com
+autoria, licença e link da origem em `photos.json` e no rodapé de cada proposta.
+As imagens são recortadas em quadrado apenas por CSS e permanecem substituíveis
+pelas capas reais. As fontes gratuitas são carregadas pelo Google Fonts com swap.
+
+## Ver e reproduzir
+
+O workflow **Design previews** instala Chromium e executa:
+
+```sh
+node tests/browser/design-preview-check.mjs
+```
+
+Ele verifica 360, 390, 768 e 1280 px, captura viewport e página inteira, compara
+com o layout atual em 390 e 1280 px e guarda PNGs e `index.html` no artefato
+`hallmark-duas-direcoes-<execução>` por sete dias. As prévias são também exportadas
+nos logs para que o conector as disponibilize nesta conversa. Nenhum deploy é feito.
+
+Após a escolha, a direção selecionada pode ser implementada nos componentes reais
+e depois levada às demais páginas com o mesmo sistema visual.
