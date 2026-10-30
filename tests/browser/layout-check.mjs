@@ -84,6 +84,13 @@ try {
       }
       if(path === "/albuns" || path === "/albuns?capas=revisar") {
         const shot = path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns";
+        // Text can overflow a grid cell without overflowing the page itself.
+        const positionRight = await page.getByText("Posição",{exact:true}).evaluate(element=>{
+          const range=document.createRange(); range.selectNodeContents(element);
+          return range.getBoundingClientRect().right;
+        });
+        const albumHeading = await page.getByText("Álbum",{exact:true}).boundingBox();
+        assert(albumHeading && positionRight + 4 <= albumHeading.x,`Cabeçalhos Posição e Álbum encostados em ${width}px (${path})`);
         // Load off-screen lazy covers before capturing the entire list.
         await page.locator("img").evaluateAll(images=>images.forEach(image=>{image.loading="eager";}));
         await page.waitForFunction(()=>Array.from(document.images).every(image=>image.complete),undefined,{timeout:10000});

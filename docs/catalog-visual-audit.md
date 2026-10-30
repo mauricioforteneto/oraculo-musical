@@ -111,7 +111,29 @@ fora da tela; a preparação de captura foi ajustada para solicitar essas imagen
 e aguardar sua conclusão por no máximo dez segundos, preservando as asserções.
 Na execução seguinte, [Verify #27](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41044153581),
 passaram novamente o trabalho `verify` completo e o comando `npm run test:layout`.
-A revisão visual das capturas está pendente. Uma exportação das imagens PNG
+A revisão visual das capturas estava pendente. Uma exportação das imagens PNG
 no log do trabalho de layout permite obtê-las pelo conector, que disponibiliza o
 ZIP apenas como link de download; o artefato com PNGs e trace foi preservado.
 O fluxo pelo celular está em [github-actions.md](github-actions.md).
+
+### Revisão visual independente
+
+A execução [Verify #28](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41044547639)
+passou os dois trabalhos e disponibilizou 16 PNGs do catálogo e da revisão de
+capas, em página inteira e viewport, nas quatro larguras. As imagens originais
+foram reconstruídas dos logs do GitHub sem edição visual.
+
+A revisão independente Hallmark retornou `fix`: **um achado de acabamento,
+nenhum Floor identificado e nenhuma lacuna relevante**. Em 360 e 390 px,
+os rótulos “Posição” e “Álbum” encostavam porque a primeira coluna do cabeçalho
+tinha 32 px. A correção reserva 44 px, preserva ambos os textos e acrescenta ao
+teste uma medição da separação entre os rótulos nas quatro larguras.
+
+Busca, filtros, títulos extensos, notas, atribuição, paginação e rodapé foram
+considerados legíveis nas 16 capturas. A barra inferior fixa pertence ao shell
+preservado. Não foi identificada perda de ação ou informação comparando o código
+anterior; a ausência de capturas anteriores impede uma comparação visual direta.
+Os cenários capturados são catálogo cheio e revisão filtrada; carregamento,
+erro e vazio não receberam aceite visual por essas imagens.
+
+A resolução do achado deve ser confirmada nas capturas da execução posterior.
