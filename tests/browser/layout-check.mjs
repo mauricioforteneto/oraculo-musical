@@ -84,12 +84,15 @@ try {
       }
       if(path === "/albuns" || path === "/albuns?capas=revisar") {
         const shot = path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns";
-        await page.locator("img").evaluateAll(images=>Promise.all(images.map(image=>image.decode().catch(()=>{}))));
+        // Load off-screen lazy covers before capturing the entire list.
+        await page.locator("img").evaluateAll(images=>images.forEach(image=>{image.loading="eager";}));
+        await page.waitForFunction(()=>Array.from(document.images).every(image=>image.complete),undefined,{timeout:10000});
         await page.evaluate(()=>scrollTo(0,0));
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}.png`),fullPage:true});
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.png`)});
       }
     }
+    console.log(`Layout: 11 telas e capturas verificadas em ${width}px.`);
   }
   await page.goto(origin+"/sincronizacao");
   await page.getByText("Ver falhas das capas (2)",{exact:true}).click();

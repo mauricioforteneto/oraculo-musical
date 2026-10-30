@@ -103,5 +103,11 @@ dias, inclusive quando o teste falha. As asserções anteriores foram preservada
 A fixture de álbuns agora também aplica a descrição e a classe de cabeçalho da
 rota real, para que as capturas representem a refatoração completa.
 
-O resultado remoto e a revisão visual devem ser registrados depois da execução.
+Na primeira execução remota, [Verify #26](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41043565767),
+passaram lint, TypeScript, 213 testes unitários, 37 testes de integração,
+o **build padrão com Turbopack e configuração original** e 15 testes de acesso.
+O coletor de imagens tinha uma espera sem limite por `decode()` de capas lazy
+fora da tela; a preparação de captura foi ajustada para solicitar essas imagens
+e aguardar sua conclusão por no máximo dez segundos, preservando as asserções.
+A confirmação do layout e a revisão visual aguardam a execução seguinte.
 O fluxo pelo celular está em [github-actions.md](github-actions.md).
