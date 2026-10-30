@@ -73,6 +73,7 @@ try {
       await page.locator("main h1").waitFor();
       await page.evaluate(async()=>{await document.fonts.load('800 28px "Bricolage Grotesque"');await document.fonts.load('400 17px "Source Serif 4"');await document.fonts.ready;});
       assert(await page.evaluate(()=>document.fonts.check('800 28px "Bricolage Grotesque"')), "Fonte editorial indisponível");
+      assert(await page.evaluate(()=>["Bricolage Grotesque","Source Serif 4"].every(name=>Array.from(document.fonts).some(face=>face.family.includes(name) && face.status==="loaded"))), "Famílias editoriais não carregadas");
       assert.equal(await page.locator("html").getAttribute("data-mode"),mode);
       assert.equal(await page.locator("main").count(),1);
       assert.equal(await page.locator("h1").count(),1);
@@ -106,15 +107,21 @@ try {
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}.png`),fullPage:true});
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.png`)});
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.jpg`),type:"jpeg",quality:90});
+        await page.screenshot({path:resolve(artifactDir,`${shot}-${width}.jpg`),type:"jpeg",quality:90,fullPage:true});
         if(path==="/albuns") {
           const first=await page.getByRole("region",{name:"Ranking anual",exact:true}).locator("ol > li").first().boundingBox();
-          const bar=await page.getByRole("navigation",{name:"Navegação mobile",exact:true}).boundingBox();
+          const bar=width < 1000 ? await page.getByRole("navigation",{name:"Navegação mobile",exact:true}).boundingBox() : null;
           assert(first && first.y + first.height <= (width < 1000 ? bar.y : 844),`Primeiro álbum fora da primeira tela em ${width}px (${mode})`);
         }
       }
     }
     console.log(`Layout: 11 telas e capturas verificadas em ${width}px, tema ${mode}.`);
   }
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(origin+"/albuns");
+  await page.getByRole("button",{name:"Mais",exact:true}).click();
+  await page.screenshot({path:resolve(artifactDir,`oraculo-tema-${mode}-390-viewport.jpg`),type:"jpeg",quality:90});
+  await page.getByRole("button",{name:"Fechar menu",exact:true}).click();
   }
   // Exercise the real mobile menu, storage, and desktop selector together.
   await page.setViewportSize({width:390,height:844});
@@ -307,7 +314,7 @@ try {
   assert.equal(batchCalls,beforeWaiting+1);
   recoveryMode=null;
   assert.deepEqual(errors,[]);
-  console.log("Layout Chromium: 11 telas × 4 larguras; menu, foco, teclado, busca/retorno, links, sincronização, central de pendências, cópia/fallback, correção da fonte, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
+  console.log("Layout Chromium: 11 telas × 4 larguras × 2 temas; preferência persistida, menu, foco, teclado, busca/retorno, links, sincronização, central de pendências, cópia/fallback, correção da fonte, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
 } catch(error) {
   await page?.screenshot({path:resolve(artifactDir,"failure.png"),fullPage:true}).catch(()=>{});
   throw error;
