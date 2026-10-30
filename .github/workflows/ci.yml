@@ -1,10 +1,18 @@
 name: Verify
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
 permissions:
   contents: read
+concurrency:
+  group: verify-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     services:
       postgres:
         image: postgres:17
@@ -30,4 +38,61 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:integration
-      - run: npm run test:e2e
+      - name: Build de produção
+        run: npm run build
+      - name: Testes de acesso com o build de produção
+        run: npx playwright test
+      - name: Guardar diagnóstico dos testes de acesso
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: access-tests-${{ github.run_id }}
+          path: |
+            test-results/
+            playwright-report/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  layout:
+    name: Layout e capturas
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+      LAYOUT_ARTIFACT_DIR: test-results/layout
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - name: Instalar Chromium e dependências do navegador
+        run: npx playwright install --with-deps chromium
+      - name: Verificar layout e comportamento em quatro larguras
+        run: npm run test:layout
+      - name: Disponibilizar capturas para revisão pelo conector
+        if: always()
+        run: |
+          node --input-type=module <<'NODE'
+          import { existsSync, readdirSync, readFileSync } from 'node:fs';
+          const directory = 'test-results/layout';
+          if (existsSync(directory)) {
+            for (const name of readdirSync(directory).filter(name => /^(oraculo-(albuns|capas-revisar)-\d+(-viewport)?|failure)\.png$/.test(name)).sort()) {
+              console.log(`::group::Captura ${name}`);
+              console.log(`LAYOUT_CAPTURE_BEGIN ${name}`);
+              const encoded = readFileSync(`${directory}/${name}`).toString('base64');
+              for (let offset = 0; offset < encoded.length; offset += 120) console.log(encoded.slice(offset, offset + 120));
+              console.log('LAYOUT_CAPTURE_END');
+              console.log('::endgroup::');
+            }
+          }
+          NODE
+      - name: Guardar capturas e trace, inclusive em caso de falha
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: layout-capturas-${{ github.run_id }}
+          path: test-results/layout/
+          if-no-files-found: warn
+          retention-days: 7

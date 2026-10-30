@@ -7,6 +7,7 @@ import { syntheticIssues } from "../fixtures/synthetic/issues";
 import { AppShell } from "../../src/components/app-shell";
 import { Dashboard } from "../../src/components/dashboard";
 import { CatalogPage } from "../../src/components/catalog-page";
+import catalogStyles from "../../src/components/catalog-page.module.css";
 import { ArtworkEditor } from "../../src/components/artwork-editor";
 import { AlbumDetails } from "../../src/components/album-details";
 import { StatisticsPage } from "../../src/components/statistics-page";
@@ -73,7 +74,7 @@ function Fixture() {
     return <VersionHistoryPage history={{versions:[after.version,before.version],selected:after.version,previous:before.version,comparison:comparePublishedVersions(before,after),page:1,hasMore:false,notices:[]}} />;
   }
   const title = path === "/albuns" ? "Álbuns" : path.startsWith("/albuns/") ? "Detalhe do álbum" : path === "/top-50" ? "Top 50" : path === "/playoffs" ? "Playoffs" : path === "/sincronizacao" ? "Sincronização" : "O ano em discos.";
-  return <AppShell title={title} version={currentVersion}>
+  return <AppShell title={title} version={currentVersion} headingClassName={path === "/albuns" ? catalogStyles.pageHeading : undefined} description={path === "/albuns" ? "Explore o ranking anual pela nota original e consulte cada avaliação." : undefined}>
     {path === "/albuns" ? <CatalogPage albums={albums} /> : path.startsWith("/albuns/") ? <><Link href={`/albuns${catalogQuery(catalogFilters(params))}`}>Voltar aos álbuns</Link><ArtworkEditor key={path} initialOpen={Boolean(catalogFilters(params).capas)} album={(albums.find(a => a.albumId === path.split("/")[2]) ?? syntheticIssues().source.albums.find(a=>a.albumId===path.split("/")[2]))!} /><AlbumDetails album={rankAnnualAlbums(albums).find(a => a.albumId === path.split("/")[2]) ?? rankAnnualAlbums(syntheticIssues().source.albums).find(a=>a.albumId===path.split("/")[2]) ?? null} /></> : path === "/top-50" ? <Top50Panel projection={competition.projection} /> : path === "/playoffs" ? <><Link href="/playoffs?aba=historico">Histórico das fases</Link>{params.get("aba") === "historico" ? <CompetitionHistory history={buildCompetitionPhaseHistory(albums.map(a => ({identityKey:a.albumId!,version:"100",current:true,record:a})),"100")} /> : <CompetitionBracket bracket={field.bracket} results={results} resultsVersion={currentVersion} />}</> : path === "/sincronizacao" ? <SynchronizationPage source={source} competition={competition} ready /> : <Dashboard source={source} competition={competition} />}
   </AppShell>;
 }

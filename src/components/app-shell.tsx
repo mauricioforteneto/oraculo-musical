@@ -22,8 +22,8 @@ const secondary = [
 export function activeDestination(path: string | null) {
   return path?.startsWith("/albuns/") ? "/albuns" : path ?? "/";
 }
-export function AppShell({ children, title, description, version, localPreview = false }: {
-  children: React.ReactNode; title: string; description?: string; version?: string | number | null; localPreview?: boolean;
+export function AppShell({ children, title, description, version, localPreview = false, headingClassName }: {
+  children: React.ReactNode; title: string; description?: string; version?: string | number | null; localPreview?: boolean; headingClassName?: string;
 }) {
   const pathname = usePathname();
   const active = activeDestination(pathname);
@@ -71,7 +71,7 @@ export function AppShell({ children, title, description, version, localPreview =
         <span className={styles.version}>{localPreview ? "Prévia local" : "Fonte"}{version != null ? `${localPreview ? " ·" : ""} v${version}` : " · sem publicação"}</span>
       </header>
       <main id="conteudo" className={styles.content}>
-        <div className={styles.heading}><span className={styles.caption}>MINHA ESCUTA · 2026</span><h1>{title}</h1>{description && <p>{description}</p>}</div>
+        <div className={[styles.heading, headingClassName].filter(Boolean).join(" ")}><span className={styles.caption}>MINHA ESCUTA · 2026</span><h1>{title}</h1>{description && <p>{description}</p>}</div>
         {children}
       </main>
       <footer className={styles.footer}>Oráculo Musical · 2026 <span>{version != null ? `Publicação v${version}` : "Aguardando publicação"}</span></footer>

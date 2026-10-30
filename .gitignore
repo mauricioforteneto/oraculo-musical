@@ -9,6 +9,7 @@ service-account*.json
 
 # Dados pessoais e evidências locais
 .private/
+.hallmark/
 backups/
 downloads/
 *.xlsx
@@ -19,6 +20,7 @@ downloads/
 *.sql.gz
 
 # Build, dependências e ferramentas
+/.agents/skills/hallmark/
 node_modules/
 .next/
 out/
