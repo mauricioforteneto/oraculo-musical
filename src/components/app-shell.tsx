@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import Link from "next/link";
+import { SeasonLink as Link, SeasonProvider, SeasonSwitcher, useSeason } from "./season-context";
 import { usePathname } from "next/navigation";
-import { AudioLines, LibraryBig, Trophy, GitBranch, MoreHorizontal, BarChart3, History, RefreshCw, ClipboardList, LogOut, X } from "lucide-react";
+import { AudioLines, LibraryBig, Trophy, GitBranch, MoreHorizontal, BarChart3, History, RefreshCw, ClipboardList, BookOpen, LogOut, X } from "lucide-react";
 import { Brand } from "./brand";
 import { ThemeSwitcher } from "./theme-switcher";
 import styles from "./app-shell.module.css";
@@ -15,6 +15,7 @@ const primary = [
   { href: "/playoffs", label: "Playoffs", icon: GitBranch },
 ];
 const secondary = [
+  { href: "/regras", label: "Regras da temporada", icon: BookOpen },
   { href: "/pendencias", label: "Pendências", icon: ClipboardList },
   { href: "/estatisticas", label: "Estatísticas", icon: BarChart3 },
   { href: "/historico", label: "Histórico de versões", icon: History },
@@ -23,9 +24,12 @@ const secondary = [
 export function activeDestination(path: string | null) {
   return path?.startsWith("/albuns/") ? "/albuns" : path ?? "/";
 }
-export function AppShell({ children, title, description, version, localPreview = false, headingClassName }: {
-  children: React.ReactNode; title: string; description?: string; version?: string | number | null; localPreview?: boolean; headingClassName?: string;
-}) {
+type AppShellProps = { children: React.ReactNode; title: string; description?: string; version?: string | number | null; localPreview?: boolean; headingClassName?: string; season?: number; publicationLabel?: string };
+export function AppShell(props: AppShellProps) {
+  return <SeasonProvider year={props.season}><AppShellContent key={props.season} {...props} /></SeasonProvider>;
+}
+function AppShellContent({ children, title, description, version, localPreview = false, headingClassName, publicationLabel }: AppShellProps) {
+  const { year } = useSeason();
   const pathname = usePathname();
   const active = activeDestination(pathname);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -50,7 +54,7 @@ export function AppShell({ children, title, description, version, localPreview =
       if (previousOverflow.current !== null) document.body.style.overflow = previousOverflow.current;
       previousOverflow.current = null;
     };
-  }, [pathname]);
+  }, [pathname, year]);
   function navigation(items: typeof primary, mobile = false) {
     return items.map(item => <Link key={item.href} href={item.href} aria-current={active === item.href ? "page" : undefined}
       className={mobile ? styles.mobileItem : styles.navItem} onClick={closeMenu}>
@@ -61,20 +65,20 @@ export function AppShell({ children, title, description, version, localPreview =
     <a href="#conteudo" className={styles.skip}>Ir para o conteúdo</a>
     <header className={styles.topbar}>
       <Link href="/" className={styles.brand} aria-label="Oráculo Musical, início"><Brand /></Link>
-      <span className={styles.desktopCaption}>Minha escuta em 2026</span>
-      <span className={styles.version}>{localPreview ? "Prévia local" : "Fonte"}{version != null ? ` v${version}` : " sem publicação"}</span>
+      <span className={styles.desktopCaption}>Minha escuta em {year}</span>
+      <span className={styles.version}><span className={styles.mobileSeason}>{year}</span><span>{publicationLabel ?? (localPreview ? "Prévia local" : "Fonte")}{publicationLabel ? "" : version != null ? ` v${version}` : " sem publicação"}</span></span>
     </header>
     <div className={styles.frame}>
     <aside className={styles.sidebar}>
       <nav aria-label="Navegação principal" className={styles.nav}>{navigation(primary)}{navigation(secondary)}</nav>
-      <div className={styles.sidebarFoot}><ThemeSwitcher /><span>Acervo privado</span><form action="/auth/logout" method="post"><button type="submit" className={styles.navItem}><LogOut size={18} aria-hidden="true" />Sair</button></form></div>
+      <div className={styles.sidebarFoot}><SeasonSwitcher /><ThemeSwitcher /><span>Acervo privado</span><form action="/auth/logout" method="post"><button type="submit" className={styles.navItem}><LogOut size={18} aria-hidden="true" />Sair</button></form></div>
     </aside>
     <div className={styles.workspace}>
       <main id="conteudo" className={styles.content}>
         <div className={[styles.heading, headingClassName].filter(Boolean).join(" ")}><h1>{title}</h1>{description && <p>{description}</p>}</div>
         {children}
       </main>
-      <footer className={styles.footer}>Oráculo Musical 2026 <span>{version != null ? `Publicação v${version}` : "Aguardando publicação"}</span></footer>
+      <footer className={styles.footer}>Oráculo Musical {year} <span>{publicationLabel ?? (version != null ? `Publicação v${version}` : "Aguardando publicação")}</span></footer>
     </div>
     </div>
     <nav className={styles.mobileNav} aria-label="Navegação mobile">
@@ -95,6 +99,7 @@ export function AppShell({ children, title, description, version, localPreview =
       <div className={styles.dialogBody}>
         <div className={styles.dialogHeading}><h2 id="mais-title">Mais do Oráculo</h2><button type="button" aria-label="Fechar menu" onClick={closeMenu}><X size={22} aria-hidden="true" /></button></div>
         <nav aria-label="Mais páginas" className={styles.nav}>{navigation(secondary)}</nav>
+        <SeasonSwitcher />
         <ThemeSwitcher />
         <form action="/auth/logout" method="post"><button className={styles.navItem} type="submit"><LogOut size={19} aria-hidden="true" />Sair</button></form>
       </div>

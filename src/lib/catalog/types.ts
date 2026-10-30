@@ -1,5 +1,7 @@
 import type { AlbumArtwork, ArtworkSummary } from "@/lib/artwork/types";
 export type AlbumRecord = {
+  evaluatedOn?: string | null;
+  releaseYear?: number | null;
   /** Database identity supplied only when reading the published source. */
   albumId?: string;
   artwork?: AlbumArtwork;
@@ -81,6 +83,8 @@ export type Top50ManualDecision = {
 };
 
 export type LocalSourcePreview = {
+  season?: number;
+  monthly?: import("@/lib/competition/monthly").MonthlyState;
   artworkSummary?: ArtworkSummary;
   version: number | string | null;
   referenceDate: string;

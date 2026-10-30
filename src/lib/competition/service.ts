@@ -1,3 +1,4 @@
+import { seasonContext, type SeasonContext } from "@/lib/seasons/context";
 import "server-only";
 import { databasePool } from "@/lib/db/pool";
 import { configuredDriveReader } from "@/lib/ingestion/google";
@@ -16,9 +17,9 @@ export type FreezeMode = "initial" | "correction";
 type FreezeRow = { id: string; file_name: string; file_version: string; sha256: string; frozen_at: string; frozen_by: string; correction_reason: string | null; supersedes_id: string | null; cutoff_album_keys: string[] };
 type ParticipantRow = { identity_key: string; artist: string; title: string; original_score: string; route: Participant["route"]; seed: number; source_row: number; evidence: Record<string, unknown> };
 
-function configuration() {
-  const season = Number(process.env.SOURCE_SEASON ?? "2026");
-  const folder = process.env.GOOGLE_DRIVE_FOLDER_ID;
+function configuration(context: SeasonContext = seasonContext()) {
+  const season = context.year;
+  const folder = context.folderId;
   if (season !== 2026 || !folder) throw new CompetitionError("COMPETITION_NOT_CONFIGURED");
   return { season, folder };
 }
@@ -44,8 +45,8 @@ async function participantsFor(role: "read" | "sync", freezeId: string): Promise
     FROM oraculo.competition_freeze_participants WHERE freeze_id=$1 ORDER BY seed`, [freezeId]);
   return rows.rows.map(p => ({ identityKey: p.identity_key, artist: p.artist, title: p.title, originalScore: Number(p.original_score), route: p.route, seed: p.seed, sourceRow: p.source_row, evidence: p.evidence }));
 }
-export async function getCompetitionState(albums: AlbumRecord[], results: PublishedPlayoffResult[], decisions: Top50ManualDecision[] = []) {
-  const { season, folder } = configuration();
+export async function getCompetitionState(albums: AlbumRecord[], results: PublishedPlayoffResult[], decisions: Top50ManualDecision[] = [], context?: SeasonContext) {
+  const { season, folder } = configuration(context);
   const id = await sourceId("read", season, folder);
   const active = await activeFor("read", id);
   const history = await databasePool("read").query<{ id: string; file_name: string; file_version: string; frozen_at: string; correction_reason: string | null; supersedes_id: string | null }>(
@@ -82,8 +83,8 @@ async function originalScoreIssues(id: string, participants: Participant[], role
     .map(p => ({ code: "ORIGINAL_SCORE_CHANGED", severity: "error" as const,
       message: "Nota original difere da avaliação imutável já registrada.", sourceRow: p.sourceRow }));
 }
-export async function previewFreeze(mode: FreezeMode) {
-  const { season, folder } = configuration();
+export async function previewFreeze(mode: FreezeMode, context?: SeasonContext) {
+  const { season, folder } = configuration(context);
   const id = await sourceId("read", season, folder);
   const active = await activeFor("read", id);
   if ((mode === "initial" && active) || (mode === "correction" && !active)) throw new CompetitionError("FREEZE_MODE_CONFLICT");
@@ -107,11 +108,11 @@ export async function previewFreeze(mode: FreezeMode) {
     projection: built.canFreeze ? projectTop50(parsed.albums, built.participants, parsed.playoffResults, parsed.albums.map(a => albumIdentity(a)), parsed.top50Decisions) : null };
 }
 
-export async function confirmFreeze(input: { mode: FreezeMode; token: FreezeToken; backupAttested: boolean; eligibilityAttested?: boolean; noMatchAttested?: boolean; reason?: string }, userId: string) {
+export async function confirmFreeze(input: { mode: FreezeMode; token: FreezeToken; backupAttested: boolean; eligibilityAttested?: boolean; noMatchAttested?: boolean; reason?: string }, userId: string, context?: SeasonContext) {
   if (!input.backupAttested) throw new CompetitionError("BACKUP_ATTESTATION_REQUIRED");
   if (Date.now() < Date.parse(CUTOFF_UTC)) throw new CompetitionError("CUTOFF_NOT_REACHED");
   if (input.mode === "correction" && (!input.eligibilityAttested || !input.noMatchAttested || !input.reason || input.reason.trim().length < 10)) throw new CompetitionError("CORRECTION_ATTESTATION_REQUIRED");
-  const { season, folder } = configuration();
+  const { season, folder } = configuration(context);
   const id = await sourceId("sync", season, folder);
   const { reader, candidate } = await chosen(input.mode, season, folder);
   const current = await activeFor("sync", id);

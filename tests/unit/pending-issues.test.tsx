@@ -7,7 +7,7 @@ import {syntheticAlbum,syntheticField,syntheticFirstResults,syntheticAdvance} fr
 import {projectTop50} from '../../src/lib/competition/top50';
 import {albumIdentity} from '../../src/lib/competition/rules';
 const state=vi.hoisted(()=>({query:''}));
-vi.mock('next/navigation',()=>({useSearchParams:()=>new URLSearchParams(state.query),usePathname:()=>'/pendencias'}));
+vi.mock('next/navigation',()=>({useSearchParams:()=>new URLSearchParams(state.query),usePathname:()=>'/pendencias',useRouter:()=>({push:()=>{}})}));
 import {PendingIssuesPage} from '../../src/components/pending-issues-page';
 beforeEach(()=>{state.query='';});
 describe('central de pendências',()=>{

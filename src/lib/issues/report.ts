@@ -13,7 +13,7 @@ export type PendingIssue={
   id:string;code:string;category:IssueCategory;scope:IssueScope;blocking:boolean;title:string;
   subjects:IssueSubject[];messages:string[];impact:string;action:string;evidence:IssueEvidence[];
 };
-export type IssueReport={version:string|null;publishedAt:string|null;items:PendingIssue[];notices:string[]};
+export type IssueReport={season?:number;version:string|null;publishedAt:string|null;items:PendingIssue[];notices:string[]};
 export type IssueCompetition=Pick<Awaited<ReturnType<typeof getCompetitionState>>,'active'|'projection'>;
 export const ISSUE_CATEGORIES=[{id:'facts',label:'Fatos do Top 50'},{id:'results',label:'Resultados'},{id:'derived',label:'Conferência da planilha'},{id:'import',label:'Importação'}] as const;
 const CUT_TIE_ACTION=`Este empate depende de decisão explícita do proprietário registrada na tabela reconhecida pelo aplicativo. ${TOP50_DECISION_INSTRUCTIONS} Enquanto não houver decisão confirmada e validada, mantenha todo o grupo sem posição em Rank Top 50 provisório (Albuns 2026) e Pos. (Top 50), preservando notas originais, fatos competitivos e os demais classificados. Mantenha fase, bônus e índice conforme o cálculo atual informado. Se já houver decisão comprovada, preserve seu registro como histórico e transcreva somente o que foi confirmado para a tabela. Observações e posições preenchidas, isoladamente, não aplicam um desempate. Não declare o empate resolvido antes da validação da decisão pelo aplicativo.`;
@@ -29,7 +29,7 @@ function albumEvidence(album:AlbumRecord,source:LocalSourcePreview):IssueEvidenc
   return {label:album.isPresent===false ? 'Última ocorrência do álbum':'Registro do álbum',
     version:album.provenance?.version ?? (album.isPresent===false ? null : source.version===null ? null : String(source.version)),
     fileName:album.provenance?.fileName ?? (album.isPresent===false ? null : source.fileName),
-    locator:album.provenance?.sourceLocator ?? (album.sourceRow>0 ? `Albuns 2026!${album.sourceRow}`:null)};
+    locator:album.provenance?.sourceLocator ?? (album.sourceRow>0 ? `Albuns ${source.season ?? 2026}!${album.sourceRow}`:null)};
 }
 function conflictAction(messages:string[]) {
   if(messages.some(m=>m.includes('exclusão da Repescagem'))) return 'Confirme se o álbum participou da Repescagem. Faça a indicação de fase e a observação concordarem com o fato comprovado; preserve o bônus somente se a participação for confirmada.';
@@ -38,6 +38,7 @@ function conflictAction(messages:string[]) {
   return 'Confira a fase alcançada e suas evidências: etapa, score e resultado. Corrija os campos contraditórios na próxima versão, sem inventar participação nem atribuir uma fase encerrada apenas pela nota.';
 }
 function importAction(code:string) {
+  if(code.startsWith('MONTHLY_')) return 'Confira Data da avaliação, Ano de lançamento e o contexto em Playoffs desta temporada. Desempates exigem reescuta e confirmação do grupo completo em Desempates mensais; fechamentos e correções exigem nova identificação e confirmação em Fechamentos mensais. Preserve as notas originais e os fechamentos anteriores. Dezembro continua sem corte e não pode ser fechado.';
   if(code.startsWith('TOP50_DECISION')) return TOP50_DECISION_INSTRUCTIONS;
   if(/ORIGINAL|PILLAR/.test(code)) return 'Confira a nota original e os pilares com a avaliação registrada. Corrija a inconsistência preservando as notas originais imutáveis; não substitua a original por nota promovida ou índice.';
   if(/DUPLICATE|IDENTITY/.test(code)) return 'Confira artista, álbum e as linhas indicadas. Corrija identidades ou duplicidades sem fundir edições distintas nem apagar avaliações válidas.';
@@ -46,16 +47,16 @@ function importAction(code:string) {
   return 'Confira o apontamento na aba ou célula indicada. Corrija a fonte quando necessário e gere uma nova versão numérica do XLSX, preservando as avaliações originais e os resultados válidos.';
 }
 
-export function buildIssueReport(source:LocalSourcePreview|null,competition:IssueCompetition|null):IssueReport {
-  const report:IssueReport={version:source?.version==null ? null:String(source.version),publishedAt:source?.publishedAt ?? null,items:[],notices:[]};
+export function buildIssueReport(source:LocalSourcePreview|null,competition:IssueCompetition|null,season=source?.season ?? 2026):IssueReport {
+  const report:IssueReport={season,version:source?.version==null ? null:String(source.version),publishedAt:source?.publishedAt ?? null,items:[],notices:[]};
   if(!source) {report.notices.push('Ainda não há fonte registrada. Abra Sincronização para publicar a planilha.');return report;}
   const version=report.version;
   const albums=source.albums ?? [];
   const byIdentity=new Map<string,AlbumRecord[]>();
   for(const album of albums) {const key=albumIdentity(album);byIdentity.set(key,[...(byIdentity.get(key) ?? []),album]);}
   function add(issue:Omit<PendingIssue,'id'>) {report.items.push({...issue,id:`pendencia-${report.items.length+1}`});}
-  const projection=competition?.projection;
-  const active=competition?.active;
+  const projection=season===2026 ? competition?.projection : null;
+  const active=season===2026 ? competition?.active : null;
   const cutTieKeys=new Set(projection?.cutTieKeys ?? []);
   const cutTieGroup=(projection?.entries ?? []).filter(entry=>cutTieKeys.has(entry.identityKey))
     .map(entry=>`${entry.artist} — ${entry.title}`).join('; ');
@@ -63,8 +64,8 @@ export function buildIssueReport(source:LocalSourcePreview|null,competition:Issu
     ? 'A leitura de desempates manuais aguarda a migração 0008 do banco. As decisões ainda não podem ser aplicadas nesta instalação.'
     : source.top50DecisionsExtracted===false ? 'Sincronize novamente a versão publicada para extrair a tabela de decisões com o novo parser. Não é necessário gerar outra versão se o XLSX já tiver a tabela correta.' : '';
   const cutTieAction=`${decisionAvailability ? `${decisionAvailability} `:''}${CUT_TIE_ACTION}`;
-  if(decisionAvailability) report.notices.push(decisionAvailability);
-  if(version!==null && !active) report.notices.push('As verificações competitivas aparecerão após a confirmação do corte oficial.');
+  if(season===2026 && decisionAvailability) report.notices.push(decisionAvailability);
+  if(version!==null && !active) report.notices.push(season===2027 ? 'Consulte a classificação mensal para conferir o contexto atual, os meses fechados e as pendências de cada mês.' : 'As verificações competitivas aparecerão após a confirmação do corte oficial.');
   if(version!==null && source.publicationIssues===undefined) report.notices.push('Não há relatório de importação salvo para esta publicação. As verificações calculadas continuam disponíveis.');
   for(const entry of [...(projection?.entries ?? []),...(projection?.survivors ?? [])]) {
     const records=byIdentity.get(entry.identityKey) ?? [];
@@ -143,7 +144,7 @@ export function buildIssueReport(source:LocalSourcePreview|null,competition:Issu
       const key=[scope,issue.code,issue.sourceLocator,issue.message].join('|');if(seen.has(key)) continue;seen.add(key);
       const parts=locatorParts(issue.sourceLocator);
       // Rejected candidate rows must never be linked to the album occupying that row in the active publication.
-      const subjects=scope==='publication' && parts.sheet==='Albuns 2026' && parts.row!==null
+      const subjects=scope==='publication' && parts.sheet===`Albuns ${season}` && parts.row!==null
         ? albums.filter(a=>a.isPresent!==false && a.sourceRow===parts.row).map(subject):[];
       add({code:issue.code,category:'import',scope,blocking:issue.severity==='error',title:issue.severity==='error' ? 'Erro na importação da planilha':'Aviso da importação da planilha',
         subjects,messages:[issue.message],impact:scope==='attempt' ? 'A tentativa não substituiu a publicação válida. Corrigir este item não altera a versão já publicada.'
@@ -168,7 +169,11 @@ export function buildIssueReport(source:LocalSourcePreview|null,competition:Issu
 export function evidenceText(evidence:IssueEvidence) {
   return [evidence.label,evidence.version!==null ? `v${evidence.version}`:'versão não registrada',evidence.fileName,evidence.locator ?? 'linha não registrada'].filter(Boolean).join(' · ');
 }
-export function issuePrompt(issues:PendingIssue[],version:string|null) {
+export function issuePrompt(issues:PendingIssue[],version:string|null,season=2026) {
+  if(season===2027) return [`Revise somente a temporada 2027. Publicação de referência: ${version!==null ? `v${version}`:"nenhuma"}.`,
+    "Use Albuns 2027, Desempates mensais e Fechamentos mensais. Preserve notas originais e registros históricos. Não aplique regras, seeds, bônus ou decisões de 2026. Não preencha confirmações nem declare uma reescuta sem decisão explícita do proprietário. Corte de dezembro permanece indefinido.",
+    "Corrija somente fatos comprovados, publique uma versão numérica nova e confira a validação no aplicativo. Correções de fechamento exigem nova identificação, referência ao fechamento vigente, justificativa e nova confirmação; não substitua linhas confirmadas.",
+    ...issues.map((issue,i)=>[`${i+1}. ${issue.title} (${issue.code})`, ...issue.subjects.map(subject=>`${subject.artist} — ${subject.title}`),...issue.evidence.map(evidenceText),...issue.messages,`Efeito: ${issue.impact}`,`Orientação: ${issue.action}`].join("\n"))].join("\n\n");
   return [`Revise as pendências abaixo no XLSX do Oráculo Musical. Publicação de referência: ${version!==null ? `v${version}`:'nenhuma'}.`,
     'Corrija apenas o que estiver comprovado nas evidências e no cálculo atual informado. Se houver correções aplicáveis ao XLSX, gere uma nova versão numérica, sem sobrescrever a anterior. Se todos os itens dependerem de confirmação ou de recurso ainda ausente no aplicativo, entregue o diagnóstico e o que falta, sem gerar uma nova versão apenas para declarar resolução.',
     'Preserve notas originais, seeds congelados, resultados válidos e dados não relacionados. Não altere notas, fases, participação, scores ou resultados para fazer uma posição desejada fechar. Não invente participação, vencedor, critério de desempate ou aprovação do proprietário.',

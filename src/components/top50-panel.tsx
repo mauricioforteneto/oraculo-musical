@@ -1,5 +1,5 @@
 import type { Top50Entry, Top50Projection } from "@/lib/competition/top50";
-import Link from 'next/link';
+import { SeasonLink as Link } from "./season-context";
 import styles from "./competition-panel.module.css";
 
 export function Top50Panel({ projection }: { projection: Top50Projection }) {

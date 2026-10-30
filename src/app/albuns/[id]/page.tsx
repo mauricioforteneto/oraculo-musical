@@ -1,4 +1,5 @@
-import Link from "next/link";
+import { pageSeason } from "@/lib/seasons/context";
+import { SeasonLink as Link } from "@/components/season-context";
 import { notFound } from "next/navigation";
 import { requireOwner } from "@/lib/auth";
 import { readPageSource } from "@/lib/catalog/page-source";
@@ -15,20 +16,21 @@ export default async function Album({ params, searchParams }: { params: Promise<
   const { id } = await params;
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) notFound();
   // The configured source is the only lookup scope, including retained absent records.
-  const source = await readPageSource();
+  const context = pageSeason(await searchParams);
+  const source = await readPageSource(context);
   const album = rankAnnualAlbums(source?.albums ?? []).find(a => a.albumId === id);
   if (!album) notFound();
   const values = await searchParams;
   const query = new URLSearchParams();
-  for (const key of ["q","nota","limite","capas"]) if (typeof values[key] === "string") query.set(key,values[key]);
+  for (const key of ["q","nota","limite","capas","temporada"]) if (typeof values[key] === "string") query.set(key,values[key]);
   const filters = catalogFilters(query);
-  return <AppShell title="Detalhe do álbum" description="A avaliação original e os registros informados pela fonte." version={source?.version}>
+  return <AppShell season={context.year} title="Detalhe do álbum" description="A avaliação original e os registros informados pela fonte." version={source?.version}>
     <div className={styles.stack}>
       <div><Link className={styles.action} href={`/albuns${catalogQuery(filters)}`}>{filters.capas ? "← Voltar à lista de capas" : "← Voltar aos álbuns"}</Link></div>
       {album.isPresent === false && <p className={styles.muted}>Este álbum não consta na versão atual. A última avaliação conhecida está preservada.</p>}
       <ArtworkEditor key={album.albumId} album={album} initialOpen={Boolean(filters.capas)} />
       <AlbumDetails album={album} />
-      <p className={styles.muted}>Álbuns {process.env.SOURCE_SEASON ?? "2026"} · linha {album.sourceRow}{album.isPresent === false ? " · última ocorrência conhecida" : ` · publicação v${source?.version}`}</p>
+      <p className={styles.muted}>Álbuns {context.year} · linha {album.sourceRow}{album.isPresent === false ? " · última ocorrência conhecida" : ` · publicação v${source?.version}`}</p>
     </div>
   </AppShell>;
 }

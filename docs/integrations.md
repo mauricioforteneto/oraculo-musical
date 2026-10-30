@@ -77,3 +77,7 @@ Preferir exportação que o usuário consiga obter na própria conta; inspeciona
 ## MusicBrainz e Cover Art Archive
 
 Enriquecimento de capas implementado separadamente da fonte de avaliações, sem credencial de API. Consulta grupos de lançamento por artista/título no MusicBrainz e suas capas frontais aprovadas no Cover Art Archive. Correspondência conservadora, revisão manual, cache, limitação global no banco e retomada de lotes estão descritos em [artwork.md](artwork.md). A migração em produção foi confirmada pelo usuário e houve associações de capas na busca real. Testes locais usam respostas sintéticas. Falhas externas agora recebem diagnóstico por provedor/motivo; sua conferência em produção permanece pendente.
+
+## Temporadas e regras
+
+A configuração por ano, os adaptadores de campeonato, as rotas com `temporada`, a migração aditiva e o procedimento de ativação de 2027 estão em [temporadas.md](temporadas.md). A página privada de regras independe de uma fonte importada.

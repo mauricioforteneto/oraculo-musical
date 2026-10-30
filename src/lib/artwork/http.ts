@@ -1,3 +1,4 @@
+import { SeasonError } from "@/lib/seasons/context";
 import 'server-only';
 import { authClient, authConfigured } from '@/lib/auth';
 import { sameOrigin, ownerAccess } from '@/lib/access';
@@ -12,6 +13,7 @@ export async function artworkRequest(request: Request,handler: (userId: string)=
   if(access!=='allowed') return Response.json({error:access==='forbidden' ? 'FORBIDDEN':'UNAUTHENTICATED'},{status:access==='forbidden' ? 403:401,headers});
   try { return Response.json(await handler(data.user!.id),{headers}); }
   catch(cause) {
+    if(cause instanceof SeasonError) return Response.json({error:cause.code},{status:["SOURCE_CONFIGURATION_INVALID","SOURCE_NOT_CONFIGURED"].includes(cause.code) ? 503:400,headers});
     const code=cause instanceof ArtworkError ? cause.code : 'ARTWORK_STORAGE_UNAVAILABLE';
     const status=code==='ARTWORK_ALBUM_NOT_FOUND' ? 404 : code==='ARTWORK_BUSY' || code==='ARTWORK_LEASE_LOST' ? 409
       : code==='ARTWORK_INVALID_REQUEST' ? 400 : code==='ARTWORK_NOT_FOUND' ? 422 : code.startsWith('ARTWORK_PROVIDER_') ? 502 : 503;

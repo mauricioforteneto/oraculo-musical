@@ -38,3 +38,7 @@ O ensaio de interface cobre nove telas em 360, 390, 768 e 1280 px, ausência de 
 ## Central de pendências
 
 `/pendencias` reúne apontamentos da publicação e da última tentativa recusada, sem misturar suas linhas. Está no menu desktop e em **Mais**, com atalhos no Início, Top 50 e Sincronização. Filtros de tipo/origem/impacto e busca ficam na URL; links de avaliação usam apenas UUIDs lidos da fonte configurada. Cópia de orientações é local, por clique, com texto selecionável se o clipboard não estiver disponível. Detalhes em [pending-issues.md](pending-issues.md).
+
+## Temporadas e regras
+
+A configuração por ano, os adaptadores de campeonato, as rotas com `temporada`, a migração aditiva e o procedimento de ativação de 2027 estão em [temporadas.md](temporadas.md). A página privada de regras independe de uma fonte importada.

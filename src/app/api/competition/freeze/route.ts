@@ -1,3 +1,4 @@
+import { requestSeason } from "@/lib/seasons/context";
 import { competitionResponse, noStore, ownerForCompetition } from "@/lib/competition/api";
 import { confirmFreeze, type FreezeToken } from "@/lib/competition/service";
 
@@ -16,6 +17,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "INVALID_REQUEST" }, { status: 400, headers: noStore });
     }
     return Response.json(await confirmFreeze({ mode: body.mode, token, backupAttested: body.backupAttested,
-      eligibilityAttested: body.eligibilityAttested, noMatchAttested: body.noMatchAttested, reason: body.reason }, access.userId!), { headers: noStore });
+      eligibilityAttested: body.eligibilityAttested, noMatchAttested: body.noMatchAttested, reason: body.reason }, access.userId!, requestSeason(request)), { headers: noStore });
   } catch (error) { return competitionResponse(error); }
 }

@@ -1,3 +1,5 @@
+import { seasonContext, type SeasonContext } from "@/lib/seasons/context";
+import { publishMonthly } from "@/lib/competition/monthly-storage";
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { Pool, PoolClient } from "pg";
@@ -59,11 +61,6 @@ function logSyncFailure(stage: string, error: unknown) {
   });
 }
 
-function safeSeason(): number {
-  const value = process.env.SOURCE_SEASON ?? "2026";
-  if (!/^\d{4}$/.test(value) || Number(value) < 2000) throw new SyncServiceError("SOURCE_NOT_CONFIGURED");
-  return Number(value);
-}
 
 function stableJson(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
@@ -74,8 +71,7 @@ function stableJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
-async function getConfiguredSource(pool: Pool, season: number): Promise<SourceRow> {
-  const folder = process.env.GOOGLE_DRIVE_FOLDER_ID;
+async function getConfiguredSource(pool: Pool, season: number, folder: string): Promise<SourceRow> {
   if (!folder) throw new SyncServiceError("DRIVE_NOT_CONFIGURED");
   const result = await pool.query<SourceRow>(
     "SELECT id, season FROM oraculo.sources WHERE season = $1 AND folder_id = $2",
@@ -262,6 +258,7 @@ async function publish(
     if (current && candidate.sourceVersion === current.version && current.sha256 === download.sha256) {
       await insertPlayoffResults(client, source.id, current.id, parsed);
       await insertTop50Decisions(client, source.id, current.id, parsed.top50Decisions);
+      if (source.season === 2027) await publishMonthly(client, source.id, current.id, candidate.sourceVersion, parsed.monthlyRecords ?? {decisions:[],closures:[]}, issues);
       await insertIssues(client, runId, issues);
       await client.query(
         `UPDATE oraculo.sync_runs SET status = 'unchanged', version_id = $2, finished_at = now(), counts = $3::jsonb
@@ -307,7 +304,7 @@ async function publish(
        VALUES ($1, $2::bigint, $3, $4, $5::timestamptz, $6, $7, $8, $9::jsonb)
        RETURNING id`,
       [source.id, candidate.sourceVersion, candidate.file.id, candidate.file.name, candidate.file.modifiedTime,
-        download.sha256, WORKBOOK_PARSER_VERSION, parsed.referenceDate, JSON.stringify(parsed.summary)],
+        download.sha256, source.season === 2027 ? "2027.1" : WORKBOOK_PARSER_VERSION, parsed.referenceDate, JSON.stringify(parsed.summary)],
     );
     const sourceVersionId = versionInsert.rows[0].id;
     await insertPlayoffResults(client, source.id, sourceVersionId, parsed);
@@ -382,6 +379,7 @@ async function publish(
         [source.id, sourceVersionId, item.order, JSON.stringify(item)],
       );
     }
+    if (source.season === 2027) await publishMonthly(client, source.id, sourceVersionId, candidate.sourceVersion, parsed.monthlyRecords ?? {decisions:[],closures:[]}, issues);
     await insertIssues(client, runId, issues);
     await client.query(
       `INSERT INTO oraculo.source_publications(source_id, source_version_id)
@@ -408,15 +406,15 @@ async function publish(
   }
 }
 
-export async function syncDriveSource(userId: string) {
-  const season = safeSeason();
+export async function syncDriveSource(userId: string, context: SeasonContext = seasonContext()) {
+  const season = context.year;
   const pool = databasePool("sync");
-  const source = await getConfiguredSource(pool, season);
+  const source = await getConfiguredSource(pool, season, context.folderId);
   const { runId, token } = await acquireLeaseAndStartRun(pool, source.id, userId);
   let finished = false;
   let issues: WorkbookIssue[] = [];
   try {
-    const folder = process.env.GOOGLE_DRIVE_FOLDER_ID!;
+    const folder = context.folderId;
     const reader = configuredDriveReader();
     const candidate = await reader.latest(folder, season);
     const download = await reader.download(candidate);

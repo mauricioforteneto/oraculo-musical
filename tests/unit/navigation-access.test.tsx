@@ -33,7 +33,7 @@ describe("novas rotas privadas", () => {
     const source = { version: "105", albums: [syntheticAlbum(1)], playoffResults: [], top50Decisions: [] };
     deps.catalog.mockResolvedValue(source);
     await route();
-    expect(deps.competition).toHaveBeenCalledWith(source.albums, source.playoffResults, source.top50Decisions);
+    expect(deps.competition).toHaveBeenCalledWith(source.albums, source.playoffResults, source.top50Decisions, expect.objectContaining({year:2026,folderId:"configured-folder"}));
   });
   for (const [name, route] of routes) {
     it(`autoriza antes de qualquer leitura: ${name}`, async () => {
