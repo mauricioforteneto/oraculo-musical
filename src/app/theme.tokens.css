@@ -1,6 +1,6 @@
 /* Hallmark · shape: app screen · genre: editorial · theme: Editorial (A, by request) · modes: light+dark · v2.0.0 */
 /* Hallmark · pre-emit critique: album titles and original scores lead; dark red is lifted to preserve text contrast on elevated surfaces */
-:root:root {
+:root {
   color-scheme: light;
   --background: oklch(97% 0.007 86); --card: oklch(94% 0.01 86); --muted: oklch(91% 0.012 84);
   --foreground: oklch(18% 0.012 280); --ink-secondary: oklch(32% 0.011 280); --muted-foreground: oklch(47% 0.01 75);
@@ -28,7 +28,7 @@
   --body-weight: 350;
 }
 @media (prefers-color-scheme: dark) {
-  :root:root:not([data-mode]) {
+  :root:not([data-mode]) {
   color-scheme: dark;
   --background: oklch(15% 0.01 86); --card: oklch(18% 0.01 86); --muted: oklch(21% 0.012 84);
   --foreground: oklch(95% 0.012 280); --ink-secondary: oklch(86% 0.011 280); --muted-foreground: oklch(72% 0.01 75);

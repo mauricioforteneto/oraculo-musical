@@ -1,5 +1,8 @@
 # Auditoria Hallmark da página de álbuns
 
+Registro histórico da primeira etapa, anterior à escolha da direção A. A
+identidade vigente é [Revista musical, clara e escura](../design.md).
+
 Página: `/albuns`. Escopo: tela de aplicação, com refatoração da composição
 interna e preservação da identidade verde escura e cobre do Oráculo Musical.
 Skill: `.agents/skills/hallmark/SKILL.md`, versão 2.0.0.

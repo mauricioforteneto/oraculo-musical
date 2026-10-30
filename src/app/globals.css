@@ -3,14 +3,6 @@
 @import "tailwindcss";
 @import "./theme.tokens.css";
 @custom-variant dark (&:is(.dark *));
-:root {
-  color-scheme: dark;
-  --background: #101412; --foreground: #f0eee5;
-  --card: #181e1a; --card-foreground: #f0eee5;
-  --primary: #dfa775; --primary-foreground: #21190f;
-  --secondary: #253129; --muted: #202923; --muted-foreground: #a8b3a9;
-  --border: #354038; --ring: #e9b68b; --destructive: #f4a599;
-}
 @theme inline {
   --color-background: var(--background); --color-foreground: var(--foreground);
   --color-card: var(--card); --color-card-foreground: var(--card-foreground);

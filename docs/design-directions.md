@@ -8,6 +8,8 @@ ranking são preservados. A skill Hallmark continua local e ignorada pelo Git.
 
 As imagens abaixo registram as propostas originais, anteriores à implementação.
 O sistema escolhido está em [design.md](../design.md).
+As [capturas da implementação real, clara e escura](editorial-implementation.md)
+substituem as propostas abaixo para revisar o resultado atual.
 
 ## Comparação no celular
 
@@ -80,5 +82,6 @@ com o layout atual em 390 e 1280 px e guarda PNGs, cópias JPEG e `index.html` n
 em JPEG nos logs para que o conector as disponibilize nesta conversa, com menor
 volume; os PNGs originais permanecem no artefato. Nenhum deploy é feito.
 
-Após a escolha, a direção selecionada pode ser implementada nos componentes reais
-e depois levada às demais páginas com o mesmo sistema visual.
+A direção A foi escolhida e está implementada nos componentes reais. A validação
+do aplicativo usa `npm run build`, `npm run test:layout` nos dois temas e testes
+de preferência com Playwright; as propostas A/B ficam como registro da decisão.

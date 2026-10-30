@@ -1,5 +1,6 @@
 /* Hallmark · shape: app screen · genre: editorial · theme: Editorial (A, by request) · modes: light+dark · v2.0.0 */
 /* Hallmark · pre-emit critique: shared surfaces preserve existing workflows while inheriting the selected editorial identity */
+/* Hallmark · finish-review: subagent · ship · 0 findings · gap: none */
 .shell { min-height: 100svh; color: var(--foreground); }
 .shell a { text-decoration: none; }
 .shell button, .shell input, .shell select { font: inherit; }

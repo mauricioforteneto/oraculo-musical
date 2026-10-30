@@ -13,4 +13,13 @@ Os títulos, artistas e notas são fictícios. As fotografias licenciadas abaixo
 
 As licenças indicadas continuam aplicáveis a cada fotografia. Código e identidade da interface pertencem ao projeto; as imagens são apresentadas como parte da comparação visual.
 
-As fontes exibidas são Bricolage Grotesque, Source Serif 4, Instrument Sans e Figtree, obtidas via Google Fonts; arquivos de fonte não são redistribuídos aqui.
+As fontes exibidas são Bricolage Grotesque, Source Serif 4, Instrument Sans e Figtree, obtidas via Google Fonts; arquivos de fonte não são versionados nesta pasta.
+
+## Implementação selecionada
+
+`editorial-claro-mobile.jpg`, `editorial-escuro-mobile.jpg`,
+`editorial-claro-desktop.jpg`, `editorial-escuro-desktop.jpg` e
+`editorial-tema-mobile.jpg` são capturas diretas, sem retoque, do teste de layout
+dos componentes reais em [Verify #39](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41059605363).
+Usam exclusivamente fixtures fictícias e capas mockadas do teste, sem fotos
+pessoais. Veja [resultado e validação](../editorial-implementation.md).
