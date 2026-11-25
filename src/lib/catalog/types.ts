@@ -62,6 +62,7 @@ export type PublishedPlayoffResult = {
 
 export type Top50ManualDecision = {
   decisionId: string;
+  supersedesDecisionId?: string;
   season: number | null;
   rulesVersion: string;
   artist: string;

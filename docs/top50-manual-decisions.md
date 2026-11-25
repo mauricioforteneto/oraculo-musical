@@ -4,7 +4,7 @@ O parser `2026.4` lê decisões da aba opcional `Desempates Top 50`. O aplicativ
 
 ## Contrato do XLSX
 
-Uma linha por álbum do grupo completo, incluindo quem ficará fora das vagas. Os cabeçalhos abaixo são obrigatórios; a ordem das colunas é livre. Datas podem ser células de data do Excel ou texto `AAAA-MM-DD`. Os valores numéricos devem ser células numéricas.
+Uma linha por álbum do grupo completo, incluindo quem ficará fora das vagas. A ordem das colunas é livre. Apenas `Substitui decisão` é opcional. Datas podem ser células de data do Excel ou texto `AAAA-MM-DD`. Os valores numéricos devem ser células numéricas.
 
 | Cabeçalho | Conteúdo |
 | --- | --- |
@@ -22,6 +22,7 @@ Uma linha por álbum do grupo completo, incluindo quem ficará fora das vagas. O
 | Confirmado por | Autor real da confirmação |
 | Confirmado em | Data real da confirmação, em `AAAA-MM-DD` |
 | Referência da confirmação | Referência real à decisão explícita do proprietário |
+| Substitui decisão (opcional) | ID do registro pendente explicitamente substituído, igual em todas as linhas da decisão confirmada |
 
 Status e metadados de confirmação devem ser iguais em todas as linhas da decisão. Sem confirmação real, ordem e campos de confirmação ficam vazios e o status permanece `Pendente`. A ordem visual da tabela não desempata. Observações e posições derivadas nunca substituem essa tabela.
 
@@ -30,6 +31,8 @@ O contexto do trio da v104 é: nota original `78`, fase `Repescagem`, desempenho
 ## Validação e cálculo
 
 O grupo deve corresponder exatamente ao grupo atualmente empatado pelos critérios automáticos. Uma decisão incompleta, com identidade desconhecida/duplicada, ordem inválida, contexto alterado, confirmação ausente ou data impossível não é aplicada e gera pendência específica. Duas decisões confirmadas aplicáveis ao mesmo grupo são conflitantes; nenhuma é escolhida silenciosamente.
+
+Um registro pendente com ordem e confirmação vazias fica preservado no histórico. Seu aviso só é dispensado quando a única decisão efetivamente aplicada ao mesmo grupo e contexto referencia explicitamente seu ID em `Substitui decisão`. A data, o status e a coincidência dos álbuns por si só não comprovam a substituição.
 
 Se o grupo ou os fatos do empate mudarem, a decisão exige revisão. Se apenas outros álbuns passarem à frente, a preferência relativa permanece válida e as posições absolutas são recalculadas. Uma decisão não fixa permanentemente alguém em 49º ou 50º. Sem decisão aplicável, o grupo no corte continua sem posição; empates internos não resolvidos mantêm posições compartilhadas.
 
@@ -40,6 +43,8 @@ Um cabeçalho incompatível gera aviso de importação e impede a aplicação da
 Aplicar `0008_top50_manual_decisions.sql` com o fluxo administrativo de migrações antes da sincronização com o novo código. A tabela é somente leitura para `oraculo_reader` e permite apenas inserção ao sincronizador; versões antigas permanecem preservadas. O backup do schema `oraculo` inclui a nova tabela.
 
 A extração é vinculada à versão publicada e à revisão do parser de decisões. Tanto uma nova publicação quanto uma sincronização `unchanged` gravam a extração na mesma transação do relatório de sucesso. Reprocessar a mesma versão é idempotente. Ausência da tabela no XLSX significa extração vazia: não recuperar decisões de uma versão anterior. Uma tentativa recusada não substitui decisões da publicação ativa, e outra fonte não pode fornecê-las.
+
+A revisão 2 da extração lê o vínculo opcional no JSON já armazenado pela infraestrutura da migração 0008. Publicações extraídas pela revisão 1 continuam disponíveis até serem reprocessadas. Uma sincronização da mesma versão lê os mesmos bytes, sem republicar. Se o vínculo não constar do arquivo publicado e houver evidência explícita da substituição, seu registro exige uma nova versão da fonte.
 
 O catálogo continua disponível antes da migração, com aviso de indisponibilidade do suporte na central. O formato dos resultados dos Playoffs permanece `2026.3`, independente do parser global `2026.4`, para preservar resultados já publicados sem exigir reimportação.
 

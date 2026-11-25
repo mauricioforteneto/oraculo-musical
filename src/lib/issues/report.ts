@@ -96,6 +96,7 @@ export function buildIssueReport(source:LocalSourcePreview|null,competition:Issu
       action:cutTieAction,
       evidence:records.map(a=>albumEvidence(a,source))});
   }
+  const decidedKeys=new Set(projection?.appliedDecisions.flatMap(decision=>decision.orderedKeys));
   for(const issue of projection?.decisionIssues ?? []) add({code:issue.code,category:'facts',scope:'publication',
     blocking:issue.rows.some(row=>cutTieKeys.has(albumIdentity(row,row.season ?? 2026))),
     title:issue.code==='TOP50_DECISION_PENDING' ? 'Desempate manual aguarda confirmação'
@@ -103,7 +104,9 @@ export function buildIssueReport(source:LocalSourcePreview|null,competition:Issu
       : issue.code==='TOP50_DECISION_CONFLICT' ? 'Decisões manuais conflitantes':'Desempate manual inválido',
     subjects:issue.rows.map(row=>subject(byIdentity.get(albumIdentity(row,row.season ?? 2026))?.[0] ?? row)),
     messages:[`Decisão: ${issue.decisionId || 'sem identificação'}.`,...issue.messages],
-    impact:'Esta decisão não foi aplicada. Os critérios automáticos continuam valendo; um grupo empatado no corte permanece sem posição.',
+    impact:issue.code==='TOP50_DECISION_PENDING' && issue.rows.every(row=>decidedKeys.has(albumIdentity(row,row.season ?? 2026)))
+      ? 'O grupo já tem ordem calculada por outra decisão validada. Este registro continua pendente sem vínculo explícito de substituição aplicável.'
+      : 'Esta decisão não foi aplicada. Os critérios automáticos continuam valendo; um grupo empatado no corte permanece sem posição.',
     action:`${issue.code==='TOP50_DECISION_STALE' || issue.code==='TOP50_DECISION_CONFLICT'
       ? 'Reconfirme a ordem com o proprietário para o grupo e o contexto atuais; até lá, marque a decisão como Pendente. Não atualize apenas o contexto para fazer uma confirmação antiga passar na validação. '
       : 'Corrija a decisão indicada sem alterar notas, fatos ou os demais classificados. '}${TOP50_DECISION_INSTRUCTIONS}`,

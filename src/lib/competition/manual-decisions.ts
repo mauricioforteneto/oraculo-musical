@@ -2,10 +2,11 @@ import type { Top50ManualDecision } from "@/lib/catalog/types";
 import { albumIdentity } from "./rules";
 
 export const TOP50_DECISION_SHEET = "Desempates Top 50";
-export const TOP50_DECISION_PARSER_REVISION = 1;
+export const TOP50_DECISION_PARSER_REVISION = 2;
 export const TOP50_DECISION_HEADERS = ["Decisão", "Temporada", "Regra", "Artista", "Álbum", "Nota original", "Melhor fase",
   "Desempenho da fase", "Índice", "Ordem no grupo", "Status", "Confirmado por", "Confirmado em", "Referência da confirmação"] as const;
-export const TOP50_DECISION_INSTRUCTIONS = `Use a aba ${TOP50_DECISION_SHEET}, com os cabeçalhos: ${TOP50_DECISION_HEADERS.join(" | ")}. Inclua uma linha por álbum do grupo completo, inclusive quem ficará fora do corte, usando o mesmo identificador em Decisão. Use a identidade exata de artista e álbum; não use número de linha como identidade. Registre temporada, versão da regra e o contexto calculado do empate: nota original, melhor fase, desempenho da fase (etapa 1 ou 2 na Repescagem, score no Play-in/Pré-playoff, zero sem fase) e índice. A ordem no grupo deve ser relativa, de 1 a N, sem repetições; não é a posição absoluta no Top 50. Status Confirmada exige decisão explícita do proprietário, Confirmado por, Confirmado em (AAAA-MM-DD) e Referência da confirmação reais e iguais nas linhas da decisão. Sem confirmação, use Pendente e deixe ordem e confirmação vazias. Não invente a ordem do grupo nem uma autorização.`;
+export const TOP50_DECISION_SUPERSEDES_HEADER = "Substitui decisão";
+export const TOP50_DECISION_INSTRUCTIONS = `Use a aba ${TOP50_DECISION_SHEET}, com os cabeçalhos: ${TOP50_DECISION_HEADERS.join(" | ")}. Inclua uma linha por álbum do grupo completo, inclusive quem ficará fora do corte, usando o mesmo identificador em Decisão. Use a identidade exata de artista e álbum; não use número de linha como identidade. Registre temporada, versão da regra e o contexto calculado do empate: nota original, melhor fase, desempenho da fase (etapa 1 ou 2 na Repescagem, score no Play-in/Pré-playoff, zero sem fase) e índice. A ordem no grupo deve ser relativa, de 1 a N, sem repetições; não é a posição absoluta no Top 50. Status Confirmada exige decisão explícita do proprietário, Confirmado por, Confirmado em (AAAA-MM-DD) e Referência da confirmação reais e iguais nas linhas da decisão. Sem confirmação, use Pendente e deixe ordem e confirmação vazias. Na coluna opcional ${TOP50_DECISION_SUPERSEDES_HEADER}, informe em todas as linhas da decisão confirmada o ID da decisão pendente do mesmo grupo que ela substitui explicitamente, quando houver registro dessa substituição. Não invente a ordem do grupo nem uma autorização.`;
 
 export type DecisionCandidate = { identityKey: string; artist: string; title: string; originalScore: number; phase: string; phaseScore: number; index: number | null };
 export type ManualDecisionIssue = { code: "TOP50_DECISION_INVALID" | "TOP50_DECISION_PENDING" | "TOP50_DECISION_STALE" | "TOP50_DECISION_CONFLICT";
@@ -27,6 +28,7 @@ export function resolveTop50Decisions(groups: DecisionCandidate[][], decisions: 
   const byId = new Map<string, Top50ManualDecision[]>();
   const byKey = new Map(groups.flatMap(group => group.map(entry => [entry.identityKey, group] as const)));
   for (const row of decisions) byId.set(row.decisionId, [...(byId.get(row.decisionId) ?? []), row]);
+  const pending: { group: DecisionCandidate[]; rows: Top50ManualDecision[] }[] = [];
   const plans = new Map<DecisionCandidate[], AppliedManualDecision[]>();
   const issue = (code: ManualDecisionIssue["code"], rows: Top50ManualDecision[], message: string) =>
     issues.push({ code, decisionId: rows[0].decisionId, rows, messages: [message] });
@@ -38,6 +40,10 @@ export function resolveTop50Decisions(groups: DecisionCandidate[][], decisions: 
     if (new Set(keys).size !== keys.length) invalid.push("O mesmo álbum aparece mais de uma vez na decisão.");
     if (new Set(rows.map(row => JSON.stringify([row.status, row.confirmedBy, row.confirmedAt, row.confirmationReference]))).size !== 1)
       invalid.push("Status e metadados de confirmação devem coincidir em todo o grupo.");
+    const supersedes = first.supersedesDecisionId ?? "";
+    if (rows.some(row => (row.supersedesDecisionId ?? "") !== supersedes) ||
+      (supersedes && (foldDecision(first.status) !== "confirmada" || supersedes === first.decisionId)))
+      invalid.push("Substitui decisão deve indicar o mesmo outro identificador em todas as linhas de uma decisão confirmada.");
     if (rows.some(row => !Number.isInteger(row.season) || row.originalScore === null || !Number.isFinite(row.originalScore)
       || !row.phase || row.phaseScore === null || !Number.isFinite(row.phaseScore) || row.index === null || !Number.isFinite(row.index)))
       invalid.push("O contexto numérico e a fase do empate devem estar preenchidos.");
@@ -59,7 +65,8 @@ export function resolveTop50Decisions(groups: DecisionCandidate[][], decisions: 
       issue("TOP50_DECISION_STALE", rows, "Nota, fase, desempenho ou índice do empate mudou. A decisão precisa de revisão e não foi reaproveitada."); continue;
     }
     if (foldDecision(first.status) === "pendente") {
-      issue("TOP50_DECISION_PENDING", rows, "A decisão está Pendente e não altera o desempate. Registre a confirmação explícita do proprietário antes de aplicá-la."); continue;
+      pending.push({ group, rows });
+      continue;
     }
     if (rows.some(row => !Number.isInteger(row.order) || row.order! < 1 || row.order! > rows.length)
       || new Set(rows.map(row => row.order)).size !== rows.length) {
@@ -70,7 +77,8 @@ export function resolveTop50Decisions(groups: DecisionCandidate[][], decisions: 
       orderedKeys: rows.map((row, i) => ({ key: keys[i], order: row.order! })).sort((a, b) => a.order - b.order).map(row => row.key) };
     plans.set(group, [...(plans.get(group) ?? []), plan]);
   }
-  for (const plansForGroup of plans.values()) {
+  const appliedByGroup = new Map<DecisionCandidate[], AppliedManualDecision>();
+  for (const [group, plansForGroup] of plans) {
     if (plansForGroup.length > 1) {
       for (const plan of plansForGroup) issue("TOP50_DECISION_CONFLICT", plan.rows,
         "Mais de uma decisão confirmada se aplica ao mesmo grupo. Mantenha uma única decisão vigente; nenhuma delas foi aplicada.");
@@ -79,6 +87,13 @@ export function resolveTop50Decisions(groups: DecisionCandidate[][], decisions: 
     const plan = plansForGroup[0];
     plan.orderedKeys.forEach((key, index) => order.set(key, index + 1));
     applied.push(plan);
+    appliedByGroup.set(group, plan);
+  }
+  for (const { group, rows } of pending) {
+    const replacement = appliedByGroup.get(group);
+    const hasActiveFields = rows.some(row => row.order !== null || row.confirmedBy || row.confirmedAt || row.confirmationReference);
+    if (!hasActiveFields && replacement?.rows[0].supersedesDecisionId === rows[0].decisionId) continue;
+    issue("TOP50_DECISION_PENDING", rows, "A decisão está Pendente e não altera o desempate. Registre a confirmação explícita do proprietário antes de aplicá-la.");
   }
   return { order, applied, issues };
 }

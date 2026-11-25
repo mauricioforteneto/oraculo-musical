@@ -1,7 +1,7 @@
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { readFile, readdir } from "node:fs/promises";
 import { PGlite } from "@electric-sql/pglite";
-import { syntheticManualWorkbook } from "../fixtures/synthetic/manual-decisions";
+import { syntheticManualTie, syntheticManualWorkbook, syntheticPendingDecision } from "../fixtures/synthetic/manual-decisions";
 import { parseWorkbookSheets } from "../../src/lib/ingestion/workbook-parser";
 import { buildParticipants } from "../../src/lib/competition/rules";
 import { projectTop50 } from "../../src/lib/competition/top50";
@@ -66,6 +66,44 @@ describe("publicação e leitura de decisões manuais", () => {
     const p = projectTop50(source.albums, participants, source.playoffResults, null, source.top50Decisions)!;
     expect(p.tieAtCut).toBe(false); expect(p.appliedDecisions).toHaveLength(1);
     expect(p.entries.filter(e => e.manualDecisionId).map(e => e.position)).toEqual([49, 50, null]);
+  });
+  it("preserva a extração antiga e lê o vínculo auditável após reprocessar a mesma publicação", async () => {
+    const confirmed = syntheticManualTie().decisions;
+    const pending = syntheticPendingDecision(confirmed);
+    const linked = confirmed.map(row => ({ ...row, supersedesDecisionId: pending[0].decisionId }));
+    const parsed = parseWorkbookSheets(syntheticManualWorkbook([...linked, ...pending]), { season: 2026, sourceVersion: "105" });
+    shared.parse.mockResolvedValue(parsed);
+    expect((await sync()).status).toBe("succeeded");
+    // Simula a extração anterior dos mesmos bytes, quando a coluna opcional era ignorada.
+    await db.query(`UPDATE oraculo.source_top50_decisions SET parser_revision=1, record=record-'supersedesDecisionId'
+      WHERE source_id=$1`, [sourceId]);
+    await db.query(`UPDATE oraculo.sync_runs SET counts=counts || '{"top50DecisionParserRevision":1}' WHERE source_id=$1`, [sourceId]);
+
+    const project = (source: Awaited<ReturnType<typeof published>>) =>
+      projectTop50(source.albums, buildParticipants(source.albums).participants, source.playoffResults, null, source.top50Decisions)!;
+    const legacy = await published();
+    const previous = project(legacy);
+    expect(legacy.top50DecisionsExtracted).toBe(true);
+    expect(previous.decisionIssues.map(issue => issue.code)).toEqual(["TOP50_DECISION_PENDING"]);
+    const legacyIssue = buildIssueReport(legacy, { active: null, projection: previous }).items.find(i => i.code === "TOP50_DECISION_PENDING");
+    expect(legacyIssue).toMatchObject({ blocking: false, impact: expect.stringContaining("já tem ordem calculada") });
+
+    expect((await sync()).status).toBe("unchanged");
+    expect((await sync()).status).toBe("unchanged");
+    const source = await published();
+    const projection = project(source);
+    expect(source.version).toBe("105");
+    expect(source.top50Decisions).toEqual(parsed.top50Decisions);
+    expect((await db.query("SELECT parser_revision, count(*)::int AS count FROM oraculo.source_top50_decisions WHERE source_id=$1 GROUP BY parser_revision ORDER BY parser_revision",
+      [sourceId])).rows).toEqual([{ parser_revision: 1, count: 6 }, { parser_revision: 2, count: 6 }]);
+    expect(projection.appliedDecisions[0]).toMatchObject({ decisionId: confirmed[0].decisionId, rows: [
+      { supersedesDecisionId: pending[0].decisionId, sourceSheet: "Desempates Top 50", sourceRow: 3, rulesVersion: "2026-top50-2" },
+      { sourceRow: 2 }, { sourceRow: 4 },
+    ] });
+    expect(projection.entries).toEqual(previous.entries);
+    expect(projection.entries.filter(e => e.manualDecisionId).map(e => e.position)).toEqual([49, 50, null]);
+    expect(projection.decisionIssues).toEqual([]);
+    expect(buildIssueReport(source, { active: null, projection }).items.map(i => i.code)).not.toContain("TOP50_DECISION_PENDING");
   });
   it("reprocessa a mesma versão e não perde resultados extraídos antes do parser 2026.4", async () => {
     await sync();
