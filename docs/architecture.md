@@ -75,3 +75,7 @@ Ensaiar restauração em banco isolado: aplicar roles/configuração necessária
 Usar npm com lockfile versionado, versão LTS de Node fixada após verificar compatibilidade do Next.js e instalação reproduzível por `npm ci`. Versionar migrações SQL em sequência; nunca editar migração já aplicada. CI: lint, tipos, testes unitários, integração com PostgreSQL efêmero e build, sem credenciais reais em PRs. Fixtures apenas fictícias.
 
 Scripts implementados: `lint`, `typecheck`, `test`, `test:integration`, `test:e2e`, `build`, `db:migrate`. Package.json, lockfile, duas migrações e CI estão presentes. Acesso, consulta do acervo, importação e publicação atômica foram implementados e exercitados localmente com serviços reais. Recuperação por backup e verificação dos cenários de falha permanecem pendentes. Ver [setup](setup.md).
+
+## Temporadas e regras
+
+A configuração por ano, os adaptadores de campeonato, as rotas com `temporada`, a migração aditiva e o procedimento de ativação de 2027 estão em [temporadas.md](temporadas.md). A página privada de regras independe de uma fonte importada.

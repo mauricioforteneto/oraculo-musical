@@ -8,7 +8,7 @@ import {POST as search} from '../../src/app/api/artwork/[id]/search/route';
 import {POST as selection} from '../../src/app/api/artwork/[id]/selection/route';
 import {ArtworkError} from '../../src/lib/artwork/types';
 const id='00000000-0000-4000-8000-000000000001';
-const request=(body:unknown={},origin='https://oraculo.example')=>new Request('https://oraculo.example/api/artwork',{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
+const request=(body:unknown={},origin='https://oraculo.example',season='')=>new Request(`https://oraculo.example/api/artwork${season?`?temporada=${season}`:''}`,{method:'POST',headers:{origin,'content-type':'application/json'},body:JSON.stringify(body)});
 beforeEach(()=>{
   vi.resetAllMocks();vi.stubEnv('APP_ORIGIN','https://oraculo.example');vi.stubEnv('OWNER_USER_ID','owner');
   deps.configured.mockReturnValue(true);deps.user.mockResolvedValue({data:{user:{id:'owner'}},error:null});
@@ -17,6 +17,14 @@ beforeEach(()=>{
 });
 afterEach(()=>vi.unstubAllEnvs());
 describe('endpoints privados de capas',()=>{
+  it('encaminha a fonte de 2027 e rejeita ano inválido antes do serviço',async()=>{
+    vi.stubEnv('SEASON_SOURCES_JSON',JSON.stringify({2026:'legacy-folder',2027:'monthly-folder'}));
+    expect((await batch(request({},'https://oraculo.example','2027'))).status).toBe(200);
+    expect(deps.factory).toHaveBeenLastCalledWith(expect.objectContaining({year:2027,folderId:'monthly-folder',format:'monthly'}));
+    deps.factory.mockClear();
+    for(const year of ['2028','invalid','2026&temporada=2027']) expect((await batch(request({},'https://oraculo.example',year))).status).toBe(400);
+    expect(deps.factory).not.toHaveBeenCalled();
+  });
   for(const [name,call] of [['lote',(r:Request)=>batch(r)],['pesquisa',(r:Request)=>search(r,{params:Promise.resolve({id})})],['seleção',(r:Request)=>selection(r,{params:Promise.resolve({id})})]] as const) {
     it(`rejeita origem e sessão antes do serviço: ${name}`,async()=>{
       expect((await call(request({},'https://foreign.example'))).status).toBe(403);expect(deps.user).not.toHaveBeenCalled();

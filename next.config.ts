@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const config: NextConfig = {
   poweredByHeader: false,
+  outputFileTracingIncludes: { "/regras": ["./docs/campeonato/regras-*.md"] },
   async headers() {
     return [
       { source: "/:path*", headers: [

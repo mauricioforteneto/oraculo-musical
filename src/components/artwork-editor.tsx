@@ -1,9 +1,10 @@
 "use client";
+import { useArtworkPost } from "./season-context";
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { AlbumRecord } from '@/lib/catalog/types';
 import type { AlbumArtwork, ArtworkCandidate, ArtworkSource } from '@/lib/artwork/types';
-import { artworkMessage, artworkPost } from '@/lib/artwork/messages';
+import { artworkMessage } from '@/lib/artwork/messages';
 import { ArtworkAttribution } from './artwork-attribution';
 import { AlbumCover } from './album-cover';
 import styles from './workspace.module.css';
@@ -11,6 +12,7 @@ import art from './artwork.module.css';
 type Preview={candidate:ArtworkCandidate;artwork:AlbumArtwork};
 export function ArtworkEditor({album,initialOpen=false}: {album:AlbumRecord;initialOpen?:boolean}) {
   const router=useRouter();
+  const artworkPost=useArtworkPost();
   const [open,setOpen]=useState(initialOpen || album.artwork?.status==='ambiguous');
   const [artist,setArtist]=useState(album.artist),[title,setTitle]=useState(album.title);
   const [provider,setProvider]=useState<ArtworkSource>(album.artwork?.provider ?? 'musicbrainz');

@@ -1,5 +1,7 @@
 "use client";
-import Link from "next/link";
+import { useSeason } from "./season-context";
+import { seasonHref } from "@/lib/seasons/definitions";
+import { SeasonLink as Link } from "./season-context";
 import { Search } from "lucide-react";
 import { ARTWORK_FILTERS, matchesArtworkFilter } from "@/lib/artwork/review";
 import { ArtworkAttribution } from "./artwork-attribution";
@@ -14,13 +16,14 @@ import styles from "./catalog-page.module.css";
 const normalize = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLocaleLowerCase("pt-BR");
 export function CatalogPage({ albums }: { albums: AlbumRecord[] }) {
   const params = useSearchParams();
+  const {year,explicit} = useSeason();
   const filters = catalogFilters(params);
   const ranked = rankAnnualAlbums(albums);
   const artworkView = ARTWORK_FILTERS.find(item => item.id === filters.capas);
   const filtered = ranked.filter(a => normalize([a.artist,a.title,a.genre,a.country].join(" ")).includes(normalize(filters.q.trim()))
     && (filters.nota === "all" || (a.originalScore ?? -1) >= Number(filters.nota)) && matchesArtworkFilter(a,filters.capas));
   function update(next: Partial<CatalogFilters>) {
-    window.history.replaceState(null,"",`/albuns${catalogQuery({ ...filters,...next })}`);
+    window.history.replaceState(null,"",seasonHref(`/albuns${catalogQuery({ ...filters,...next })}`, year, explicit));
   }
   return <div className={styles.catalog}>
     <section className={styles.toolbar} aria-label="Buscar e filtrar álbuns">

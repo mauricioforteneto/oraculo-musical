@@ -17,7 +17,7 @@ export const HISTORY_DOMAINS: { id: HistoryDomain; label: string }[] = [{ id: "a
 export const HISTORY_KINDS: { id: HistoryChangeKind; label: string }[] = [{ id: "added", label: "Adicionados" }, { id: "changed", label: "Alterados" }, { id: "absent", label: "Ausentes" }, { id: "reappeared", label: "Reaparecidos" }];
 
 const fields: Record<HistoryDomain, Record<string, string>> = {
-  albums: { artist: "Artista", title: "Álbum", originalScore: "Nota original registrada", reportedScore: "Nota informada", tier: "Faixa",
+  albums: { evaluatedOn: "Data da avaliação", releaseYear: "Ano de lançamento", artist: "Artista", title: "Álbum", originalScore: "Nota original registrada", reportedScore: "Nota informada", tier: "Faixa",
     genre: "Gênero", country: "País", source: "Fonte", soundScore: "Construção sonora", identityScore: "Identidade e personalidade",
     consistencyScore: "Consistência e narrativa", replayScore: "Replay e impacto", repescagem: "Repescagem", repescagemDisqualified: "Desqualificado na Repescagem",
     repescagemNote: "Observação da Repescagem", playInScore: "Score do Play-in", playInResult: "Resultado do Play-in", prePlayoffScore: "Score do Pré-playoff",

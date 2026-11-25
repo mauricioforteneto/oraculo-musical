@@ -1,3 +1,4 @@
+import { seasonContext, type SeasonContext } from "@/lib/seasons/context";
 import 'server-only';
 import { databasePool } from '@/lib/db/pool';
 import { ArtworkStore, readArtwork, type ArtworkAlbum } from './database';
@@ -8,10 +9,11 @@ type ArtworkWrite=Parameters<ArtworkStore['write']>[3];
 const externalError=(error:unknown):error is ArtworkError=>error instanceof ArtworkError &&
   (error.code.startsWith('ARTWORK_PROVIDER_') || error.code==='ARTWORK_COOLDOWN' || error.code==='ARTWORK_BUDGET');
 export class ArtworkService {
-  constructor(private readonly store: ArtworkStore, private readonly fetcher: typeof fetch = fetch) {}
+  constructor(private readonly store: ArtworkStore, private readonly fetcher: typeof fetch = fetch, private readonly season?: SeasonContext) {}
   private async context() {
-    const season=Number(process.env.SOURCE_SEASON ?? '2026');
-    const folder=process.env.GOOGLE_DRIVE_FOLDER_ID ?? '';
+    const context=this.season ?? seasonContext();
+    const season=context.year;
+    const folder=context.folderId;
     if(!Number.isInteger(season) || !folder) throw new ArtworkError('SOURCE_NOT_CONFIGURED');
     const source=await this.store.source(season,folder);
     return {source,albums:await this.store.albums(source)};
@@ -119,7 +121,7 @@ export class ArtworkService {
     });
   }
 }
-export function configuredArtworkService() {
+export function configuredArtworkService(context?: SeasonContext) {
   const pool=databasePool('sync');
-  return new ArtworkService(new ArtworkStore((sql,params)=>pool.query(sql,params)));
+  return new ArtworkService(new ArtworkStore((sql,params)=>pool.query(sql,params)), fetch, context);
 }

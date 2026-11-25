@@ -40,7 +40,7 @@ try {
   });
   page.on("pageerror",error => errors.push(error.message));
   await page.route("**/api/**",async route => {
-    mutations.push({url:new URL(route.request().url()).pathname,body:route.request().postDataJSON()});
+    mutations.push({url:new URL(route.request().url()).pathname,season:new URL(route.request().url()).searchParams.get("temporada"),body:route.request().postDataJSON()});
     const url = new URL(route.request().url()).pathname;
     if(url==="/api/artwork/batch") {
       batchCalls++;
@@ -64,11 +64,12 @@ try {
   });
   const origin = "http://127.0.0.1:3216";
   await page.goto(origin+"/albuns");
+  const screenRoutes=["/","/pendencias","/albuns","/albuns?capas=revisar","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao","/regras?temporada=2026","/regras?temporada=2027","/albuns?temporada=2027","/playoffs?temporada=2027","/?temporada=2027","/pendencias?temporada=2027","/top-50?temporada=2027","/estatisticas?temporada=2027","/historico?temporada=2027","/sincronizacao?temporada=2027"];
   for (const mode of ["light","dark"]) {
   await page.evaluate(({key,mode})=>localStorage.setItem(key,mode),{key:THEME_STORAGE_KEY,mode});
   for (const width of [360,390,768,1280]) {
     await page.setViewportSize({width,height:844});
-    for (const path of ["/","/pendencias","/albuns","/albuns?capas=revisar","/albuns/00000000-0000-4000-8000-000000000001","/top-50","/playoffs","/playoffs?aba=historico","/estatisticas","/historico","/sincronizacao"]) {
+    for (const path of screenRoutes) {
       await page.goto(origin+path);
       await page.locator("main h1").waitFor();
       await page.evaluate(async()=>{await document.fonts.load('800 28px "Bricolage Grotesque"');await document.fonts.load('400 17px "Source Serif 4"');await document.fonts.ready;});
@@ -91,8 +92,28 @@ try {
         const footer = await page.locator("footer").boundingBox(); const bar = await nav.boundingBox();
         assert(footer.y+footer.height <= bar.y,`covered footer at ${width}`);
       }
-      if(path === "/albuns" || path === "/albuns?capas=revisar") {
-        const shot = `${path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns"}-${mode}`;
+      if(path.includes("temporada=") && ["/regras","/albuns","/playoffs"].some(route=>path.startsWith(route))) {
+        const kind=path.startsWith("/regras")?`regras-${path.endsWith("2026")?2026:2027}`:path.startsWith("/playoffs")?"mensal-2027":"albuns-2027";
+        await page.evaluate(()=>scrollTo(0,0));
+        await page.screenshot({path:resolve(artifactDir,`oraculo-${kind}-${mode}-${width}-viewport.jpg`),type:"jpeg",quality:90});
+        await page.screenshot({path:resolve(artifactDir,`oraculo-${kind}-${mode}-${width}.png`),fullPage:true});
+        if(width===390 && (path.startsWith("/regras") || path.startsWith("/playoffs"))) await page.screenshot({path:resolve(artifactDir,`oraculo-${kind}-${mode}-${width}.jpg`),type:"jpeg",quality:82,fullPage:true});
+        if(path.startsWith("/regras")) {
+          await page.getByRole("navigation",{name:"Índice das regras"}).getByRole("link",{name:"Regulamento completo",exact:true}).click();
+          const disclosure=path.endsWith("2026")?"Ler o regulamento vigente consolidado de 2026":"Ler as definições de 2027 e seus pontos pendentes";
+          await page.getByText(disclosure,{exact:true}).click();
+          assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),`Overflow no regulamento aberto em ${width}px`);
+          if(width===390) await page.screenshot({path:resolve(artifactDir,`oraculo-${kind}-${mode}-${width}-aberto.jpg`),type:"jpeg",quality:82,fullPage:true});
+        }
+        if(path.startsWith("/playoffs")) {
+          await page.getByRole("button",{name:/Dezembro/}).click();
+          await page.getByText("Preparar fechamento na planilha",{exact:true}).click();
+          assert(await page.getByRole("button",{name:"Copiar orientação de fechamento"}).isDisabled());
+          assert(await page.getByText(/O corte de dezembro e o prazo do AOTY/).isVisible());
+        }
+      }
+      if(path === "/albuns" || path === "/albuns?capas=revisar" || path === "/albuns?temporada=2027") {
+        const shot = `${path.includes("temporada=") ? "oraculo-albuns-2027" : path.includes("?") ? "oraculo-capas-revisar" : "oraculo-albuns"}-${mode}`;
         // Text can overflow a grid cell without overflowing the page itself.
         const positionRight = await page.getByText("Posição",{exact:true}).evaluate(element=>{
           const range=document.createRange(); range.selectNodeContents(element);
@@ -108,15 +129,40 @@ try {
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.png`)});
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}-viewport.jpg`),type:"jpeg",quality:90});
         await page.screenshot({path:resolve(artifactDir,`${shot}-${width}.jpg`),type:"jpeg",quality:90,fullPage:true});
-        if(path==="/albuns") {
+        if(path==="/albuns" || path==="/albuns?temporada=2027") {
           const first=await page.getByRole("region",{name:"Ranking anual",exact:true}).locator("ol > li").first().boundingBox();
           const bar=width < 1000 ? await page.getByRole("navigation",{name:"Navegação mobile",exact:true}).boundingBox() : null;
           assert(first && first.y + first.height <= (width < 1000 ? bar.y : 844),`Primeiro álbum fora da primeira tela em ${width}px (${mode})`);
         }
       }
     }
-    console.log(`Layout: 11 telas e capturas verificadas em ${width}px, tema ${mode}.`);
+    console.log(`Layout: ${screenRoutes.length} telas e capturas verificadas em ${width}px, tema ${mode}.`);
   }
+  // Season switching clears source-bound filters and closes the mobile menu.
+  await page.setViewportSize({width:390,height:844});
+  await page.goto(origin+"/albuns?capas=revisar&q=jazz&versao=99");
+  await page.getByRole("button",{name:"Mais",exact:true}).click();
+  await page.getByRole("dialog").getByLabel("Temporada",{exact:true}).selectOption("2027");
+  await page.waitForFunction(()=>location.search==="?temporada=2027" && !document.querySelector("dialog[open]"));
+  assert.equal(new URL(page.url()).search,"?temporada=2027");
+  assert(!(await page.getByRole("dialog").isVisible()));
+  assert.equal(await page.evaluate(()=>document.body.style.overflow),"");
+  await page.getByRole("region",{name:"Ranking anual",exact:true}).locator("ol > li a").first().click();
+  assert(new URL(page.url()).pathname.startsWith("/albuns/"));
+  assert.equal(new URL(page.url()).searchParams.get("temporada"),"2027");
+  await page.getByRole("button",{name:"Mais",exact:true}).click();
+  await page.getByRole("dialog").getByLabel("Temporada",{exact:true}).selectOption("2026");
+  assert.equal(new URL(page.url()).pathname,"/albuns");
+  assert.equal(new URL(page.url()).search,"?temporada=2026");
+  await page.goto(origin+"/playoffs?temporada=2027");
+  assert(await page.getByText("Classificados confirmados",{exact:true}).isVisible());
+  await page.getByText("Preparar correção do fechamento",{exact:true}).click();
+  await page.getByRole("button",{name:"Copiar orientação de fechamento"}).click();
+  const copied=await page.evaluate(()=>window.fixtureClipboardText);
+  assert(copied.includes("Status: Pendente") && copied.includes("Corrige fechamento: jan-ficticio-1"));
+  await page.getByRole("button",{name:/Fevereiro/}).click();
+  assert(await page.getByText(/Empate na segunda vaga/).isVisible());
+  assert(await page.getByRole("button",{name:"Copiar orientação de fechamento"}).isDisabled());
   await page.setViewportSize({width:390,height:844});
   await page.goto(origin+"/albuns");
   await page.getByRole("button",{name:"Mais",exact:true}).click();
@@ -312,9 +358,16 @@ try {
   await page.getByRole("button",{name:"Parar busca",exact:true}).click();
   await page.getByRole("status").filter({hasText:/Busca pausada/}).waitFor();
   assert.equal(batchCalls,beforeWaiting+1);
-  recoveryMode=null;
+  recoveryMode=null;slowBatch=false;
+  await page.goto(origin+"/sincronizacao?temporada=2027");
+  const beforeSeasonSync=mutations.length;
+  await page.getByRole("button",{name:"Sincronizar",exact:true}).click();
+  await page.getByRole("status").filter({hasText:/publicada/}).first().waitFor();
+  await page.getByRole("status").filter({hasText:/Busca concluída/}).waitFor();
+  assert(mutations.slice(beforeSeasonSync).some(item=>item.url==="/api/sync" && item.season==="2027"));
+  assert(!mutations.slice(beforeSeasonSync).some(item=>item.season!=="2027"));
   assert.deepEqual(errors,[]);
-  console.log("Layout Chromium: 11 telas × 4 larguras × 2 temas; preferência persistida, menu, foco, teclado, busca/retorno, links, sincronização, central de pendências, cópia/fallback, correção da fonte, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
+  console.log("Layout Chromium: 21 telas × 4 larguras × 2 temas; regras, classificação mensal, isolamento de temporada, preferência persistida, menu, foco, teclado, busca/retorno, links, sincronização, central de pendências, cópia/fallback, correção da fonte, capas, revisão manual, iTunes, recuperação automática, parar durante a espera e hashes passaram.");
 } catch(error) {
   await page?.screenshot({path:resolve(artifactDir,"failure.png"),fullPage:true}).catch(()=>{});
   throw error;

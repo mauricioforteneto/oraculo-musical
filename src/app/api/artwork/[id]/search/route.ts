@@ -1,3 +1,4 @@
+import { requestSeason } from "@/lib/seasons/context";
 import { artworkRequest, artworkBody } from '@/lib/artwork/http';
 import { configuredArtworkService } from '@/lib/artwork/service';
 import { ArtworkError, isUuid, type ArtworkSource } from '@/lib/artwork/types';
@@ -9,6 +10,6 @@ export async function POST(request: Request,{params}: {params:Promise<{id:string
     if(Object.keys(body).some(k=>!['artist','title','provider'].includes(k))) throw new ArtworkError('ARTWORK_INVALID_REQUEST');
     for(const value of Object.values(body)) if(typeof value!=='string' || !value.trim() || value.length>200) throw new ArtworkError('ARTWORK_INVALID_REQUEST');
     if(body.provider!==undefined && !['musicbrainz','itunes'].includes(String(body.provider))) throw new ArtworkError('ARTWORK_INVALID_REQUEST');
-    return configuredArtworkService().search(id,body.artist as string|undefined,body.title as string|undefined,body.provider as ArtworkSource|undefined);
+    return configuredArtworkService(requestSeason(request)).search(id,body.artist as string|undefined,body.title as string|undefined,body.provider as ArtworkSource|undefined);
   });
 }

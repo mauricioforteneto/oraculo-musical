@@ -1,8 +1,9 @@
 "use client";
 
 import { useId, useState } from "react";
-import Link from "next/link";
+import { SeasonLink as Link } from "./season-context";
 import { History } from "lucide-react";
+import { seasonHref } from "@/lib/seasons/definitions";
 import { AppShell } from "./app-shell";
 import { HISTORY_DOMAINS, HISTORY_KINDS, filterHistoryChanges, type HistoryChange, type HistoryChangeKind,
   type HistoryDomain, type HistoryValue, type VersionHistoryData } from "@/lib/catalog/version-history";
@@ -18,7 +19,7 @@ const displayValue = (v: HistoryValue) => v === null ? "Não informado" : typeof
   : typeof v === "number" ? v.toLocaleString("pt-BR", { maximumFractionDigits: 20 }) : v;
 const changeLabel: Record<HistoryChangeKind, string> = { added: "Adicionado", changed: "Alterado", absent: "Deixou de constar", reappeared: "Reapareceu" };
 
-export function VersionHistoryPage({ history, loadFailed = false }: { history: VersionHistoryData | null; loadFailed?: boolean }) {
+export function VersionHistoryPage({ history, loadFailed = false, season }: { history: VersionHistoryData | null; loadFailed?: boolean; season?: number }) {
   const [domain, setDomain] = useState<HistoryDomain | "all">("all");
   const [kind, setKind] = useState<HistoryChangeKind | "all">("all");
   const [query, setQuery] = useState("");
@@ -30,10 +31,10 @@ export function VersionHistoryPage({ history, loadFailed = false }: { history: V
   const totalChanges = history ? visibleDomains.reduce((n, d) => n + history.comparison.blocks[d.id].changes.length, 0) : 0;
   const hasWarnings = history && visibleDomains.some(d => history.comparison.blocks[d.id].warnings.length > 0);
 
-  return <AppShell title="Histórico de versões" description="Compare as publicações importadas de álbuns e resultados dos Playoffs." version={history?.selected.version}><div className={styles.page}>
+  return <AppShell season={season} title="Histórico de versões" description="Compare as publicações importadas de álbuns e resultados dos Playoffs." version={history?.selected.version}><div className={styles.page}>
     <p className={styles.note}>Horários são de importação ou modificação do arquivo, não de escuta ou realização de partidas.</p>
 
-    {loadFailed ? <section className={styles.panel} role="alert"><h2>Histórico indisponível neste momento</h2><p>Tente recarregar a página. Seus dados permanecem preservados.</p><a href="/historico">Tentar novamente</a></section>
+    {loadFailed ? <section className={styles.panel} role="alert"><h2>Histórico indisponível neste momento</h2><p>Tente recarregar a página. Seus dados permanecem preservados.</p><a href={seasonHref("/historico",season ?? 2026,season!=null)}>Tentar novamente</a></section>
       : !history ? <section className={styles.panel}><History size={28} aria-hidden="true" /><h2>Nenhuma publicação disponível</h2><p>O histórico aparecerá após uma publicação da fonte. Confira a página de Sincronização para publicar a fonte.</p></section>
       : <>
         {history.notices.filter(n => !/backlog/i.test(n)).map(notice => <p className={styles.notice} role="status" key={notice}>{notice}</p>)}

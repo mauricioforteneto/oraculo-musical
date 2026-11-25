@@ -81,12 +81,18 @@
 .dialogHeading button { border-radius: 0; border-color: var(--control-border); }
 .dialogBody > div:last-of-type { margin-top: 24px; }
 .shell :is(button,a):active { background: var(--muted); }
+.mobileSeason { display: none; }
+.sidebar { padding-block: 24px; }
+.sidebar .nav { gap: 0; }
+.sidebar .navItem { min-height: 44px; padding-block: 8px; }
+.sidebarFoot { padding-top: 16px; gap: 8px; }
 @media(max-width: 1000px) {
   .frame { display: block; }
   .sidebar { display: none; }
   .workspace { padding-bottom: calc(80px + env(safe-area-inset-bottom,0px)); }
   .topbar { padding: 12px 24px; min-height: 72px; }
   .desktopCaption { display: none; }
+  .mobileSeason { display: block; color: var(--foreground); }
   .mobileNav { max-width: var(--content-width); margin: auto; background: var(--background); border-color: var(--control-border); backdrop-filter: none; }
   .mobileItem { color: var(--muted-foreground); border-radius: 0; font-size: 12px !important; }
   .mobileItem[aria-current="page"] { color: var(--primary); background: transparent; }
@@ -102,3 +108,5 @@
   .heading h1 { font-size: 40px; }
   .footer { padding: 20px; }
 }
+
+@media(max-width:1000px) { .mobileSeason { display:block; } }

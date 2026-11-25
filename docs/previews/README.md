@@ -23,3 +23,6 @@ As fontes exibidas são Bricolage Grotesque, Source Serif 4, Instrument Sans e F
 dos componentes reais em [Verify #39](https://github.com/mauricioforteneto/oraculo-musical/actions/runs/41059605363).
 Usam exclusivamente fixtures fictícias e capas mockadas do teste, sem fotos
 pessoais. Veja [resultado e validação](../editorial-implementation.md).
+## Temporadas e classificação mensal
+
+As novas regras de 2026/2027 e a classificação mensal, nos temas claro e escuro, têm uma [galeria própria de capturas fictícias](temporadas.md).

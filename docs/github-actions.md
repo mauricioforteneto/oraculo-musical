@@ -25,7 +25,8 @@ Eles não consultam o acervo nem alteram dados reais.
 Na página da execução, abaixo dos trabalhos, a área **Artifacts** oferece
 `layout-capturas-<número da execução>` por sete dias. O ZIP contém:
 
-- Catálogo e revisão de capas em 360, 390, 768 e 1280 px.
+- Catálogo, revisão de capas, regras e classificação mensal em 360, 390, 768 e 1280 px, nos dois temas.
+- Matriz de 21 telas cobrindo os formatos de 2026 e 2027, com troca de ano e operações vinculadas à temporada.
 - Uma imagem da página inteira e outra da primeira tela em cada largura.
 - `failure.png`, quando o navegador chega a abrir e um teste falha.
 - `trace.zip`, com o diagnóstico do Playwright para inspeção local.
@@ -33,7 +34,7 @@ Na página da execução, abaixo dos trabalhos, a área **Artifacts** oferece
 Um teste verde comprova as verificações automáticas, mas as capturas ainda
 precisam ser conferidas visualmente. O ZIP pode ser baixado pelo celular e
 anexado à conversa se o conector não conseguir disponibilizá-lo diretamente.
-As mesmas imagens PNG também são exportadas em blocos identificados e codificados
+As versões JPEG das capturas selecionadas também são exportadas em blocos identificados e codificados
 no log da etapa **Disponibilizar capturas para revisão pelo conector**. Isso
 permite que o assistente reconstrua as imagens pelos logs quando o conector só
 oferece um link para o ZIP. Somente capturas do cenário sintético são exportadas;

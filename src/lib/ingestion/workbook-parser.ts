@@ -1,5 +1,7 @@
 import type { AlbumRecord, BacklogRecord, PlayoffPhase, PublishedPlayoffResult, Top50ManualDecision } from "../catalog/types";
 import { parseTop50Decisions } from "./top50-decisions";
+import { parseMonthlyRecords } from "./monthly-records";
+import { validCalendarDate } from "@/lib/competition/monthly";
 
 export type WorkbookIssue = {
   code: string;
@@ -20,6 +22,7 @@ export type WorkbookSheetData = {
 export type ParsedAlbum = AlbumRecord & { identityKey: string };
 
 export type ParsedSourceWorkbook = {
+  monthlyRecords?: ReturnType<typeof parseMonthlyRecords>;
   season: number;
   sourceVersion: string;
   referenceDate: string;
@@ -44,11 +47,13 @@ export type ParsedSourceWorkbook = {
 };
 
 type FieldColumns = Map<string, number>;
-type HeaderConfig = { headers: Record<string, string[]>; required: string[]; markers: string[] };
+type HeaderConfig = { optionalWarnings?: boolean; headers: Record<string, string[]>; required: string[]; markers: string[] };
 
 const ALBUM_HEADERS: HeaderConfig = {
   headers: {
     sourceRank: ["rank"],
+    evaluatedOn: ["data da avaliação", "data de avaliação"],
+    releaseYear: ["ano de lançamento"],
     artist: ["artista"],
     title: ["álbum"],
     reportedScore: ["nota"],
@@ -171,7 +176,7 @@ function mapHeaders(
     }
   }
   for (const optional of Object.keys(config.headers)) {
-    if (!config.required.includes(optional) && !columns.has(optional)) {
+    if (config.optionalWarnings !== false && !["evaluatedOn", "releaseYear"].includes(optional) && !config.required.includes(optional) && !columns.has(optional)) {
       issues.push({ code: "OPTIONAL_COLUMN_MISSING", severity: "warning", sourceLocator: `${sheetName}!${rowIndex + 1}`, message: "Uma coluna competitiva opcional não foi encontrada; esse campo ficará vazio." });
     }
   }
@@ -381,7 +386,7 @@ export function parseWorkbookSheets(
 
   const albumHeader = albumSheet ? findHeader(albumSheet, ALBUM_HEADERS) : null;
   if (albumSheet && !albumHeader) issues.push({ code: "ALBUM_HEADER_NOT_FOUND", severity: "error", sourceLocator: albumSheetName, message: "Não foi possível localizar o cabeçalho da tabela de avaliações." });
-  const albumColumns = albumHeader ? mapHeaders(albumSheetName, albumHeader.rowIndex, albumHeader.row, ALBUM_HEADERS, issues) : new Map<string, number>();
+  const albumColumns = albumHeader ? mapHeaders(albumSheetName, albumHeader.rowIndex, albumHeader.row, {...ALBUM_HEADERS,optionalWarnings:options.season !== 2027}, issues) : new Map<string, number>();
   const albums: ParsedAlbum[] = [];
   const seenIdentities = new Map<string, number>();
   const seenLooseIdentities = new Map<string, number>();
@@ -436,7 +441,14 @@ export function parseWorkbookSheets(
         issues.push({ code: "REPORTED_ORIGINAL_DIFFERENCE", severity: "warning", sourceLocator: `${albumSheetName}!${sourceRow}`, message: "Nota informada e Nota Original diferem; ambos os valores foram preservados." });
       }
 
+      const evaluatedOn = dateValue(readText(valueAt(row, albumColumns, "evaluatedOn")));
+      const releaseYear = options.season === 2027 ? readNumber(valueAt(row, albumColumns, "releaseYear"), "release_year", "Ano de lançamento", locator(albumSheetName, sourceRow, albumColumns, "releaseYear"), issues, { minimum: 1000, maximum: 9999, integer: true }) : null;
+      if (options.season === 2027) {
+        if (evaluatedOn && (!validCalendarDate(evaluatedOn) || !evaluatedOn.startsWith("2027-"))) issues.push({ code: "EVALUATION_DATE_INVALID", severity: "error", sourceLocator: `${albumSheetName}!${sourceRow}`, message: "Data da avaliação deve ser válida e pertencer a 2027." });
+        if (!evaluatedOn || releaseYear === null) issues.push({ code: "MONTHLY_METADATA_MISSING", severity: "warning", sourceLocator: `${albumSheetName}!${sourceRow}`, message: "Data da avaliação ou ano de lançamento ausente; classificação mensal exige completar os metadados." });
+      }
       albums.push({
+        ...(options.season === 2027 ? { evaluatedOn: evaluatedOn || null, releaseYear } : {}),
         sourceRow,
         identityKey,
         sourceRank,
@@ -508,6 +520,7 @@ export function parseWorkbookSheets(
   if (summarySheet) addSummaryIssues(summary, albums, backlog, issues);
   const playoffResults = parsePublishedPlayoffResults(sheets, issues);
   const top50Decisions = parseTop50Decisions(sheets, issues);
+  const monthlyRecords = options.season === 2027 ? parseMonthlyRecords(sheets, issues) : undefined;
   const reportedOriginalDifferences = issues.filter((issue) => issue.code === "REPORTED_ORIGINAL_DIFFERENCE").length;
   const errors = issues.filter((issue) => issue.severity === "error").length;
   const warnings = issues.length - errors;
@@ -522,6 +535,7 @@ export function parseWorkbookSheets(
     backlog,
     playoffResults,
     top50Decisions,
+    ...(monthlyRecords ? { monthlyRecords } : {}),
     issues,
     counts: {
       albumRows,

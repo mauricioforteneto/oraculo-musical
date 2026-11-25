@@ -1,16 +1,18 @@
 "use client";
+import { useArtworkPost } from "./season-context";
 import { useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import Link from "next/link";
+import { SeasonLink as Link } from "./season-context";
 import { useRouter } from 'next/navigation';
 import type { AlbumRecord } from '@/lib/catalog/types';
 import type { ArtworkSummary, ArtworkBatch } from '@/lib/artwork/types';
-import { artworkMessage, artworkPost } from '@/lib/artwork/messages';
+import { artworkMessage } from '@/lib/artwork/messages';
 import { runArtworkSearch, waitForArtwork } from '@/lib/artwork/runner';
 import styles from './workspace.module.css';
 import art from './artwork.module.css';
 export type ArtworkSyncHandle={ start:()=>void };
 export function ArtworkSync({initial,failures=[],ref}: {initial?:ArtworkSummary;failures?:AlbumRecord[];ref?:React.Ref<ArtworkSyncHandle>}) {
   const router=useRouter();
+  const artworkPost=useArtworkPost();
   const [summary,setSummary]=useState<ArtworkSummary|null>(null);
   const current=summary ?? initial;
   const [busy,setBusy]=useState(false);
@@ -32,7 +34,7 @@ export function ArtworkSync({initial,failures=[],ref}: {initial?:ArtworkSummary;
       });
     } catch(error) {if(mounted.current) setFeedback(artworkMessage(error instanceof Error ? error.message : 'ARTWORK_PROVIDER_UNAVAILABLE'));}
     finally {running.current=false;if(mounted.current) {setBusy(false);router.refresh();}}
-  },[initial?.ready,router]);
+  },[initial?.ready,router,artworkPost]);
   useImperativeHandle(ref,()=>({start:()=>{void start();}}),[start]);
   function stop() {stopped.current=true;waiting.current?.abort();setFeedback('Parando após o lote atual…');}
   return <section className={styles.card} aria-labelledby="artwork-sync-title">

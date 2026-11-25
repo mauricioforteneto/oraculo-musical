@@ -32,6 +32,6 @@ describe("rotas privadas da competição", () => {
     const response = await preview(request("/api/competition/preview", "http://localhost:3000", { mode: "initial" }));
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toContain("no-store");
-    expect(previewFreeze).toHaveBeenCalledWith("initial");
+    expect(previewFreeze).toHaveBeenCalledWith("initial",expect.objectContaining({year:2026,format:"legacy-2026"}));
   });
 });

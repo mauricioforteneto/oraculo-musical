@@ -36,3 +36,4 @@ Thumbs.db
 
 # Futuras fixtures devem ser explicitamente fictícias
 !tests/fixtures/synthetic/*.csv
+!docs/templates/Oraculo_Musical_2027_v1.xlsx
