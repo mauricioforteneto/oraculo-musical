@@ -1,6 +1,6 @@
 import type { Top50ManualDecision } from "../../../src/lib/catalog/types";
 import type { WorkbookSheetData } from "../../../src/lib/ingestion/workbook-parser";
-import { TOP50_DECISION_HEADERS, TOP50_DECISION_SHEET } from "../../../src/lib/competition/manual-decisions";
+import { TOP50_DECISION_HEADERS, TOP50_DECISION_SHEET, TOP50_DECISION_SUPERSEDES_HEADER } from "../../../src/lib/competition/manual-decisions";
 import { albumIdentity } from "../../../src/lib/competition/rules";
 import { syntheticAlbum, syntheticField, syntheticFirstResults } from "./top50";
 
@@ -17,9 +17,17 @@ export function syntheticManualTie() {
   return { albums, tied, decisions, participants: field.participants, cutoff: albums.map(album => albumIdentity(album)), results: syntheticFirstResults() };
 }
 
+export function syntheticPendingDecision(rows: Top50ManualDecision[]) {
+  return rows.map((row, index) => ({ ...row, decisionId: "synthetic-pending", order: null, status: "Pendente",
+    confirmedBy: "", confirmedAt: "", confirmationReference: "", sourceRow: rows.length + index + 2 }));
+}
+
 export function syntheticDecisionSheet(decisions: Top50ManualDecision[]): WorkbookSheetData {
-  return { sheet: TOP50_DECISION_SHEET, data: [TOP50_DECISION_HEADERS, ...decisions.map(row => [row.decisionId, row.season, row.rulesVersion,
-    row.artist, row.title, row.originalScore, row.phase, row.phaseScore, row.index, row.order, row.status, row.confirmedBy, row.confirmedAt, row.confirmationReference])] };
+  const hasLink = decisions.some(row => row.supersedesDecisionId);
+  return { sheet: TOP50_DECISION_SHEET, data: [
+    hasLink ? [...TOP50_DECISION_HEADERS, TOP50_DECISION_SUPERSEDES_HEADER] : TOP50_DECISION_HEADERS, ...decisions.map(row => [row.decisionId, row.season, row.rulesVersion,
+      row.artist, row.title, row.originalScore, row.phase, row.phaseScore, row.index, row.order, row.status, row.confirmedBy,
+      row.confirmedAt, row.confirmationReference, ...(hasLink ? [row.supersedesDecisionId ?? null] : [])])] };
 }
 
 export function syntheticManualWorkbook(decisions = syntheticManualTie().decisions): WorkbookSheetData[] {

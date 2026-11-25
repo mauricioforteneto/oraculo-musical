@@ -17,11 +17,14 @@ export async function insertTop50Decisions(client: Pick<PoolClient, "query">, so
 export async function readTop50Decisions(client: Pick<PoolClient, "query">, sourceId: string, versionId: string) {
   const available = await client.query<{ relation: string | null }>("SELECT to_regclass('oraculo.source_top50_decisions')::text AS relation");
   if (!available.rows[0]?.relation) return { records: [] as Top50ManualDecision[], ready: false, extracted: false };
-  const extraction = await client.query<{ extracted: boolean }>(`SELECT EXISTS (SELECT 1 FROM oraculo.sync_runs
+  const extraction = await client.query<{ revision: string }>(`SELECT counts->>'top50DecisionParserRevision' AS revision
+    FROM oraculo.sync_runs
     WHERE source_id=$1 AND version_id=$2 AND status IN ('succeeded','unchanged')
-      AND counts->>'top50DecisionParserRevision'=$3::text) AS extracted`, [sourceId, versionId, TOP50_DECISION_PARSER_REVISION]);
-  if (!extraction.rows[0]?.extracted) return { records: [] as Top50ManualDecision[], ready: true, extracted: false };
+      AND counts->>'top50DecisionParserRevision' IN ($3::text, '1')
+    ORDER BY (counts->>'top50DecisionParserRevision'=$3::text) DESC LIMIT 1`, [sourceId, versionId, TOP50_DECISION_PARSER_REVISION]);
+  const revision = extraction.rows[0]?.revision;
+  if (!revision) return { records: [] as Top50ManualDecision[], ready: true, extracted: false };
   const result = await client.query<{ record: Top50ManualDecision }>(PUBLISHED_TOP50_DECISIONS_SQL,
-    [sourceId, versionId, TOP50_DECISION_PARSER_REVISION]);
+    [sourceId, versionId, revision]);
   return { records: result.rows.map(row => row.record), ready: true, extracted: true };
 }

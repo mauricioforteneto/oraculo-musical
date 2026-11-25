@@ -1,5 +1,5 @@
 import type { Top50ManualDecision } from "@/lib/catalog/types";
-import { foldDecision, TOP50_DECISION_HEADERS, TOP50_DECISION_SHEET } from "@/lib/competition/manual-decisions";
+import { foldDecision, TOP50_DECISION_HEADERS, TOP50_DECISION_SHEET, TOP50_DECISION_SUPERSEDES_HEADER } from "@/lib/competition/manual-decisions";
 import type { WorkbookIssue, WorkbookSheetData } from "./workbook-parser";
 
 export function parseTop50Decisions(sheets: readonly WorkbookSheetData[], issues: WorkbookIssue[]): Top50ManualDecision[] {
@@ -13,6 +13,9 @@ export function parseTop50Decisions(sheets: readonly WorkbookSheetData[], issues
     return [];
   }
   const columns = TOP50_DECISION_HEADERS.map(header => tokens.indexOf(foldDecision(header)));
+  const supersedesToken = foldDecision(TOP50_DECISION_SUPERSEDES_HEADER);
+  const supersedesColumn = tokens.indexOf(supersedesToken);
+  const duplicateSupersedesColumn = supersedesColumn !== tokens.lastIndexOf(supersedesToken);
   const records: Top50ManualDecision[] = [];
   for (let index = headerIndex + 1; index < sheet.data.length; index++) {
     const row = sheet.data[index];
@@ -27,10 +30,15 @@ export function parseTop50Decisions(sheets: readonly WorkbookSheetData[], issues
       errors.push(`${TOP50_DECISION_HEADERS[column]} deve ser uma célula numérica.`); return null;
     };
     const rawDate = at(12);
+    const supersedes = row[supersedesColumn];
+    if (duplicateSupersedesColumn) errors.push(`${TOP50_DECISION_SUPERSEDES_HEADER} tem cabeçalho duplicado.`);
+    if (supersedes != null && typeof supersedes !== "string")
+      errors.push(`${TOP50_DECISION_SUPERSEDES_HEADER} deve ser um identificador em texto.`);
+    const supersedesDecisionId = typeof supersedes === "string" ? supersedes.trim() : "";
     records.push({ decisionId: text(0), season: number(1), rulesVersion: text(2), artist: text(3), title: text(4),
       originalScore: number(5), phase: text(6), phaseScore: number(7), index: number(8), order: number(9), status: text(10),
       confirmedBy: text(11), confirmedAt: rawDate instanceof Date && Number.isFinite(rawDate.getTime()) ? rawDate.toISOString().slice(0, 10) : text(12),
-      confirmationReference: text(13), sourceSheet: sheet.sheet, sourceRow: index + 1, parseErrors: errors });
+      confirmationReference: text(13), ...(supersedesDecisionId ? { supersedesDecisionId } : {}), sourceSheet: sheet.sheet, sourceRow: index + 1, parseErrors: errors });
   }
   return records;
 }

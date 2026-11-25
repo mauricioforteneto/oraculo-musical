@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
-import { syntheticDecisionSheet, syntheticManualTie, syntheticManualWorkbook } from "../fixtures/synthetic/manual-decisions";
+import { syntheticDecisionSheet, syntheticManualTie, syntheticManualWorkbook, syntheticPendingDecision } from "../fixtures/synthetic/manual-decisions";
 import { parseWorkbookSheets } from "../../src/lib/ingestion/workbook-parser";
+import { resolveTop50Decisions } from "../../src/lib/competition/manual-decisions";
 import { projectTop50 } from "../../src/lib/competition/top50";
 import { albumIdentity, buildParticipants } from "../../src/lib/competition/rules";
 import { buildIssueReport, issuePrompt } from "../../src/lib/issues/report";
@@ -80,6 +81,72 @@ describe("desempates manuais explícitos do Top 50", () => {
     const p = project([...rows, ...rows.map(r => ({ ...r, decisionId: "synthetic-cut-2", order: 4 - r.order! }))]);
     expect(p.tieAtCut).toBe(true); expect(p.appliedDecisions).toEqual([]);
     expect(p.decisionIssues.map(i => i.code)).toEqual(["TOP50_DECISION_CONFLICT", "TOP50_DECISION_CONFLICT"]);
+  });
+  it("preserva o histórico quando uma confirmação aplicável o substitui explicitamente", () => {
+    const rows = syntheticManualTie().decisions;
+    const pending = syntheticPendingDecision(rows);
+    const replacement = rows.map(r => ({ ...r, supersedesDecisionId: pending[0].decisionId }));
+    const records = [...pending, ...replacement];
+    const before = structuredClone(records);
+    const p = project(records);
+    const expected = project(rows);
+    expect(p.decisionIssues).toEqual([]);
+    expect(p.entries).toEqual(expected.entries);
+    expect(p.cutTieKeys).toEqual([]);
+    expect(p.appliedDecisions[0]).toMatchObject({ decisionId: rows[0].decisionId, rows: replacement.toSorted((a, b) => a.order! - b.order!) });
+    expect(records).toEqual(before);
+    expect(project([...replacement, ...pending]).decisionIssues).toEqual([]);
+  });
+  it("mantém pendências sem vínculo explícito ou com campos de confirmação ativos", () => {
+    const rows = syntheticManualTie().decisions;
+    const pending = syntheticPendingDecision(rows);
+    const unrelated = rows.map(row => ({ ...row, supersedesDecisionId: "outro-registro" }));
+    const replacement = rows.map(row => ({ ...row, supersedesDecisionId: pending[0].decisionId }));
+    const withOrder = pending.map((row, index) => ({ ...row, order: index + 1 }));
+    for (const records of [[...rows, ...pending], [...unrelated, ...pending], [...replacement, ...withOrder]]) {
+      const p = project(records);
+      expect(p.appliedDecisions.map(d => d.decisionId)).toEqual([rows[0].decisionId]);
+      expect(p.decisionIssues.map(i => i.code)).toEqual(["TOP50_DECISION_PENDING"]);
+    }
+  });
+  it.each([
+    ["participantes distintos", { artist: "Outro artista fictício" }, "STALE"],
+    ["contexto distinto", { originalScore: 79 }, "STALE"],
+    ["regra distinta", { rulesVersion: "regra anterior" }, "STALE"],
+    ["ordem inválida", { order: null }, "INVALID"],
+    ["vínculo inconsistente", { supersedesDecisionId: "outro-registro" }, "INVALID"],
+  ])("mantém a pendência quando a substituta tem %s", (_label, change, code) => {
+    const rows = syntheticManualTie().decisions;
+    const pending = syntheticPendingDecision(rows);
+    const replacement = rows.map(row => ({ ...row, supersedesDecisionId: pending[0].decisionId }));
+    Object.assign(replacement[0], change);
+    const p = project([...pending, ...replacement]);
+    expect(p.appliedDecisions).toEqual([]);
+    expect(p.tieAtCut).toBe(true);
+    expect(p.entries.filter(e => p.cutTieKeys.includes(e.identityKey)).map(e => e.position)).toEqual([null, null, null]);
+    expect(p.decisionIssues.map(i => i.code)).toEqual([`TOP50_DECISION_${code}`, "TOP50_DECISION_PENDING"]);
+  });
+  it("não arquiva a pendência de outro grupo mesmo com o vínculo preenchido", () => {
+    const rows = syntheticManualTie().decisions;
+    const pending = syntheticPendingDecision(rows).map(row => ({ ...row, title: `Outro ${row.title}` }));
+    const replacement = rows.map(row => ({ ...row, supersedesDecisionId: pending[0].decisionId }));
+    const group = (records: typeof rows) => records.map(row => ({
+      identityKey: albumIdentity(row), artist: row.artist, title: row.title, originalScore: 78, phase: "Repescagem", phaseScore: 2, index: 79,
+    }));
+    const resolved = resolveTop50Decisions([group(pending), group(replacement)], [...pending, ...replacement], "2026-top50-2");
+    expect(resolved.applied.map(d => d.decisionId)).toEqual([rows[0].decisionId]);
+    expect(resolved.issues.map(i => i.code)).toEqual(["TOP50_DECISION_PENDING"]);
+    expect(pending.every(row => !resolved.order.has(albumIdentity(row)))).toBe(true);
+  });
+  it("mantém a pendência quando a substituta explícita disputa com outra confirmação", () => {
+    const rows = syntheticManualTie().decisions;
+    const pending = syntheticPendingDecision(rows);
+    const replacement = rows.map(row => ({ ...row, supersedesDecisionId: pending[0].decisionId }));
+    const competing = rows.map(row => ({ ...row, decisionId: "synthetic-cut-2", confirmedAt: "2026-11-25" }));
+    const p = project([...replacement, ...pending, ...competing]);
+    expect(p.appliedDecisions).toEqual([]);
+    expect(p.tieAtCut).toBe(true);
+    expect(p.decisionIssues.map(i => i.code)).toEqual(["TOP50_DECISION_CONFLICT", "TOP50_DECISION_CONFLICT", "TOP50_DECISION_PENDING"]);
   });
   it("não aplica decisão quando o grupo atual cresce ou um dos álbuns ganha conflito", () => {
     const tie = syntheticManualTie();
